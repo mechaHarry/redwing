@@ -12,8 +12,8 @@ and horizontal Spaces -> Messages -> Threads experience.
 
 The SDK baseline is `webex-swift-sdk` `v2.5.0` from:
 
-- Local path: `~/gits/github.com/harriche_cisco/webex-swift-sdk`
-- Remote: `https://github.com/harriche_cisco/webex-swift-sdk`
+- Local path: `/Users/harriche/gits/github.com/mechaHarry/webex-swift-sdk`
+- Remote: `git@github.com:mechaHarry/webex-swift-sdk.git`
 
 The SDK owns OAuth, token refresh, Keychain-backed credential storage,
 authenticated REST transport, graceful retry/backoff, snapshot streams,
