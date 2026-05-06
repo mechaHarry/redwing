@@ -47,7 +47,7 @@ final class DiagnosticsStore: ObservableObject {
             timestamp: now(),
             source: source,
             severity: severity,
-            message: message,
+            message: Self.redacted(message),
             detail: detail.map(Self.redacted)
         ))
     }
@@ -59,13 +59,13 @@ final class DiagnosticsStore: ObservableObject {
     private static func redacted(_ value: String) -> String {
         var output = value
         output = output.replacingOccurrences(
-            of: #"Bearer\s+[A-Za-z0-9._\-]+"#,
+            of: #"Bearer\s+\S+"#,
             with: "Bearer <redacted>",
             options: .regularExpression
         )
         output = output.replacingOccurrences(
-            of: #"client_secret=([^&\s]+)"#,
-            with: "client_secret=<redacted>",
+            of: #"(?i)(["']?client_secret["']?\s*[:=]\s*)(["']?)[^"',\s&}\]]+(["']?)"#,
+            with: "$1$2<redacted>$3",
             options: .regularExpression
         )
         output = output.replacingOccurrences(
