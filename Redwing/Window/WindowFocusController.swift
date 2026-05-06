@@ -1,4 +1,5 @@
 import AppKit
+import SwiftUI
 
 enum WindowFocusController {
     static func centeredFrame(windowSize: CGSize, visibleFrame: CGRect) -> CGRect {
@@ -15,15 +16,13 @@ enum WindowFocusController {
         guard let window else { return }
 
         guard let screen = NSScreen.main ?? window.screen ?? NSScreen.screens.first else {
-            window.makeKeyAndOrderFront(nil)
-            NSApp.activate(ignoringOtherApps: true)
+            orderFrontOnCurrentDesktop(window)
             return
         }
 
         let visibleFrame = screen.visibleFrame
         guard !visibleFrame.isEmpty else {
-            window.makeKeyAndOrderFront(nil)
-            NSApp.activate(ignoringOtherApps: true)
+            orderFrontOnCurrentDesktop(window)
             return
         }
 
@@ -32,7 +31,75 @@ enum WindowFocusController {
         let frame = centeredFrame(windowSize: windowSize, visibleFrame: visibleFrame)
 
         window.setFrame(frame, display: true)
+        orderFrontOnCurrentDesktop(window)
+    }
+
+    static func collectionBehaviorForCurrentDesktop(
+        from behavior: NSWindow.CollectionBehavior
+    ) -> NSWindow.CollectionBehavior {
+        var updated = behavior
+        updated.insert(.moveToActiveSpace)
+        return updated
+    }
+
+    @MainActor
+    private static func orderFrontOnCurrentDesktop(_ window: NSWindow) {
+        let previousBehavior = window.collectionBehavior
+        window.collectionBehavior = collectionBehaviorForCurrentDesktop(from: previousBehavior)
+        defer { window.collectionBehavior = previousBehavior }
+
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+    }
+}
+
+struct WindowFocusAttachment: NSViewRepresentable {
+    let requestID: Int
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+
+    func makeNSView(context: Context) -> FocusView {
+        FocusView()
+    }
+
+    func updateNSView(_ nsView: FocusView, context: Context) {
+        context.coordinator.requestID = requestID
+        nsView.onWindowAvailable = { window in
+            Task { @MainActor in
+                context.coordinator.focus(window: window)
+            }
+        }
+
+        Task { @MainActor in
+            context.coordinator.focus(window: nsView.window)
+        }
+    }
+
+    final class Coordinator {
+        var requestID = 0
+        private var handledRequestID = 0
+
+        @MainActor
+        func focus(window: NSWindow?) {
+            guard requestID > 0,
+                  handledRequestID != requestID,
+                  let window else {
+                return
+            }
+
+            handledRequestID = requestID
+            WindowFocusController.moveToCurrentDesktop(window: window)
+        }
+    }
+
+    final class FocusView: NSView {
+        var onWindowAvailable: ((NSWindow?) -> Void)?
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            onWindowAvailable?(window)
+        }
     }
 }

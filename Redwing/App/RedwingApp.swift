@@ -5,13 +5,15 @@ import SwiftUI
 struct RedwingApp: App {
     @StateObject private var rootModel = AppRootModel()
     @State private var isShowingDiagnostics = false
+    @State private var mainWindowFocusRequestID = 0
     @Environment(\.openWindow) private var openWindow
 
     var body: some Scene {
         WindowGroup("Redwing", id: RedwingWindowID.main) {
             RedwingRootView(
                 rootModel: rootModel,
-                isShowingDiagnostics: $isShowingDiagnostics
+                isShowingDiagnostics: $isShowingDiagnostics,
+                mainWindowFocusRequestID: mainWindowFocusRequestID
             )
                 .frame(minWidth: 980, minHeight: 620)
         }
@@ -33,6 +35,7 @@ struct RedwingApp: App {
     private var openMainWindow: MainWindowOpeningAction {
         MainWindowOpeningAction(
             openWindow: { openWindow(id: $0) },
+            requestFocus: { mainWindowFocusRequestID += 1 },
             activate: { NSApp.activate(ignoringOtherApps: true) }
         )
     }
@@ -44,10 +47,12 @@ enum RedwingWindowID {
 
 struct MainWindowOpeningAction {
     let openWindow: (String) -> Void
+    let requestFocus: () -> Void
     let activate: () -> Void
 
     func callAsFunction() {
         openWindow(RedwingWindowID.main)
+        requestFocus()
         activate()
     }
 }
@@ -55,6 +60,7 @@ struct MainWindowOpeningAction {
 private struct RedwingRootView: View {
     @ObservedObject var rootModel: AppRootModel
     @Binding var isShowingDiagnostics: Bool
+    let mainWindowFocusRequestID: Int
 
     var body: some View {
         Group {
@@ -83,6 +89,7 @@ private struct RedwingRootView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
+        .background(WindowFocusAttachment(requestID: mainWindowFocusRequestID))
         .sheet(isPresented: $isShowingDiagnostics) {
             DiagnosticsPanelView(diagnostics: rootModel.diagnostics)
         }

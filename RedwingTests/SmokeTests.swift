@@ -65,15 +65,18 @@ final class SmokeTests: XCTestCase {
 
     func testMainWindowOpeningActionOpensConfiguredWindowIDAndActivatesApp() {
         var openedWindowID: String?
+        var focusRequestCount = 0
         var activationCount = 0
         let action = MainWindowOpeningAction(
             openWindow: { openedWindowID = $0 },
+            requestFocus: { focusRequestCount += 1 },
             activate: { activationCount += 1 }
         )
 
         action()
 
         XCTAssertEqual(openedWindowID, RedwingWindowID.main)
+        XCTAssertEqual(focusRequestCount, 1)
         XCTAssertEqual(activationCount, 1)
     }
 }

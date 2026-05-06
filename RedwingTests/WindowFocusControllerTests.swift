@@ -19,4 +19,17 @@ final class WindowFocusControllerTests: XCTestCase {
 
         XCTAssertEqual(frame, CGRect(x: 0, y: 0, width: 1000, height: 700))
     }
+
+    func testCurrentDesktopCollectionBehaviorAddsMoveToActiveSpace() {
+        let behavior = WindowFocusController.collectionBehaviorForCurrentDesktop(from: [])
+
+        XCTAssertTrue(behavior.contains(.moveToActiveSpace))
+    }
+
+    func testCurrentDesktopCollectionBehaviorPreservesExistingOptions() {
+        let behavior = WindowFocusController.collectionBehaviorForCurrentDesktop(from: [.fullScreenPrimary])
+
+        XCTAssertTrue(behavior.contains(.fullScreenPrimary))
+        XCTAssertTrue(behavior.contains(.moveToActiveSpace))
+    }
 }
