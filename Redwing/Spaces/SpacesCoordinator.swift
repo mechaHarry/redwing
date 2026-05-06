@@ -15,6 +15,7 @@ final class SpacesCoordinator: ObservableObject {
     private let diagnostics: DiagnosticsStore
     private var stream: SpacesStreamProviding?
     private var task: Task<Void, Never>?
+    private var generation = 0
 
     init(session: AccountSession?, diagnostics: DiagnosticsStore) {
         self.session = session
@@ -28,21 +29,42 @@ final class SpacesCoordinator: ObservableObject {
 
     func start() async {
         guard let session else { return }
+        let generation = replaceStreamState()
         do {
             let stream = try await session.makeSpacesStream()
+            guard isCurrent(generation) else {
+                stream.cancel()
+                return
+            }
+
             self.stream = stream
             status = .refreshing
-            subscribe(to: stream)
+            subscribe(to: stream, generation: generation)
             await stream.refresh()
         } catch {
+            guard isCurrent(generation) else { return }
             status = .failed("Spaces unavailable")
             diagnostics.append(source: .spaces, severity: .error, message: "Spaces stream failed", detail: String(describing: error))
         }
     }
 
     func apply(snapshot: SpaceSnapshot) {
+        apply(snapshot: snapshot, generation: generation)
+    }
+
+    func select(spaceID: String) {
+        selectedSpaceID = spaceID
+    }
+
+    func loadNextPage() async {
+        await stream?.loadNextPage()
+    }
+
+    private func apply(snapshot: SpaceSnapshot, generation: Int) {
+        guard isCurrent(generation) else { return }
+
         hasMore = snapshot.hasMore
-        status = snapshot.lastErrorDescription.map(SessionStatus.failed) ?? (snapshot.isRefreshing ? .refreshing : .connected)
+        status = snapshot.lastErrorDescription.map { _ in SessionStatus.failed("Spaces refresh failed") } ?? (snapshot.isRefreshing ? .refreshing : .connected)
         if let error = snapshot.lastErrorDescription {
             diagnostics.append(source: .spaces, severity: .error, message: "Spaces refresh failed", detail: error)
         }
@@ -64,20 +86,25 @@ final class SpacesCoordinator: ObservableObject {
         isShowingSkeletons = false
     }
 
-    func select(spaceID: String) {
-        selectedSpaceID = spaceID
-    }
-
-    func loadNextPage() async {
-        await stream?.loadNextPage()
-    }
-
-    private func subscribe(to stream: SpacesStreamProviding) {
+    private func subscribe(to stream: SpacesStreamProviding, generation: Int) {
         task?.cancel()
         task = Task { [weak self] in
             for await snapshot in stream.snapshots {
-                self?.apply(snapshot: snapshot)
+                self?.apply(snapshot: snapshot, generation: generation)
             }
         }
+    }
+
+    private func replaceStreamState() -> Int {
+        generation += 1
+        task?.cancel()
+        task = nil
+        stream?.cancel()
+        stream = nil
+        return generation
+    }
+
+    private func isCurrent(_ generation: Int) -> Bool {
+        generation == self.generation
     }
 }
