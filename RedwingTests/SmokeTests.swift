@@ -62,4 +62,18 @@ final class SmokeTests: XCTestCase {
 
         XCTAssertEqual(attentionFeed.items.map(\.id), ["mention"])
     }
+
+    func testMainWindowOpeningActionOpensConfiguredWindowIDAndActivatesApp() {
+        var openedWindowID: String?
+        var activationCount = 0
+        let action = MainWindowOpeningAction(
+            openWindow: { openedWindowID = $0 },
+            activate: { activationCount += 1 }
+        )
+
+        action()
+
+        XCTAssertEqual(openedWindowID, RedwingWindowID.main)
+        XCTAssertEqual(activationCount, 1)
+    }
 }

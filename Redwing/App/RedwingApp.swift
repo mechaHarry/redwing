@@ -5,9 +5,10 @@ import SwiftUI
 struct RedwingApp: App {
     @StateObject private var rootModel = AppRootModel()
     @State private var isShowingDiagnostics = false
+    @Environment(\.openWindow) private var openWindow
 
     var body: some Scene {
-        WindowGroup("Redwing") {
+        WindowGroup("Redwing", id: RedwingWindowID.main) {
             RedwingRootView(
                 rootModel: rootModel,
                 isShowingDiagnostics: $isShowingDiagnostics
@@ -18,7 +19,7 @@ struct RedwingApp: App {
 
         MenuBarExtra("Redwing", systemImage: "bolt.horizontal.circle") {
             if let attentionFeed = rootModel.attentionFeed {
-                MenuBarView(attentionFeed: attentionFeed, openWindow: openMainWindow)
+                MenuBarView(attentionFeed: attentionFeed, openWindow: openMainWindow.callAsFunction)
             } else {
                 Button("Open Redwing") {
                     openMainWindow()
@@ -29,8 +30,25 @@ struct RedwingApp: App {
         }
     }
 
-    private func openMainWindow() {
-        NSApp.activate(ignoringOtherApps: true)
+    private var openMainWindow: MainWindowOpeningAction {
+        MainWindowOpeningAction(
+            openWindow: { openWindow(id: $0) },
+            activate: { NSApp.activate(ignoringOtherApps: true) }
+        )
+    }
+}
+
+enum RedwingWindowID {
+    static let main = "main"
+}
+
+struct MainWindowOpeningAction {
+    let openWindow: (String) -> Void
+    let activate: () -> Void
+
+    func callAsFunction() {
+        openWindow(RedwingWindowID.main)
+        activate()
     }
 }
 
