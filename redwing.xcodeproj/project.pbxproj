@@ -38,6 +38,11 @@
 		F90000000000000000000001 /* LaneLayoutModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F90000000000000000000002 /* LaneLayoutModelTests.swift */; };
 		F90000000000000000000003 /* LaneLayoutModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F90000000000000000000005 /* LaneLayoutModel.swift */; };
 		F90000000000000000000004 /* SkeletonViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = F90000000000000000000006 /* SkeletonViews.swift */; };
+		F90000000000000000000008 /* LaneSurfaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F90000000000000000000009 /* LaneSurfaceView.swift */; };
+		A20000000000000000000001 /* StatusBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000011 /* StatusBarView.swift */; };
+		A20000000000000000000002 /* DiagnosticsPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000012 /* DiagnosticsPanelView.swift */; };
+		A20000000000000000000003 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000013 /* MenuBarView.swift */; };
+		A20000000000000000000004 /* SetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000014 /* SetupView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -85,6 +90,11 @@
 		F90000000000000000000002 /* LaneLayoutModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaneLayoutModelTests.swift; sourceTree = "<group>"; };
 		F90000000000000000000005 /* LaneLayoutModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaneLayoutModel.swift; sourceTree = "<group>"; };
 		F90000000000000000000006 /* SkeletonViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkeletonViews.swift; sourceTree = "<group>"; };
+		F90000000000000000000009 /* LaneSurfaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaneSurfaceView.swift; sourceTree = "<group>"; };
+		A20000000000000000000011 /* StatusBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarView.swift; sourceTree = "<group>"; };
+		A20000000000000000000012 /* DiagnosticsPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsPanelView.swift; sourceTree = "<group>"; };
+		A20000000000000000000013 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
+		A20000000000000000000014 /* SetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -180,8 +190,10 @@
 		A1000000000000000000002A /* Diagnostics */ = {
 			isa = PBXGroup;
 			children = (
+				A20000000000000000000012 /* DiagnosticsPanelView.swift */,
 				A10000000000000000000019 /* DiagnosticsStore.swift */,
 				A1000000000000000000001A /* SessionStatus.swift */,
+				A20000000000000000000011 /* StatusBarView.swift */,
 			);
 			path = Diagnostics;
 			sourceTree = "<group>";
@@ -191,6 +203,7 @@
 			children = (
 				A1000000000000000000001C /* SetupCredentials.swift */,
 				A1000000000000000000001D /* SetupValidation.swift */,
+				A20000000000000000000014 /* SetupView.swift */,
 			);
 			path = Setup;
 			sourceTree = "<group>";
@@ -237,6 +250,7 @@
 			children = (
 				E80000000000000000000006 /* AttentionFeedStore.swift */,
 				E80000000000000000000005 /* AttentionItemViewModel.swift */,
+				A20000000000000000000013 /* MenuBarView.swift */,
 			);
 			path = Attention;
 			sourceTree = "<group>";
@@ -245,6 +259,7 @@
 			isa = PBXGroup;
 			children = (
 				F90000000000000000000005 /* LaneLayoutModel.swift */,
+				F90000000000000000000009 /* LaneSurfaceView.swift */,
 				F90000000000000000000006 /* SkeletonViews.swift */,
 			);
 			path = Lanes;
@@ -358,18 +373,23 @@
 				A10000000000000000000002 /* AppRootModel.swift in Sources */,
 				E80000000000000000000004 /* AttentionFeedStore.swift in Sources */,
 				E80000000000000000000003 /* AttentionItemViewModel.swift in Sources */,
+				A20000000000000000000002 /* DiagnosticsPanelView.swift in Sources */,
 				A10000000000000000000007 /* DiagnosticsStore.swift in Sources */,
 				F90000000000000000000003 /* LaneLayoutModel.swift in Sources */,
+				F90000000000000000000008 /* LaneSurfaceView.swift in Sources */,
+				A20000000000000000000003 /* MenuBarView.swift in Sources */,
 				D70000000000000000000005 /* MessageRowViewModel.swift in Sources */,
 				D70000000000000000000009 /* MessagesCoordinator.swift in Sources */,
 				A10000000000000000000003 /* RedwingEnvironment.swift in Sources */,
 				A10000000000000000000001 /* RedwingApp.swift in Sources */,
 				A1000000000000000000000A /* SetupCredentials.swift in Sources */,
 				A1000000000000000000000B /* SetupValidation.swift in Sources */,
+				A20000000000000000000004 /* SetupView.swift in Sources */,
 				A10000000000000000000008 /* SessionStatus.swift in Sources */,
 				F90000000000000000000004 /* SkeletonViews.swift in Sources */,
 				C60000000000000000000003 /* SpaceRowViewModel.swift in Sources */,
 				C60000000000000000000004 /* SpacesCoordinator.swift in Sources */,
+				A20000000000000000000001 /* StatusBarView.swift in Sources */,
 				D70000000000000000000007 /* ThreadLanePolicy.swift in Sources */,
 				A1000000000000000000000E /* WebexClientProviding.swift in Sources */,
 			);

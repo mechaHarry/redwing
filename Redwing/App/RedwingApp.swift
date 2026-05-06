@@ -4,49 +4,90 @@ import SwiftUI
 @main
 struct RedwingApp: App {
     @StateObject private var rootModel = AppRootModel()
+    @State private var isShowingDiagnostics = false
 
     var body: some Scene {
         WindowGroup("Redwing") {
-            RootPlaceholderView(model: rootModel)
+            RedwingRootView(
+                rootModel: rootModel,
+                isShowingDiagnostics: $isShowingDiagnostics
+            )
                 .frame(minWidth: 980, minHeight: 620)
         }
         .windowResizability(.contentMinSize)
 
         MenuBarExtra("Redwing", systemImage: "bolt.horizontal.circle") {
-            Button("Open Redwing") {
-                NSApp.activate(ignoringOtherApps: true)
+            if let attentionFeed = rootModel.attentionFeed {
+                MenuBarView(attentionFeed: attentionFeed, openWindow: openMainWindow)
+            } else {
+                Button("Open Redwing") {
+                    openMainWindow()
+                }
+                Divider()
+                Text("Setup required")
             }
-            Divider()
-            Text("Attention feed unavailable")
         }
+    }
+
+    private func openMainWindow() {
+        NSApp.activate(ignoringOtherApps: true)
     }
 }
 
-private struct RootPlaceholderView: View {
-    @ObservedObject var model: AppRootModel
+private struct RedwingRootView: View {
+    @ObservedObject var rootModel: AppRootModel
+    @Binding var isShowingDiagnostics: Bool
 
     var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "bolt.horizontal.circle")
-                .font(.system(size: 42))
-            Text("Redwing")
-                .font(.title)
-            Text(statusText)
-                .foregroundStyle(.secondary)
+        Group {
+            if let accountSession = rootModel.accountSession,
+               let spaces = rootModel.spacesCoordinator,
+               let messages = rootModel.messagesCoordinator,
+               let attentionFeed = rootModel.attentionFeed {
+                VStack(spacing: 0) {
+                    LaneSurfaceView(spaces: spaces, messages: messages)
+
+                    Divider()
+
+                    StatusBarView(
+                        accountSession: accountSession,
+                        spaces: spaces,
+                        messages: messages,
+                        attentionFeed: attentionFeed
+                    ) {
+                        isShowingDiagnostics = true
+                    }
+                }
+            } else {
+                SetupView { credentials in
+                    validateSetup(credentials)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .sheet(isPresented: $isShowingDiagnostics) {
+            DiagnosticsPanelView(diagnostics: rootModel.diagnostics)
+        }
     }
 
-    private var statusText: String {
-        switch model.phase {
-        case .setupRequired:
-            return "Setup required"
-        case .loading:
-            return "Loading"
-        case .ready:
-            return "Ready"
-        case .failed(let message):
-            return message
+    private func validateSetup(_ credentials: SetupCredentials) {
+        do {
+            try SetupValidation.validate(credentials)
+            rootModel.markSetupRequired()
+            rootModel.diagnostics.append(
+                source: .auth,
+                severity: .info,
+                message: "Setup credentials validated",
+                detail: "Authorization adapter pending"
+            )
+        } catch {
+            rootModel.markSetupRequired()
+            rootModel.diagnostics.append(
+                source: .auth,
+                severity: .error,
+                message: "Setup validation failed",
+                detail: String(describing: error)
+            )
         }
     }
 }
