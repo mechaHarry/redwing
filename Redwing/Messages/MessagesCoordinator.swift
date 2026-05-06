@@ -128,7 +128,21 @@ final class MessagesCoordinator: ObservableObject {
         }
 
         isThreadLaneVisible = true
-        threadRows = walkThread(from: selectedEntry.parentID ?? selectedEntry.id, in: snapshot, depth: 0, visited: [])
+        threadRows = walkThread(from: rootMessageID(for: selectedEntry, in: snapshot), in: snapshot, depth: 0, visited: [])
+    }
+
+    private func rootMessageID(for entry: MessageThreadEntryDTO, in snapshot: MessageThreadSnapshotDTO) -> String {
+        var current = entry
+        var visited: Set<String> = [entry.id]
+
+        while let parentID = current.parentID,
+              !visited.contains(parentID),
+              let parent = snapshot.entriesByID[parentID] {
+            visited.insert(parentID)
+            current = parent
+        }
+
+        return current.id
     }
 
     private func walkThread(

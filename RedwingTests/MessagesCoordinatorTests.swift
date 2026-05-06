@@ -89,6 +89,29 @@ final class MessagesCoordinatorTests: XCTestCase {
         XCTAssertTrue(coordinator.hasMore)
     }
 
+    func testSelectingGrandchildBuildsThreadLaneFromRootParent() {
+        let coordinator = MessagesCoordinator(session: nil, diagnostics: DiagnosticsStore())
+
+        coordinator.apply(snapshot: MessageThreadSnapshotDTO(
+            topLevelMessageIDs: ["parent"],
+            entriesByID: [
+                "parent": message(id: "parent", childIDs: ["reply-1"], body: "Parent"),
+                "reply-1": message(id: "reply-1", parentID: "parent", childIDs: ["reply-2"], body: "Reply 1"),
+                "reply-2": message(id: "reply-2", parentID: "reply-1", body: "Reply 2")
+            ],
+            isRefreshing: false,
+            isLoadingNextPage: false,
+            hasMore: false,
+            lastErrorDescription: nil
+        ))
+
+        coordinator.select(messageID: "reply-2")
+
+        XCTAssertTrue(coordinator.isThreadLaneVisible)
+        XCTAssertEqual(coordinator.threadRows.map(\.id), ["parent", "reply-1", "reply-2"])
+        XCTAssertEqual(coordinator.threadRows.map(\.depth), [0, 1, 2])
+    }
+
     func testRepeatedSelectCancelsOldStreamAndIgnoresStaleSnapshots() async {
         let provider = SuspendedMessagesProvider()
         let session = AccountSession(clientProvider: provider, diagnostics: DiagnosticsStore())
