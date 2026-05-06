@@ -15,6 +15,9 @@
 		A10000000000000000000006 /* DiagnosticsStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000018 /* DiagnosticsStoreTests.swift */; };
 		A10000000000000000000007 /* DiagnosticsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000019 /* DiagnosticsStore.swift */; };
 		A10000000000000000000008 /* SessionStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000001A /* SessionStatus.swift */; };
+		A10000000000000000000009 /* SetupValidationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000001B /* SetupValidationTests.swift */; };
+		A1000000000000000000000A /* SetupCredentials.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000001C /* SetupCredentials.swift */; };
+		A1000000000000000000000B /* SetupValidation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000001D /* SetupValidation.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -39,6 +42,9 @@
 		A10000000000000000000018 /* DiagnosticsStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsStoreTests.swift; sourceTree = "<group>"; };
 		A10000000000000000000019 /* DiagnosticsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsStore.swift; sourceTree = "<group>"; };
 		A1000000000000000000001A /* SessionStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStatus.swift; sourceTree = "<group>"; };
+		A1000000000000000000001B /* SetupValidationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupValidationTests.swift; sourceTree = "<group>"; };
+		A1000000000000000000001C /* SetupCredentials.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupCredentials.swift; sourceTree = "<group>"; };
+		A1000000000000000000001D /* SetupValidation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupValidation.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -75,6 +81,7 @@
 				A10000000000000000000028 /* App */,
 				A1000000000000000000002A /* Diagnostics */,
 				A10000000000000000000029 /* Resources */,
+				A1000000000000000000002B /* Setup */,
 			);
 			path = Redwing;
 			sourceTree = "<group>";
@@ -83,6 +90,7 @@
 			isa = PBXGroup;
 			children = (
 				A10000000000000000000018 /* DiagnosticsStoreTests.swift */,
+				A1000000000000000000001B /* SetupValidationTests.swift */,
 				A10000000000000000000014 /* SmokeTests.swift */,
 			);
 			path = RedwingTests;
@@ -123,6 +131,15 @@
 				A1000000000000000000001A /* SessionStatus.swift */,
 			);
 			path = Diagnostics;
+			sourceTree = "<group>";
+		};
+		A1000000000000000000002B /* Setup */ = {
+			isa = PBXGroup;
+			children = (
+				A1000000000000000000001C /* SetupCredentials.swift */,
+				A1000000000000000000001D /* SetupValidation.swift */,
+			);
+			path = Setup;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -233,6 +250,8 @@
 				A10000000000000000000007 /* DiagnosticsStore.swift in Sources */,
 				A10000000000000000000003 /* RedwingEnvironment.swift in Sources */,
 				A10000000000000000000001 /* RedwingApp.swift in Sources */,
+				A1000000000000000000000A /* SetupCredentials.swift in Sources */,
+				A1000000000000000000000B /* SetupValidation.swift in Sources */,
 				A10000000000000000000008 /* SessionStatus.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -242,6 +261,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A10000000000000000000006 /* DiagnosticsStoreTests.swift in Sources */,
+				A10000000000000000000009 /* SetupValidationTests.swift in Sources */,
 				A10000000000000000000004 /* SmokeTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
