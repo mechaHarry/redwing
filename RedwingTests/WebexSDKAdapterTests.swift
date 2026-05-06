@@ -211,6 +211,7 @@ final class WebexSDKAdapterTests: XCTestCase {
 
     func testRefreshTriggerFiltersByResourceAndRoomID() {
         XCTAssertTrue(WebexSDKSpacesStreamAdapter.shouldRefresh(for: WebexStreamTrigger(resource: "rooms", event: "created")))
+        XCTAssertTrue(WebexSDKSpacesStreamAdapter.shouldRefresh(for: WebexStreamTrigger(resource: "spaces", event: "updated", resourceID: "space-1")))
         XCTAssertTrue(WebexSDKSpacesStreamAdapter.shouldRefresh(for: WebexStreamTrigger(resource: "messages", event: "created", roomID: "space-2")))
         XCTAssertTrue(WebexSDKSpacesStreamAdapter.shouldRefresh(for: WebexStreamTrigger(resource: "messages", event: "created")))
         XCTAssertFalse(WebexSDKSpacesStreamAdapter.shouldRefresh(for: WebexStreamTrigger(resource: "memberships", event: "created", roomID: "space-1")))
@@ -223,12 +224,28 @@ final class WebexSDKAdapterTests: XCTestCase {
             for: WebexStreamTrigger(resource: "messages", event: "created"),
             spaceID: "space-1"
         ))
+        XCTAssertTrue(WebexSDKMessagesThreadStreamAdapter.shouldRefresh(
+            for: WebexStreamTrigger(resource: "rooms", event: "updated", resourceID: "space-1"),
+            spaceID: "space-1"
+        ))
+        XCTAssertTrue(WebexSDKMessagesThreadStreamAdapter.shouldRefresh(
+            for: WebexStreamTrigger(resource: "spaces", event: "updated", resourceID: "space-1"),
+            spaceID: "space-1"
+        ))
         XCTAssertFalse(WebexSDKMessagesThreadStreamAdapter.shouldRefresh(
             for: WebexStreamTrigger(resource: "messages", event: "created", roomID: "space-2"),
             spaceID: "space-1"
         ))
-        XCTAssertFalse(WebexSDKMessagesThreadStreamAdapter.shouldRefresh(
+        XCTAssertTrue(WebexSDKMessagesThreadStreamAdapter.shouldRefresh(
             for: WebexStreamTrigger(resource: "rooms", event: "updated", roomID: "space-1"),
+            spaceID: "space-1"
+        ))
+        XCTAssertFalse(WebexSDKMessagesThreadStreamAdapter.shouldRefresh(
+            for: WebexStreamTrigger(resource: "rooms", event: "updated", roomID: "space-2"),
+            spaceID: "space-1"
+        ))
+        XCTAssertFalse(WebexSDKMessagesThreadStreamAdapter.shouldRefresh(
+            for: WebexStreamTrigger(resource: "rooms", event: "updated", resourceID: "space-2"),
             spaceID: "space-1"
         ))
     }

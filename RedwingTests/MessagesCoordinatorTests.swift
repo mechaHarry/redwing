@@ -181,6 +181,76 @@ final class MessagesCoordinatorTests: XCTestCase {
         XCTAssertEqual(coordinator.messageScrollTargetID, "newer")
     }
 
+    func testMessagesLaneIssuesNewScrollRequestWhenNewestTargetRepeats() {
+        let coordinator = MessagesCoordinator(session: nil, diagnostics: DiagnosticsStore())
+
+        coordinator.apply(snapshot: MessageThreadSnapshotDTO(
+            topLevelMessageIDs: ["newest"],
+            entriesByID: ["newest": message(id: "newest", body: "Original")],
+            isRefreshing: false,
+            isLoadingNextPage: false,
+            hasMore: false,
+            lastErrorDescription: nil
+        ))
+        let firstRequest = coordinator.messageScrollRequest
+
+        coordinator.apply(snapshot: MessageThreadSnapshotDTO(
+            topLevelMessageIDs: ["newest"],
+            entriesByID: ["newest": message(id: "newest", body: "Updated")],
+            isRefreshing: false,
+            isLoadingNextPage: false,
+            hasMore: false,
+            lastErrorDescription: nil
+        ))
+
+        XCTAssertEqual(coordinator.messageScrollRequest?.targetID, "newest")
+        XCTAssertNotEqual(coordinator.messageScrollRequest?.id, firstRequest?.id)
+    }
+
+    func testThreadLaneIssuesNewScrollRequestWhenNewestReplyTargetRepeats() {
+        let coordinator = MessagesCoordinator(session: nil, diagnostics: DiagnosticsStore())
+
+        coordinator.apply(snapshot: MessageThreadSnapshotDTO(
+            topLevelMessageIDs: ["parent"],
+            entriesByID: [
+                "parent": message(id: "parent", childIDs: ["reply"], body: "Parent"),
+                "reply": message(id: "reply", parentID: "parent", body: "Original")
+            ],
+            isRefreshing: false,
+            isLoadingNextPage: false,
+            hasMore: false,
+            lastErrorDescription: nil
+        ))
+        coordinator.select(messageID: "parent")
+        coordinator.apply(snapshot: MessageThreadSnapshotDTO(
+            topLevelMessageIDs: ["parent"],
+            entriesByID: [
+                "parent": message(id: "parent", childIDs: ["reply"], body: "Parent"),
+                "reply": message(id: "reply", parentID: "parent", body: "Updated")
+            ],
+            isRefreshing: false,
+            isLoadingNextPage: false,
+            hasMore: false,
+            lastErrorDescription: nil
+        ))
+        let firstRequest = coordinator.threadScrollRequest
+
+        coordinator.apply(snapshot: MessageThreadSnapshotDTO(
+            topLevelMessageIDs: ["parent"],
+            entriesByID: [
+                "parent": message(id: "parent", childIDs: ["reply"], body: "Parent"),
+                "reply": message(id: "reply", parentID: "parent", body: "Updated again")
+            ],
+            isRefreshing: false,
+            isLoadingNextPage: false,
+            hasMore: false,
+            lastErrorDescription: nil
+        ))
+
+        XCTAssertEqual(coordinator.threadScrollRequest?.targetID, "reply")
+        XCTAssertNotEqual(coordinator.threadScrollRequest?.id, firstRequest?.id)
+    }
+
     func testLiveSnapshotsUpdateAttentionFeedForSelectedSpace() async throws {
         let fake = FakeWebexClientProviding()
         let session = AccountSession(clientProvider: fake, diagnostics: DiagnosticsStore())

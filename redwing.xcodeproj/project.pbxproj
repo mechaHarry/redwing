@@ -45,6 +45,7 @@
 		F90000000000000000000008 /* LaneSurfaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F90000000000000000000009 /* LaneSurfaceView.swift */; };
 		AB1100000000000000000001 /* WindowFocusControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1100000000000000000002 /* WindowFocusControllerTests.swift */; };
 		AB1100000000000000000003 /* WindowFocusController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1100000000000000000004 /* WindowFocusController.swift */; };
+		AB1200000000000000000001 /* SceneConfigurationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1200000000000000000002 /* SceneConfigurationTests.swift */; };
 		A20000000000000000000001 /* StatusBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000011 /* StatusBarView.swift */; };
 		A20000000000000000000002 /* DiagnosticsPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000012 /* DiagnosticsPanelView.swift */; };
 		A20000000000000000000003 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000013 /* MenuBarView.swift */; };
@@ -103,6 +104,7 @@
 		F90000000000000000000009 /* LaneSurfaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaneSurfaceView.swift; sourceTree = "<group>"; };
 		AB1100000000000000000002 /* WindowFocusControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowFocusControllerTests.swift; sourceTree = "<group>"; };
 		AB1100000000000000000004 /* WindowFocusController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowFocusController.swift; sourceTree = "<group>"; };
+		AB1200000000000000000002 /* SceneConfigurationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneConfigurationTests.swift; sourceTree = "<group>"; };
 		A20000000000000000000011 /* StatusBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarView.swift; sourceTree = "<group>"; };
 		A20000000000000000000012 /* DiagnosticsPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsPanelView.swift; sourceTree = "<group>"; };
 		A20000000000000000000013 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
@@ -166,6 +168,7 @@
 				A1000000000000000000002E /* FakeWebexClientProvidingTests.swift */,
 				F90000000000000000000002 /* LaneLayoutModelTests.swift */,
 				D70000000000000000000004 /* MessagesCoordinatorTests.swift */,
+				AB1200000000000000000002 /* SceneConfigurationTests.swift */,
 				A1000000000000000000001B /* SetupValidationTests.swift */,
 				A10000000000000000000014 /* SmokeTests.swift */,
 				C60000000000000000000002 /* SpacesCoordinatorTests.swift */,
@@ -448,6 +451,7 @@
 				A1000000000000000000000F /* FakeWebexClientProvidingTests.swift in Sources */,
 				F90000000000000000000001 /* LaneLayoutModelTests.swift in Sources */,
 				D70000000000000000000003 /* MessagesCoordinatorTests.swift in Sources */,
+				AB1200000000000000000001 /* SceneConfigurationTests.swift in Sources */,
 				A10000000000000000000009 /* SetupValidationTests.swift in Sources */,
 				A10000000000000000000004 /* SmokeTests.swift in Sources */,
 				C60000000000000000000001 /* SpacesCoordinatorTests.swift in Sources */,

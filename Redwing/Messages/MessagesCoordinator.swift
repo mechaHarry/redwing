@@ -1,6 +1,11 @@
 import Combine
 import Foundation
 
+struct LaneScrollRequest: Equatable, Identifiable {
+    let id = UUID()
+    let targetID: String
+}
+
 @MainActor
 final class MessagesCoordinator: ObservableObject {
     static let skeletonRowCount = 8
@@ -15,6 +20,8 @@ final class MessagesCoordinator: ObservableObject {
     @Published private(set) var hasMore = false
     @Published private(set) var messageScrollTargetID: String?
     @Published private(set) var threadScrollTargetID: String?
+    @Published private(set) var messageScrollRequest: LaneScrollRequest?
+    @Published private(set) var threadScrollRequest: LaneScrollRequest?
 
     private let session: AccountSession?
     private let diagnostics: DiagnosticsStore
@@ -57,8 +64,8 @@ final class MessagesCoordinator: ObservableObject {
         isThreadLaneVisible = false
         isShowingSkeletons = true
         messageRows = (0..<Self.skeletonRowCount).map(MessageRowViewModel.skeleton)
-        messageScrollTargetID = nil
-        threadScrollTargetID = nil
+        setMessageScrollTarget(nil)
+        setThreadScrollTarget(nil)
         hasMore = false
         status = .refreshing
 
@@ -94,7 +101,7 @@ final class MessagesCoordinator: ObservableObject {
         rememberSelectedMessageForCurrentSpace()
         if let snapshot = latestSnapshot,
            let selectedEntry = snapshot.entriesByID[messageID] {
-            messageScrollTargetID = messageLaneTargetID(for: selectedEntry, in: snapshot)
+            setMessageScrollTarget(messageLaneTargetID(for: selectedEntry, in: snapshot))
         }
         rebuildThreadRows(anchor: .selected)
     }
@@ -127,7 +134,7 @@ final class MessagesCoordinator: ObservableObject {
         guard !rows.isEmpty else {
             messageRows = snapshot.isRefreshing ? messageRows : []
             isShowingSkeletons = snapshot.isRefreshing
-            messageScrollTargetID = nil
+            setMessageScrollTarget(nil)
             rebuildThreadRows(anchor: .newest)
             return
         }
@@ -160,7 +167,7 @@ final class MessagesCoordinator: ObservableObject {
         else {
             threadRows = []
             isThreadLaneVisible = false
-            threadScrollTargetID = nil
+            setThreadScrollTarget(nil)
             return
         }
 
@@ -168,9 +175,9 @@ final class MessagesCoordinator: ObservableObject {
         threadRows = walkThread(from: rootMessageID(for: selectedEntry, in: snapshot), in: snapshot, depth: 0, visited: [])
         switch anchor {
         case .selected:
-            threadScrollTargetID = selectedMessageID
+            setThreadScrollTarget(selectedMessageID)
         case .newest:
-            threadScrollTargetID = threadRows.last?.id
+            setThreadScrollTarget(threadRows.last?.id)
         }
     }
 
@@ -178,10 +185,20 @@ final class MessagesCoordinator: ObservableObject {
         if let selectedMessageID,
            let selectedEntry = snapshot.entriesByID[selectedMessageID] {
             let targetID = messageLaneTargetID(for: selectedEntry, in: snapshot)
-            messageScrollTargetID = rows.contains { $0.id == targetID } ? targetID : rows.last?.id
+            setMessageScrollTarget(rows.contains { $0.id == targetID } ? targetID : rows.last?.id)
         } else {
-            messageScrollTargetID = rows.last?.id
+            setMessageScrollTarget(rows.last?.id)
         }
+    }
+
+    private func setMessageScrollTarget(_ targetID: String?) {
+        messageScrollTargetID = targetID
+        messageScrollRequest = targetID.map { LaneScrollRequest(targetID: $0) }
+    }
+
+    private func setThreadScrollTarget(_ targetID: String?) {
+        threadScrollTargetID = targetID
+        threadScrollRequest = targetID.map { LaneScrollRequest(targetID: $0) }
     }
 
     private func messageLaneTargetID(for entry: MessageThreadEntryDTO, in snapshot: MessageThreadSnapshotDTO) -> String {

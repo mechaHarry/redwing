@@ -322,8 +322,12 @@ final class WebexSDKSpacesStreamAdapter: SpacesStreamProviding {
     }
 
     static func shouldRefresh(for trigger: WebexStreamTrigger) -> Bool {
-        trigger.resource == WebexRealtimeResource.spaces.rawValue
-            || trigger.resource == WebexRealtimeResource.messages.rawValue
+        switch WebexRealtimeResource(rawValue: trigger.resource) {
+        case .spaces, .rooms, .messages:
+            return true
+        case .memberships, .attachmentActions, .unknown:
+            return false
+        }
     }
 }
 
@@ -369,10 +373,14 @@ final class WebexSDKMessagesThreadStreamAdapter: MessagesThreadStreamProviding {
     }
 
     static func shouldRefresh(for trigger: WebexStreamTrigger, spaceID: String) -> Bool {
-        guard trigger.resource == WebexRealtimeResource.messages.rawValue else {
+        switch WebexRealtimeResource(rawValue: trigger.resource) {
+        case .messages:
+            return trigger.roomID.map { $0 == spaceID } ?? true
+        case .spaces, .rooms:
+            let triggerSpaceID = trigger.roomID ?? trigger.resourceID
+            return triggerSpaceID.map { $0 == spaceID } ?? true
+        case .memberships, .attachmentActions, .unknown:
             return false
         }
-
-        return trigger.roomID.map { $0 == spaceID } ?? true
     }
 }

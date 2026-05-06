@@ -13,7 +13,7 @@ struct RedwingApp: App {
     @Environment(\.openWindow) private var openWindow
 
     var body: some Scene {
-        WindowGroup("Redwing", id: RedwingWindowID.main) {
+        Window("Redwing", id: RedwingWindowID.main) {
             RedwingRootView(
                 rootModel: rootModel,
                 isShowingDiagnostics: $isShowingDiagnostics,
@@ -22,6 +22,7 @@ struct RedwingApp: App {
                 .frame(minWidth: 980, minHeight: 620)
         }
         .windowResizability(.contentMinSize)
+        .restorationBehavior(.disabled)
 
         MenuBarExtra("Redwing", systemImage: "bolt.horizontal.circle") {
             if let attentionFeed = rootModel.attentionFeed {

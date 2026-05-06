@@ -55,7 +55,9 @@ struct LaneSurfaceView: View {
     }
 
     private func messagesLane(width: CGFloat) -> some View {
-        ScrollViewReader { proxy in
+        let rowIDs = messages.messageRows.map(\.id)
+
+        return ScrollViewReader { proxy in
             List(messages.messageRows) { row in
                 messageRow(row) {
                     messages.select(messageID: row.id)
@@ -63,15 +65,20 @@ struct LaneSurfaceView: View {
                 .id(row.id)
             }
             .listStyle(.inset)
-            .onReceive(messages.$messageScrollTargetID.compactMap { $0 }) { targetID in
-                scroll(proxy, to: targetID)
+            .onReceive(messages.$messageScrollRequest.compactMap { $0 }) { request in
+                scroll(proxy, to: request.targetID)
+            }
+            .onChange(of: rowIDs) { _, _ in
+                scrollToCurrentMessageTarget(proxy)
             }
         }
         .frame(width: width)
     }
 
     private func threadLane(width: CGFloat) -> some View {
-        ScrollViewReader { proxy in
+        let rowIDs = messages.threadRows.map(\.id)
+
+        return ScrollViewReader { proxy in
             List(messages.threadRows) { row in
                 messageRow(row) {
                     messages.select(messageID: row.id)
@@ -80,8 +87,11 @@ struct LaneSurfaceView: View {
                 .padding(.leading, CGFloat(row.depth) * 16)
             }
             .listStyle(.inset)
-            .onReceive(messages.$threadScrollTargetID.compactMap { $0 }) { targetID in
-                scroll(proxy, to: targetID)
+            .onReceive(messages.$threadScrollRequest.compactMap { $0 }) { request in
+                scroll(proxy, to: request.targetID)
+            }
+            .onChange(of: rowIDs) { _, _ in
+                scrollToCurrentThreadTarget(proxy)
             }
         }
         .frame(width: width)
@@ -118,9 +128,27 @@ struct LaneSurfaceView: View {
         }
     }
 
+    private func scrollToCurrentMessageTarget(_ proxy: ScrollViewProxy) {
+        guard let targetID = messages.messageScrollTargetID else {
+            return
+        }
+
+        scroll(proxy, to: targetID)
+    }
+
+    private func scrollToCurrentThreadTarget(_ proxy: ScrollViewProxy) {
+        guard let targetID = messages.threadScrollTargetID else {
+            return
+        }
+
+        scroll(proxy, to: targetID)
+    }
+
     private func scroll(_ proxy: ScrollViewProxy, to targetID: String) {
         Task { @MainActor in
-            await Task.yield()
+            for _ in 0..<3 {
+                await Task.yield()
+            }
             withAnimation(.easeInOut(duration: 0.18)) {
                 proxy.scrollTo(targetID, anchor: .bottom)
             }
