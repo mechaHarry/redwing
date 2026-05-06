@@ -63,6 +63,37 @@ final class SmokeTests: XCTestCase {
         XCTAssertEqual(attentionFeed.items.map(\.id), ["mention"])
     }
 
+    func testResolvedAccountIDUpdatesAttentionFeedCurrentUserID() throws {
+        let model = AppRootModel()
+        model.configure(clientProvider: FakeWebexClientProviding(), currentUserID: "")
+        model.updateCurrentUserID("person-123")
+
+        let attentionFeed = try XCTUnwrap(model.attentionFeed)
+        attentionFeed.apply(snapshot: MessageThreadSnapshotDTO(
+            topLevelMessageIDs: ["mention"],
+            entriesByID: [
+                "mention": MessageThreadEntryDTO(
+                    id: "mention",
+                    parentID: nil,
+                    childIDs: [],
+                    sender: "alex@example.com",
+                    body: "Can you review this?",
+                    created: Date(timeIntervalSince1970: 10),
+                    mentionedPeople: ["person-123"],
+                    mentionedGroups: [],
+                    isPlaceholderParent: false,
+                    isDeletedTombstone: false
+                )
+            ],
+            isRefreshing: false,
+            isLoadingNextPage: false,
+            hasMore: false,
+            lastErrorDescription: nil
+        ), spaceID: "space-1", spaceTitle: "General")
+
+        XCTAssertEqual(attentionFeed.items.map(\.id), ["mention"])
+    }
+
     func testMainWindowOpeningActionOpensConfiguredWindowIDAndActivatesApp() {
         var openedWindowID: String?
         var focusRequestCount = 0

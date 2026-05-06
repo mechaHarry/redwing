@@ -65,6 +65,38 @@ final class AttentionFeedStoreTests: XCTestCase {
         XCTAssertEqual(store.items.map(\.id), ["retained"])
     }
 
+    func testChangingCurrentUserIDClearsStaleItemsAndUsesNewID() {
+        let store = AttentionFeedStore(currentUserID: "me")
+        store.apply(snapshot: MessageThreadSnapshotDTO(
+            topLevelMessageIDs: ["old"],
+            entriesByID: ["old": entry(id: "old", mentionedPeople: ["me"])],
+            isRefreshing: false,
+            isLoadingNextPage: false,
+            hasMore: false,
+            lastErrorDescription: nil
+        ), spaceID: "space-1", spaceTitle: "General")
+
+        XCTAssertEqual(store.items.map(\.id), ["old"])
+
+        store.updateCurrentUserID("person-123")
+
+        XCTAssertTrue(store.items.isEmpty)
+
+        store.apply(snapshot: MessageThreadSnapshotDTO(
+            topLevelMessageIDs: ["old", "new"],
+            entriesByID: [
+                "old": entry(id: "old", created: Date(timeIntervalSince1970: 2), mentionedPeople: ["me"]),
+                "new": entry(id: "new", created: Date(timeIntervalSince1970: 1), mentionedPeople: ["person-123"])
+            ],
+            isRefreshing: false,
+            isLoadingNextPage: false,
+            hasMore: false,
+            lastErrorDescription: nil
+        ), spaceID: "space-1", spaceTitle: "General")
+
+        XCTAssertEqual(store.items.map(\.id), ["new"])
+    }
+
     func testExcludesPlaceholderParentsAndDeletedTombstonesEvenWhenMentioned() {
         let store = AttentionFeedStore(currentUserID: "me")
         store.apply(snapshot: MessageThreadSnapshotDTO(

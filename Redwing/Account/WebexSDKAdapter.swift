@@ -29,9 +29,10 @@ actor WebexSDKAdapter: WebexClientProviding {
             return nil
         }
 
-        client = try await registry.client(for: account.id)
+        let loadedClient = try await registry.client(for: account.id)
+        client = loadedClient
         activeAccountID = account.id
-        return Self.mapAccount(account)
+        return await accountSummary(for: account, client: loadedClient, grantedScopes: [])
     }
 
     func authorize(credentials: SetupCredentials) async throws -> WebexAccountSummary {
@@ -45,7 +46,11 @@ actor WebexSDKAdapter: WebexClientProviding {
 
         client = authorized.client
         activeAccountID = authorized.account.id
-        return Self.mapAccount(authorized.account, grantedScopes: configuration.scopes)
+        return await accountSummary(
+            for: authorized.account,
+            client: authorized.client,
+            grantedScopes: configuration.scopes
+        )
     }
 
     func startRealtime() async -> AsyncStream<RealtimeStateDTO> {
@@ -130,6 +135,19 @@ actor WebexSDKAdapter: WebexClientProviding {
         }
     }
 
+    private func accountSummary(
+        for record: WebexAccountRecord,
+        client: WebexClient,
+        grantedScopes: [String]
+    ) async -> WebexAccountSummary {
+        do {
+            let person = try await client.people.me()
+            return Self.mapCurrentPerson(person, grantedScopes: grantedScopes)
+        } catch {
+            return Self.mapAccount(record, grantedScopes: grantedScopes)
+        }
+    }
+
     static func mapAccount(
         _ record: WebexAccountRecord,
         grantedScopes: [String] = []
@@ -140,6 +158,19 @@ actor WebexSDKAdapter: WebexClientProviding {
                 ?? record.metadata.email
                 ?? record.metadata.webexUserID
                 ?? "Webex Account",
+            grantedScopes: grantedScopes
+        )
+    }
+
+    static func mapCurrentPerson(
+        _ person: WebexPerson,
+        grantedScopes: [String] = []
+    ) -> WebexAccountSummary {
+        WebexAccountSummary(
+            id: person.id,
+            displayName: nonEmpty(person.displayName)
+                ?? person.emails.compactMap { nonEmpty($0) }.first
+                ?? person.id,
             grantedScopes: grantedScopes
         )
     }

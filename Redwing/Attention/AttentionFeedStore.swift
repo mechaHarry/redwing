@@ -6,10 +6,19 @@ final class AttentionFeedStore: ObservableObject {
     @Published private(set) var items: [AttentionItemViewModel] = []
     @Published private(set) var status: SessionStatus = .idle
 
-    private let currentUserID: String
+    private var currentUserID: String
 
     init(currentUserID: String) {
         self.currentUserID = currentUserID
+    }
+
+    func updateCurrentUserID(_ currentUserID: String) {
+        guard self.currentUserID != currentUserID else {
+            return
+        }
+
+        self.currentUserID = currentUserID
+        items.removeAll()
     }
 
     func apply(snapshot: MessageThreadSnapshotDTO, spaceID: String, spaceTitle: String) {

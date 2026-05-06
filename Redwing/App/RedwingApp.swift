@@ -100,6 +100,9 @@ private struct RedwingRootView: View {
 
             await accountSession.authorize(credentials: credentials)
             if accountSession.phase == .ready {
+                if let currentUserID = accountSession.activeAccount?.id {
+                    rootModel.updateCurrentUserID(currentUserID)
+                }
                 await rootModel.spacesCoordinator?.start()
             }
         }
@@ -150,6 +153,9 @@ private struct RedwingSessionView: View {
 
         await accountSession.start()
         if accountSession.phase == .ready {
+            if let currentUserID = accountSession.activeAccount?.id {
+                attentionFeed.updateCurrentUserID(currentUserID)
+            }
             await spaces.start()
         }
     }
@@ -158,6 +164,9 @@ private struct RedwingSessionView: View {
         Task {
             await accountSession.authorize(credentials: credentials)
             if accountSession.phase == .ready {
+                if let currentUserID = accountSession.activeAccount?.id {
+                    attentionFeed.updateCurrentUserID(currentUserID)
+                }
                 await spaces.start()
             }
         }

@@ -44,4 +44,8 @@ final class AppRootModel: ObservableObject {
         messagesCoordinator = MessagesCoordinator(session: session, diagnostics: diagnostics)
         attentionFeed = AttentionFeedStore(currentUserID: currentUserID)
     }
+
+    func updateCurrentUserID(_ currentUserID: String) {
+        attentionFeed?.updateCurrentUserID(currentUserID)
+    }
 }

@@ -32,6 +32,23 @@ final class WebexSDKAdapterTests: XCTestCase {
         XCTAssertEqual(summary.grantedScopes, [])
     }
 
+    func testMapsCurrentPersonToMentionMatchingAccountID() {
+        let person = WebexPerson(
+            id: "person-123",
+            emails: ["alex@example.com"],
+            displayName: "Alex Rivera"
+        )
+
+        let summary = WebexSDKAdapter.mapCurrentPerson(
+            person,
+            grantedScopes: ["spark:all", "spark:kms"]
+        )
+
+        XCTAssertEqual(summary.id, "person-123")
+        XCTAssertEqual(summary.displayName, "Alex Rivera")
+        XCTAssertEqual(summary.grantedScopes, ["spark:all", "spark:kms"])
+    }
+
     func testMapsRealtimeStates() {
         XCTAssertEqual(WebexSDKAdapter.mapRealtimeState(.disconnected), .disconnected)
         XCTAssertEqual(WebexSDKAdapter.mapRealtimeState(.discovering), .connecting)
