@@ -19,6 +19,7 @@ final class AccountSession: ObservableObject {
     private let clientProvider: WebexClientProviding
     private let diagnostics: DiagnosticsStore
     private var realtimeTask: Task<Void, Never>?
+    private var realtimeGeneration = 0
 
     init(clientProvider: WebexClientProviding, diagnostics: DiagnosticsStore) {
         self.clientProvider = clientProvider
@@ -31,10 +32,10 @@ final class AccountSession: ObservableObject {
 
     func start() async {
         phase = .loading
+        clearSessionState()
         do {
             guard let account = try await clientProvider.existingAccount() else {
                 phase = .setupRequired
-                tokenStatus = .idle
                 return
             }
             activeAccount = account
@@ -44,13 +45,14 @@ final class AccountSession: ObservableObject {
         } catch {
             let message = String(describing: error)
             diagnostics.append(source: .auth, severity: .error, message: "Failed to load account", detail: message)
-            phase = .failed(message)
+            phase = .failed("Account load failed")
             tokenStatus = .failed("Account load failed")
         }
     }
 
     func authorize(credentials: SetupCredentials) async {
         phase = .loading
+        clearSessionState()
         do {
             try SetupValidation.validate(credentials)
             let account = try await clientProvider.authorize(credentials: credentials)
@@ -62,7 +64,7 @@ final class AccountSession: ObservableObject {
         } catch {
             let message = String(describing: error)
             diagnostics.append(source: .auth, severity: .error, message: "Authorization failed", detail: message)
-            phase = .failed(message)
+            phase = .failed("Authorization failed")
             tokenStatus = .failed("Authorization failed")
         }
     }
@@ -76,8 +78,7 @@ final class AccountSession: ObservableObject {
     }
 
     func signOut() async {
-        realtimeTask?.cancel()
-        realtimeTask = nil
+        cancelRealtimeTask()
         await clientProvider.signOut()
         activeAccount = nil
         phase = .setupRequired
@@ -86,20 +87,38 @@ final class AccountSession: ObservableObject {
     }
 
     private func startRealtime() async {
-        realtimeTask?.cancel()
+        cancelRealtimeTask()
         realtimeStatus = .refreshing
         let states = await clientProvider.startRealtime()
+        let generation = realtimeGeneration
         await withCheckedContinuation { continuation in
             realtimeTask = Task { [weak self] in
                 continuation.resume()
                 for await state in states {
-                    self?.applyRealtimeState(state)
+                    self?.applyRealtimeState(state, generation: generation)
                 }
             }
         }
     }
 
-    private func applyRealtimeState(_ state: RealtimeStateDTO) {
+    private func cancelRealtimeTask() {
+        realtimeTask?.cancel()
+        realtimeTask = nil
+        realtimeGeneration += 1
+    }
+
+    private func clearSessionState() {
+        cancelRealtimeTask()
+        activeAccount = nil
+        realtimeStatus = .idle
+        tokenStatus = .idle
+    }
+
+    private func applyRealtimeState(_ state: RealtimeStateDTO, generation: Int) {
+        guard generation == realtimeGeneration else {
+            return
+        }
+
         switch state {
         case .disconnected:
             realtimeStatus = .idle
@@ -110,7 +129,7 @@ final class AccountSession: ObservableObject {
         case .reconnecting(let attempt, let delay):
             realtimeStatus = .reconnecting("attempt \(attempt), \(String(format: "%.1f", delay))s")
         case .failed(let message):
-            realtimeStatus = .failed(message)
+            realtimeStatus = .failed("Realtime failed")
             diagnostics.append(source: .realtime, severity: .error, message: "Realtime failed", detail: message)
         }
     }
