@@ -16,8 +16,15 @@ final class AttentionFeedStore: ObservableObject {
         status = snapshot.lastErrorDescription.map { _ in SessionStatus.failed("Attention refresh failed") } ?? .connected
         var byID = Dictionary(uniqueKeysWithValues: items.map { ($0.id, $0) })
 
-        for entry in snapshot.entriesByID.values where !entry.isPlaceholderParent && !entry.isDeletedTombstone {
-            guard let reason = attentionReason(for: entry) else { continue }
+        for entry in snapshot.entriesByID.values {
+            guard !entry.isPlaceholderParent,
+                  !entry.isDeletedTombstone,
+                  let reason = attentionReason(for: entry)
+            else {
+                byID[entry.id] = nil
+                continue
+            }
+
             byID[entry.id] = AttentionItemViewModel(
                 id: entry.id,
                 spaceID: spaceID,

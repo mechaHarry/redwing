@@ -38,6 +38,33 @@ final class AttentionFeedStoreTests: XCTestCase {
         XCTAssertEqual(store.items.count, 1)
     }
 
+    func testRemovesItemWhenSameMessageBecomesIneligibleInLaterSnapshot() {
+        let store = AttentionFeedStore(currentUserID: "me")
+        store.apply(snapshot: MessageThreadSnapshotDTO(
+            topLevelMessageIDs: ["m1", "retained"],
+            entriesByID: [
+                "m1": entry(id: "m1", created: Date(timeIntervalSince1970: 2), mentionedPeople: ["me"]),
+                "retained": entry(id: "retained", created: Date(timeIntervalSince1970: 1), mentionedPeople: ["me"])
+            ],
+            isRefreshing: false,
+            isLoadingNextPage: false,
+            hasMore: false,
+            lastErrorDescription: nil
+        ), spaceID: "space-1", spaceTitle: "General")
+        XCTAssertEqual(store.items.map(\.id), ["m1", "retained"])
+
+        store.apply(snapshot: MessageThreadSnapshotDTO(
+            topLevelMessageIDs: ["m1"],
+            entriesByID: ["m1": entry(id: "m1", created: Date(timeIntervalSince1970: 3), mentionedPeople: [])],
+            isRefreshing: false,
+            isLoadingNextPage: false,
+            hasMore: false,
+            lastErrorDescription: nil
+        ), spaceID: "space-1", spaceTitle: "General")
+
+        XCTAssertEqual(store.items.map(\.id), ["retained"])
+    }
+
     func testExcludesPlaceholderParentsAndDeletedTombstonesEvenWhenMentioned() {
         let store = AttentionFeedStore(currentUserID: "me")
         store.apply(snapshot: MessageThreadSnapshotDTO(
