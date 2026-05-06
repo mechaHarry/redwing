@@ -3,7 +3,11 @@ import SwiftUI
 
 @main
 struct RedwingApp: App {
-    @StateObject private var rootModel = AppRootModel()
+    @StateObject private var rootModel: AppRootModel = {
+        let model = AppRootModel()
+        model.configure(clientProvider: WebexSDKAdapter(), currentUserID: "")
+        return model
+    }()
     @State private var isShowingDiagnostics = false
     @State private var mainWindowFocusRequestID = 0
     @Environment(\.openWindow) private var openWindow
@@ -68,6 +72,51 @@ private struct RedwingRootView: View {
                let spaces = rootModel.spacesCoordinator,
                let messages = rootModel.messagesCoordinator,
                let attentionFeed = rootModel.attentionFeed {
+                RedwingSessionView(
+                    accountSession: accountSession,
+                    spaces: spaces,
+                    messages: messages,
+                    attentionFeed: attentionFeed,
+                    isShowingDiagnostics: $isShowingDiagnostics
+                )
+            } else {
+                SetupView { credentials in
+                    authorize(credentials)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .background(WindowFocusAttachment(requestID: mainWindowFocusRequestID))
+        .sheet(isPresented: $isShowingDiagnostics) {
+            DiagnosticsPanelView(diagnostics: rootModel.diagnostics)
+        }
+    }
+
+    private func authorize(_ credentials: SetupCredentials) {
+        Task {
+            guard let accountSession = rootModel.accountSession else {
+                return
+            }
+
+            await accountSession.authorize(credentials: credentials)
+            if accountSession.phase == .ready {
+                await rootModel.spacesCoordinator?.start()
+            }
+        }
+    }
+}
+
+private struct RedwingSessionView: View {
+    @ObservedObject var accountSession: AccountSession
+    @ObservedObject var spaces: SpacesCoordinator
+    @ObservedObject var messages: MessagesCoordinator
+    @ObservedObject var attentionFeed: AttentionFeedStore
+    @Binding var isShowingDiagnostics: Bool
+
+    var body: some View {
+        Group {
+            switch accountSession.phase {
+            case .idle, .loading, .ready:
                 VStack(spacing: 0) {
                     LaneSurfaceView(spaces: spaces, messages: messages)
 
@@ -82,37 +131,35 @@ private struct RedwingRootView: View {
                         isShowingDiagnostics = true
                     }
                 }
-            } else {
+            case .setupRequired, .failed:
                 SetupView { credentials in
-                    validateSetup(credentials)
+                    authorize(credentials)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
-        .background(WindowFocusAttachment(requestID: mainWindowFocusRequestID))
-        .sheet(isPresented: $isShowingDiagnostics) {
-            DiagnosticsPanelView(diagnostics: rootModel.diagnostics)
+        .task {
+            await start()
         }
     }
 
-    private func validateSetup(_ credentials: SetupCredentials) {
-        do {
-            try SetupValidation.validate(credentials)
-            rootModel.markSetupRequired()
-            rootModel.diagnostics.append(
-                source: .auth,
-                severity: .info,
-                message: "Setup credentials validated",
-                detail: "Authorization adapter pending"
-            )
-        } catch {
-            rootModel.markSetupRequired()
-            rootModel.diagnostics.append(
-                source: .auth,
-                severity: .error,
-                message: "Setup validation failed",
-                detail: String(describing: error)
-            )
+    private func start() async {
+        guard accountSession.phase == .idle else {
+            return
+        }
+
+        await accountSession.start()
+        if accountSession.phase == .ready {
+            await spaces.start()
+        }
+    }
+
+    private func authorize(_ credentials: SetupCredentials) {
+        Task {
+            await accountSession.authorize(credentials: credentials)
+            if accountSession.phase == .ready {
+                await spaces.start()
+            }
         }
     }
 }

@@ -22,8 +22,12 @@
 		A1000000000000000000000D /* FakeWebexClientProviding.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000001F /* FakeWebexClientProviding.swift */; };
 		A1000000000000000000000E /* WebexClientProviding.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000020 /* WebexClientProviding.swift */; };
 		A1000000000000000000000F /* FakeWebexClientProvidingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000002E /* FakeWebexClientProvidingTests.swift */; };
+		B51200000000000000000004 /* WebexSDKAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B51200000000000000000005 /* WebexSDKAdapter.swift */; };
+		B51200000000000000000006 /* AsyncStreamMapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = B51200000000000000000007 /* AsyncStreamMapping.swift */; };
 		B50000000000000000000003 /* AccountSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = B50000000000000000000004 /* AccountSession.swift */; };
 		B50000000000000000000001 /* AccountSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B50000000000000000000002 /* AccountSessionTests.swift */; };
+		B51200000000000000000001 /* WebexSDKAdapterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B51200000000000000000002 /* WebexSDKAdapterTests.swift */; };
+		B51200000000000000000003 /* WebexSwiftSDK in Frameworks */ = {isa = PBXBuildFile; productRef = A10000000000000000000061 /* WebexSwiftSDK */; };
 		C60000000000000000000001 /* SpacesCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C60000000000000000000002 /* SpacesCoordinatorTests.swift */; };
 		C60000000000000000000003 /* SpaceRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C60000000000000000000005 /* SpaceRowViewModel.swift */; };
 		C60000000000000000000004 /* SpacesCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C60000000000000000000006 /* SpacesCoordinator.swift */; };
@@ -76,8 +80,11 @@
 		A1000000000000000000001F /* FakeWebexClientProviding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FakeWebexClientProviding.swift; sourceTree = "<group>"; };
 		A10000000000000000000020 /* WebexClientProviding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebexClientProviding.swift; sourceTree = "<group>"; };
 		A1000000000000000000002E /* FakeWebexClientProvidingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FakeWebexClientProvidingTests.swift; sourceTree = "<group>"; };
+		B51200000000000000000005 /* WebexSDKAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebexSDKAdapter.swift; sourceTree = "<group>"; };
+		B51200000000000000000007 /* AsyncStreamMapping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncStreamMapping.swift; sourceTree = "<group>"; };
 		B50000000000000000000004 /* AccountSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountSession.swift; sourceTree = "<group>"; };
 		B50000000000000000000002 /* AccountSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountSessionTests.swift; sourceTree = "<group>"; };
+		B51200000000000000000002 /* WebexSDKAdapterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebexSDKAdapterTests.swift; sourceTree = "<group>"; };
 		C60000000000000000000002 /* SpacesCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpacesCoordinatorTests.swift; sourceTree = "<group>"; };
 		C60000000000000000000005 /* SpaceRowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpaceRowViewModel.swift; sourceTree = "<group>"; };
 		C60000000000000000000006 /* SpacesCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpacesCoordinator.swift; sourceTree = "<group>"; };
@@ -114,6 +121,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B51200000000000000000003 /* WebexSwiftSDK in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -160,6 +168,7 @@
 				A10000000000000000000014 /* SmokeTests.swift */,
 				C60000000000000000000002 /* SpacesCoordinatorTests.swift */,
 				D70000000000000000000002 /* ThreadLanePolicyTests.swift */,
+				B51200000000000000000002 /* WebexSDKAdapterTests.swift */,
 				AB1100000000000000000002 /* WindowFocusControllerTests.swift */,
 			);
 			path = RedwingTests;
@@ -227,7 +236,9 @@
 			isa = PBXGroup;
 			children = (
 				B50000000000000000000004 /* AccountSession.swift */,
+				B51200000000000000000007 /* AsyncStreamMapping.swift */,
 				A10000000000000000000020 /* WebexClientProviding.swift */,
+				B51200000000000000000005 /* WebexSDKAdapter.swift */,
 			);
 			path = Account;
 			sourceTree = "<group>";
@@ -316,6 +327,9 @@
 				A10000000000000000000037 /* PBXTargetDependency */,
 			);
 			name = RedwingTests;
+			packageProductDependencies = (
+				A10000000000000000000061 /* WebexSwiftSDK */,
+			);
 			productName = RedwingTests;
 			productReference = A10000000000000000000017 /* RedwingTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -385,6 +399,7 @@
 			files = (
 				B50000000000000000000003 /* AccountSession.swift in Sources */,
 				A10000000000000000000002 /* AppRootModel.swift in Sources */,
+				B51200000000000000000006 /* AsyncStreamMapping.swift in Sources */,
 				E80000000000000000000004 /* AttentionFeedStore.swift in Sources */,
 				E80000000000000000000003 /* AttentionItemViewModel.swift in Sources */,
 				A20000000000000000000002 /* DiagnosticsPanelView.swift in Sources */,
@@ -406,6 +421,7 @@
 				A20000000000000000000001 /* StatusBarView.swift in Sources */,
 				D70000000000000000000007 /* ThreadLanePolicy.swift in Sources */,
 				A1000000000000000000000E /* WebexClientProviding.swift in Sources */,
+				B51200000000000000000004 /* WebexSDKAdapter.swift in Sources */,
 				AB1100000000000000000003 /* WindowFocusController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -426,6 +442,7 @@
 				A10000000000000000000004 /* SmokeTests.swift in Sources */,
 				C60000000000000000000001 /* SpacesCoordinatorTests.swift in Sources */,
 				D70000000000000000000001 /* ThreadLanePolicyTests.swift in Sources */,
+				B51200000000000000000001 /* WebexSDKAdapterTests.swift in Sources */,
 				AB1100000000000000000001 /* WindowFocusControllerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
