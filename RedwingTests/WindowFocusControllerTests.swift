@@ -2,6 +2,23 @@ import XCTest
 @testable import Redwing
 
 final class WindowFocusControllerTests: XCTestCase {
+    func testMainWindowLookupPrefersVisibleRedwingWindow() {
+        let candidates = [
+            WindowFocusController.Candidate(title: "Other", isVisible: true, isMiniaturized: false),
+            WindowFocusController.Candidate(title: "Redwing", isVisible: true, isMiniaturized: false)
+        ]
+
+        XCTAssertEqual(WindowFocusController.preferredMainWindowIndex(from: candidates), 1)
+    }
+
+    func testMainWindowLookupFallsBackToMiniaturizedRedwingWindow() {
+        let candidates = [
+            WindowFocusController.Candidate(title: "Redwing", isVisible: false, isMiniaturized: true)
+        ]
+
+        XCTAssertEqual(WindowFocusController.preferredMainWindowIndex(from: candidates), 0)
+    }
+
     func testCenteredFrameUsesTargetScreenVisibleFrame() {
         let frame = WindowFocusController.centeredFrame(
             windowSize: CGSize(width: 800, height: 500),

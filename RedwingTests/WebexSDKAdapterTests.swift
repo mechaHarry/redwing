@@ -232,7 +232,7 @@ final class WebexSDKAdapterTests: XCTestCase {
             for: WebexStreamTrigger(resource: "spaces", event: "updated", resourceID: "space-1"),
             spaceID: "space-1"
         ))
-        XCTAssertFalse(WebexSDKMessagesThreadStreamAdapter.shouldRefresh(
+        XCTAssertTrue(WebexSDKMessagesThreadStreamAdapter.shouldRefresh(
             for: WebexStreamTrigger(resource: "messages", event: "created", roomID: "space-2"),
             spaceID: "space-1"
         ))

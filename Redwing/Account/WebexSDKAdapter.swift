@@ -375,7 +375,7 @@ final class WebexSDKMessagesThreadStreamAdapter: MessagesThreadStreamProviding {
     static func shouldRefresh(for trigger: WebexStreamTrigger, spaceID: String) -> Bool {
         switch WebexRealtimeResource(rawValue: trigger.resource) {
         case .messages:
-            return trigger.roomID.map { $0 == spaceID } ?? true
+            return true
         case .spaces, .rooms:
             let triggerSpaceID = trigger.roomID ?? trigger.resourceID
             return triggerSpaceID.map { $0 == spaceID } ?? true

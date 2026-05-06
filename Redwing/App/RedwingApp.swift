@@ -3,6 +3,7 @@ import SwiftUI
 
 @main
 struct RedwingApp: App {
+    @NSApplicationDelegateAdaptor(RedwingAppDelegate.self) private var appDelegate
     @StateObject private var rootModel: AppRootModel = {
         let model = AppRootModel()
         model.configure(clientProvider: WebexSDKAdapter(), currentUserID: "")
@@ -59,6 +60,19 @@ struct MainWindowOpeningAction {
         openWindow(RedwingWindowID.main)
         requestFocus()
         activate()
+    }
+}
+
+final class RedwingAppDelegate: NSObject, NSApplicationDelegate {
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows _: Bool) -> Bool {
+        guard !sender.windows.isEmpty else {
+            return true
+        }
+
+        Task { @MainActor in
+            WindowFocusController.moveMainWindowToCurrentDesktop(windows: sender.windows)
+        }
+        return false
     }
 }
 

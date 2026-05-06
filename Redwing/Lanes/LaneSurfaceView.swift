@@ -55,20 +55,26 @@ struct LaneSurfaceView: View {
     }
 
     private func messagesLane(width: CGFloat) -> some View {
-        let rowIDs = messages.messageRows.map(\.id)
-
         return ScrollViewReader { proxy in
-            List(messages.messageRows) { row in
-                messageRow(row) {
-                    messages.select(messageID: row.id)
+            ScrollView(.vertical) {
+                LazyVStack(spacing: 0) {
+                    ForEach(messages.messageRows) { row in
+                        messageRow(row) {
+                            messages.select(messageID: row.id)
+                        }
+                        .id(row.id)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
                 }
-                .id(row.id)
+                .padding(.vertical, 6)
             }
-            .listStyle(.inset)
+            .defaultScrollAnchor(.bottom)
             .onReceive(messages.$messageScrollRequest.compactMap { $0 }) { request in
                 scroll(proxy, to: request.targetID)
             }
-            .onChange(of: rowIDs) { _, _ in
+            .onChange(of: messages.messageRows) { _, _ in
                 scrollToCurrentMessageTarget(proxy)
             }
         }
@@ -76,21 +82,27 @@ struct LaneSurfaceView: View {
     }
 
     private func threadLane(width: CGFloat) -> some View {
-        let rowIDs = messages.threadRows.map(\.id)
-
         return ScrollViewReader { proxy in
-            List(messages.threadRows) { row in
-                messageRow(row) {
-                    messages.select(messageID: row.id)
+            ScrollView(.vertical) {
+                LazyVStack(spacing: 0) {
+                    ForEach(messages.threadRows) { row in
+                        messageRow(row) {
+                            messages.select(messageID: row.id)
+                        }
+                        .id(row.id)
+                        .padding(.leading, CGFloat(row.depth) * 16)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
                 }
-                .id(row.id)
-                .padding(.leading, CGFloat(row.depth) * 16)
+                .padding(.vertical, 6)
             }
-            .listStyle(.inset)
+            .defaultScrollAnchor(.bottom)
             .onReceive(messages.$threadScrollRequest.compactMap { $0 }) { request in
                 scroll(proxy, to: request.targetID)
             }
-            .onChange(of: rowIDs) { _, _ in
+            .onChange(of: messages.threadRows) { _, _ in
                 scrollToCurrentThreadTarget(proxy)
             }
         }

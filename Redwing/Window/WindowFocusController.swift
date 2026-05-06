@@ -2,6 +2,33 @@ import AppKit
 import SwiftUI
 
 enum WindowFocusController {
+    struct Candidate: Equatable {
+        let title: String
+        let isVisible: Bool
+        let isMiniaturized: Bool
+    }
+
+    static func preferredMainWindowIndex(from candidates: [Candidate]) -> Int? {
+        let available = candidates.enumerated().filter { !$0.element.isMiniaturized }
+        return available.first { $0.element.title == "Redwing" }?.offset
+            ?? available.first { $0.element.isVisible }?.offset
+            ?? available.first?.offset
+            ?? candidates.enumerated().first { $0.element.title == "Redwing" }?.offset
+            ?? candidates.indices.first
+    }
+
+    static func mainWindow(from windows: [NSWindow]) -> NSWindow? {
+        let candidates = windows.map {
+            Candidate(title: $0.title, isVisible: $0.isVisible, isMiniaturized: $0.isMiniaturized)
+        }
+
+        guard let index = preferredMainWindowIndex(from: candidates) else {
+            return nil
+        }
+
+        return windows[index]
+    }
+
     static func centeredFrame(windowSize: CGSize, visibleFrame: CGRect) -> CGRect {
         let width = min(windowSize.width, visibleFrame.width)
         let height = min(windowSize.height, visibleFrame.height)
@@ -34,6 +61,23 @@ enum WindowFocusController {
         orderFrontOnCurrentDesktop(window)
     }
 
+    @MainActor
+    @discardableResult
+    static func moveMainWindowToCurrentDesktop() -> Bool {
+        moveMainWindowToCurrentDesktop(windows: NSApp.windows)
+    }
+
+    @MainActor
+    @discardableResult
+    static func moveMainWindowToCurrentDesktop(windows: [NSWindow]) -> Bool {
+        guard let window = mainWindow(from: windows) else {
+            return false
+        }
+
+        moveToCurrentDesktop(window: window)
+        return true
+    }
+
     static func collectionBehaviorForCurrentDesktop(
         from behavior: NSWindow.CollectionBehavior
     ) -> NSWindow.CollectionBehavior {
@@ -48,6 +92,9 @@ enum WindowFocusController {
         window.collectionBehavior = collectionBehaviorForCurrentDesktop(from: previousBehavior)
         defer { window.collectionBehavior = previousBehavior }
 
+        if window.isMiniaturized {
+            window.deminiaturize(nil)
+        }
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
     }
