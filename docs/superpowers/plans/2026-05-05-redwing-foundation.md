@@ -223,11 +223,11 @@ Create `Redwing/Resources/Info.plist`:
   <key>CFBundleName</key>
   <string>Redwing</string>
   <key>CFBundleShortVersionString</key>
-  <string>0.1.0</string>
+  <string>$(REDWING_SEMVER)</string>
   <key>CFBundleVersion</key>
-  <string>1</string>
+  <string>$(REDWING_SEMVER)</string>
   <key>LSMinimumSystemVersion</key>
-  <string>14.0</string>
+  <string>$(MACOSX_DEPLOYMENT_TARGET)</string>
   <key>NSPrincipalClass</key>
   <string>NSApplication</string>
 </dict>
@@ -265,7 +265,7 @@ Create `redwing.xcodeproj/project.pbxproj` with:
 - one macOS application target named `Redwing`
 - one unit test target named `RedwingTests`
 - bundle identifier `com.mechaharry.redwing`
-- deployment target `14.0`
+- latest installed macOS only, currently deployment target `26.4`
 - Swift language version inherited from Xcode
 - local package reference `../webex-swift-sdk` if relative to `/Users/harriche/gits/github.com/mechaHarry/redwing`, or absolute local package path if Xcode rejects the relative path
 - product dependency `WebexSwiftSDK` linked to the app target

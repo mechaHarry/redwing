@@ -69,6 +69,7 @@
 		A10000000000000000000014 /* SmokeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmokeTests.swift; sourceTree = "<group>"; };
 		A10000000000000000000015 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A10000000000000000000016 /* Redwing.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Redwing.entitlements; sourceTree = "<group>"; };
+		A30000000000000000000001 /* Version.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Version.xcconfig; sourceTree = "<group>"; };
 		A10000000000000000000017 /* RedwingTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RedwingTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A10000000000000000000018 /* DiagnosticsStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsStoreTests.swift; sourceTree = "<group>"; };
 		A10000000000000000000019 /* DiagnosticsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsStore.swift; sourceTree = "<group>"; };
@@ -143,6 +144,7 @@
 				A1000000000000000000002D /* Account */,
 				A10000000000000000000028 /* App */,
 				E80000000000000000000007 /* Attention */,
+				A30000000000000000000002 /* Config */,
 				A1000000000000000000002A /* Diagnostics */,
 				F90000000000000000000007 /* Lanes */,
 				D7000000000000000000000B /* Messages */,
@@ -241,6 +243,14 @@
 				B51200000000000000000005 /* WebexSDKAdapter.swift */,
 			);
 			path = Account;
+			sourceTree = "<group>";
+		};
+		A30000000000000000000002 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				A30000000000000000000001 /* Version.xcconfig */,
+			);
+			path = Config;
 			sourceTree = "<group>";
 		};
 		C60000000000000000000007 /* Spaces */ = {
@@ -460,6 +470,7 @@
 /* Begin XCBuildConfiguration section */
 		A10000000000000000000044 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A30000000000000000000001 /* Version.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -509,7 +520,6 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -520,6 +530,7 @@
 		};
 		A10000000000000000000045 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A30000000000000000000001 /* Version.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -563,7 +574,6 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
@@ -573,12 +583,12 @@
 		};
 		A10000000000000000000046 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A30000000000000000000001 /* Version.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Redwing/Resources/Redwing.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = NO;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -587,7 +597,6 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.mechaharry.redwing;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -597,12 +606,12 @@
 		};
 		A10000000000000000000047 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A30000000000000000000001 /* Version.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Redwing/Resources/Redwing.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -611,7 +620,6 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.mechaharry.redwing;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -621,10 +629,10 @@
 		};
 		A10000000000000000000048 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A30000000000000000000001 /* Version.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -632,7 +640,6 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.mechaharry.redwing.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -642,10 +649,10 @@
 		};
 		A10000000000000000000049 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A30000000000000000000001 /* Version.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -653,7 +660,6 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.mechaharry.redwing.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;

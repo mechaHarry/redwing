@@ -14,7 +14,7 @@ The current app is read-only. It provides:
 
 ## Prerequisites
 
-- macOS with Xcode installed
+- macOS 26.4 or newer with Xcode installed
 - The `redwing.xcodeproj` project in this repository
 - The local SDK checkout at:
 
@@ -30,6 +30,18 @@ git@github.com:mechaHarry/webex-swift-sdk.git
 
 If Xcode cannot resolve `webex-swift-sdk`, make sure that local checkout exists
 at the path above or update the package reference in Xcode.
+
+## Versioning
+
+Update the app version in one place:
+
+```sh
+Redwing/Config/Version.xcconfig
+```
+
+`REDWING_SEMVER` is the release version source of truth. The app and test
+bundle plists consume it through Xcode build settings for both
+`CFBundleShortVersionString` and `CFBundleVersion`.
 
 ## Building
 

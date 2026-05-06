@@ -211,10 +211,16 @@ final class WebexSDKAdapterTests: XCTestCase {
 
     func testRefreshTriggerFiltersByResourceAndRoomID() {
         XCTAssertTrue(WebexSDKSpacesStreamAdapter.shouldRefresh(for: WebexStreamTrigger(resource: "rooms", event: "created")))
-        XCTAssertFalse(WebexSDKSpacesStreamAdapter.shouldRefresh(for: WebexStreamTrigger(resource: "messages", event: "created")))
+        XCTAssertTrue(WebexSDKSpacesStreamAdapter.shouldRefresh(for: WebexStreamTrigger(resource: "messages", event: "created", roomID: "space-2")))
+        XCTAssertTrue(WebexSDKSpacesStreamAdapter.shouldRefresh(for: WebexStreamTrigger(resource: "messages", event: "created")))
+        XCTAssertFalse(WebexSDKSpacesStreamAdapter.shouldRefresh(for: WebexStreamTrigger(resource: "memberships", event: "created", roomID: "space-1")))
 
         XCTAssertTrue(WebexSDKMessagesThreadStreamAdapter.shouldRefresh(
             for: WebexStreamTrigger(resource: "messages", event: "created", roomID: "space-1"),
+            spaceID: "space-1"
+        ))
+        XCTAssertTrue(WebexSDKMessagesThreadStreamAdapter.shouldRefresh(
+            for: WebexStreamTrigger(resource: "messages", event: "created"),
             spaceID: "space-1"
         ))
         XCTAssertFalse(WebexSDKMessagesThreadStreamAdapter.shouldRefresh(
