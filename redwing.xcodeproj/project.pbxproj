@@ -27,6 +27,11 @@
 		C60000000000000000000001 /* SpacesCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C60000000000000000000002 /* SpacesCoordinatorTests.swift */; };
 		C60000000000000000000003 /* SpaceRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C60000000000000000000005 /* SpaceRowViewModel.swift */; };
 		C60000000000000000000004 /* SpacesCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C60000000000000000000006 /* SpacesCoordinator.swift */; };
+		D70000000000000000000001 /* ThreadLanePolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D70000000000000000000002 /* ThreadLanePolicyTests.swift */; };
+		D70000000000000000000003 /* MessagesCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D70000000000000000000004 /* MessagesCoordinatorTests.swift */; };
+		D70000000000000000000005 /* MessageRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D70000000000000000000006 /* MessageRowViewModel.swift */; };
+		D70000000000000000000007 /* ThreadLanePolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = D70000000000000000000008 /* ThreadLanePolicy.swift */; };
+		D70000000000000000000009 /* MessagesCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7000000000000000000000A /* MessagesCoordinator.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -63,6 +68,11 @@
 		C60000000000000000000002 /* SpacesCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpacesCoordinatorTests.swift; sourceTree = "<group>"; };
 		C60000000000000000000005 /* SpaceRowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpaceRowViewModel.swift; sourceTree = "<group>"; };
 		C60000000000000000000006 /* SpacesCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpacesCoordinator.swift; sourceTree = "<group>"; };
+		D70000000000000000000002 /* ThreadLanePolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThreadLanePolicyTests.swift; sourceTree = "<group>"; };
+		D70000000000000000000004 /* MessagesCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagesCoordinatorTests.swift; sourceTree = "<group>"; };
+		D70000000000000000000006 /* MessageRowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageRowViewModel.swift; sourceTree = "<group>"; };
+		D70000000000000000000008 /* ThreadLanePolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThreadLanePolicy.swift; sourceTree = "<group>"; };
+		D7000000000000000000000A /* MessagesCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagesCoordinator.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -99,6 +109,7 @@
 				A1000000000000000000002D /* Account */,
 				A10000000000000000000028 /* App */,
 				A1000000000000000000002A /* Diagnostics */,
+				D7000000000000000000000B /* Messages */,
 				A10000000000000000000029 /* Resources */,
 				A1000000000000000000002B /* Setup */,
 				C60000000000000000000007 /* Spaces */,
@@ -113,9 +124,11 @@
 				B50000000000000000000002 /* AccountSessionTests.swift */,
 				A10000000000000000000018 /* DiagnosticsStoreTests.swift */,
 				A1000000000000000000002E /* FakeWebexClientProvidingTests.swift */,
+				D70000000000000000000004 /* MessagesCoordinatorTests.swift */,
 				A1000000000000000000001B /* SetupValidationTests.swift */,
 				A10000000000000000000014 /* SmokeTests.swift */,
 				C60000000000000000000002 /* SpacesCoordinatorTests.swift */,
+				D70000000000000000000002 /* ThreadLanePolicyTests.swift */,
 			);
 			path = RedwingTests;
 			sourceTree = "<group>";
@@ -191,6 +204,16 @@
 				C60000000000000000000006 /* SpacesCoordinator.swift */,
 			);
 			path = Spaces;
+			sourceTree = "<group>";
+		};
+		D7000000000000000000000B /* Messages */ = {
+			isa = PBXGroup;
+			children = (
+				D70000000000000000000006 /* MessageRowViewModel.swift */,
+				D7000000000000000000000A /* MessagesCoordinator.swift */,
+				D70000000000000000000008 /* ThreadLanePolicy.swift */,
+			);
+			path = Messages;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -300,6 +323,8 @@
 				B50000000000000000000003 /* AccountSession.swift in Sources */,
 				A10000000000000000000002 /* AppRootModel.swift in Sources */,
 				A10000000000000000000007 /* DiagnosticsStore.swift in Sources */,
+				D70000000000000000000005 /* MessageRowViewModel.swift in Sources */,
+				D70000000000000000000009 /* MessagesCoordinator.swift in Sources */,
 				A10000000000000000000003 /* RedwingEnvironment.swift in Sources */,
 				A10000000000000000000001 /* RedwingApp.swift in Sources */,
 				A1000000000000000000000A /* SetupCredentials.swift in Sources */,
@@ -307,6 +332,7 @@
 				A10000000000000000000008 /* SessionStatus.swift in Sources */,
 				C60000000000000000000003 /* SpaceRowViewModel.swift in Sources */,
 				C60000000000000000000004 /* SpacesCoordinator.swift in Sources */,
+				D70000000000000000000007 /* ThreadLanePolicy.swift in Sources */,
 				A1000000000000000000000E /* WebexClientProviding.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -320,9 +346,11 @@
 				A10000000000000000000006 /* DiagnosticsStoreTests.swift in Sources */,
 				A1000000000000000000000D /* FakeWebexClientProviding.swift in Sources */,
 				A1000000000000000000000F /* FakeWebexClientProvidingTests.swift in Sources */,
+				D70000000000000000000003 /* MessagesCoordinatorTests.swift in Sources */,
 				A10000000000000000000009 /* SetupValidationTests.swift in Sources */,
 				A10000000000000000000004 /* SmokeTests.swift in Sources */,
 				C60000000000000000000001 /* SpacesCoordinatorTests.swift in Sources */,
+				D70000000000000000000001 /* ThreadLanePolicyTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
