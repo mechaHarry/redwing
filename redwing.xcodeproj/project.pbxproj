@@ -24,6 +24,9 @@
 		A1000000000000000000000F /* FakeWebexClientProvidingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000002E /* FakeWebexClientProvidingTests.swift */; };
 		B50000000000000000000003 /* AccountSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = B50000000000000000000004 /* AccountSession.swift */; };
 		B50000000000000000000001 /* AccountSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B50000000000000000000002 /* AccountSessionTests.swift */; };
+		C60000000000000000000001 /* SpacesCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C60000000000000000000002 /* SpacesCoordinatorTests.swift */; };
+		C60000000000000000000003 /* SpaceRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C60000000000000000000005 /* SpaceRowViewModel.swift */; };
+		C60000000000000000000004 /* SpacesCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C60000000000000000000006 /* SpacesCoordinator.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -57,6 +60,9 @@
 		A1000000000000000000002E /* FakeWebexClientProvidingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FakeWebexClientProvidingTests.swift; sourceTree = "<group>"; };
 		B50000000000000000000004 /* AccountSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountSession.swift; sourceTree = "<group>"; };
 		B50000000000000000000002 /* AccountSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountSessionTests.swift; sourceTree = "<group>"; };
+		C60000000000000000000002 /* SpacesCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpacesCoordinatorTests.swift; sourceTree = "<group>"; };
+		C60000000000000000000005 /* SpaceRowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpaceRowViewModel.swift; sourceTree = "<group>"; };
+		C60000000000000000000006 /* SpacesCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpacesCoordinator.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -95,6 +101,7 @@
 				A1000000000000000000002A /* Diagnostics */,
 				A10000000000000000000029 /* Resources */,
 				A1000000000000000000002B /* Setup */,
+				C60000000000000000000007 /* Spaces */,
 			);
 			path = Redwing;
 			sourceTree = "<group>";
@@ -108,6 +115,7 @@
 				A1000000000000000000002E /* FakeWebexClientProvidingTests.swift */,
 				A1000000000000000000001B /* SetupValidationTests.swift */,
 				A10000000000000000000014 /* SmokeTests.swift */,
+				C60000000000000000000002 /* SpacesCoordinatorTests.swift */,
 			);
 			path = RedwingTests;
 			sourceTree = "<group>";
@@ -174,6 +182,15 @@
 				A10000000000000000000020 /* WebexClientProviding.swift */,
 			);
 			path = Account;
+			sourceTree = "<group>";
+		};
+		C60000000000000000000007 /* Spaces */ = {
+			isa = PBXGroup;
+			children = (
+				C60000000000000000000005 /* SpaceRowViewModel.swift */,
+				C60000000000000000000006 /* SpacesCoordinator.swift */,
+			);
+			path = Spaces;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -288,6 +305,8 @@
 				A1000000000000000000000A /* SetupCredentials.swift in Sources */,
 				A1000000000000000000000B /* SetupValidation.swift in Sources */,
 				A10000000000000000000008 /* SessionStatus.swift in Sources */,
+				C60000000000000000000003 /* SpaceRowViewModel.swift in Sources */,
+				C60000000000000000000004 /* SpacesCoordinator.swift in Sources */,
 				A1000000000000000000000E /* WebexClientProviding.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -303,6 +322,7 @@
 				A1000000000000000000000F /* FakeWebexClientProvidingTests.swift in Sources */,
 				A10000000000000000000009 /* SetupValidationTests.swift in Sources */,
 				A10000000000000000000004 /* SmokeTests.swift in Sources */,
+				C60000000000000000000001 /* SpacesCoordinatorTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
