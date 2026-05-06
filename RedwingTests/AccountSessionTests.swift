@@ -51,6 +51,22 @@ final class AccountSessionTests: XCTestCase {
         XCTAssertNil(session.activeAccount)
     }
 
+    func testSignOutFailurePublishesFailureAndRestoresAccount() async {
+        let provider = FailingSignOutProvider()
+        provider.account = WebexAccountSummary(id: "a1", displayName: "User", grantedScopes: ["spark:all", "spark:kms"])
+        let diagnostics = DiagnosticsStore()
+        let session = AccountSession(clientProvider: provider, diagnostics: diagnostics)
+
+        await session.start()
+        await session.signOut()
+
+        XCTAssertEqual(session.phase, .failed("Sign out failed"))
+        XCTAssertEqual(session.tokenStatus, .failed("Sign out failed"))
+        XCTAssertEqual(session.activeAccount?.id, "a1")
+        XCTAssertEqual(diagnostics.entries.last?.message, "Sign out failed")
+        XCTAssertFalse(diagnostics.entries.last?.detail?.contains("super-secret") ?? true)
+    }
+
     func testReloadMissingAccountClearsActiveAccountAndIgnoresOldRealtimeEvents() async {
         let fake = FakeWebexClientProviding()
         fake.account = WebexAccountSummary(id: "a1", displayName: "User", grantedScopes: ["spark:all", "spark:kms"])
@@ -298,8 +314,38 @@ private final class SpyWebexClientProviding: WebexClientProviding, @unchecked Se
         FakeMessagesThreadStream()
     }
 
-    func signOut() async {
+    func signOut() async throws {
         state.withValue { $0.didSignOut = true }
+    }
+}
+
+private final class FailingSignOutProvider: WebexClientProviding, @unchecked Sendable {
+    var account: WebexAccountSummary?
+
+    func existingAccount() async throws -> WebexAccountSummary? {
+        account
+    }
+
+    func authorize(credentials: SetupCredentials) async throws -> WebexAccountSummary {
+        WebexAccountSummary(id: "account-1", displayName: "Test User", grantedScopes: credentials.scopes)
+    }
+
+    func startRealtime() async -> AsyncStream<RealtimeStateDTO> {
+        AsyncStream { continuation in
+            continuation.finish()
+        }
+    }
+
+    func makeSpacesStream() async throws -> SpacesStreamProviding {
+        FakeSpacesStream()
+    }
+
+    func makeMessagesThreadStream(spaceID: String) async throws -> MessagesThreadStreamProviding {
+        FakeMessagesThreadStream()
+    }
+
+    func signOut() async throws {
+        throw SecretError("Keychain delete failed client_secret=super-secret")
     }
 }
 
@@ -379,7 +425,7 @@ private actor SuspendedWebexClientProviding: WebexClientProviding {
         FakeMessagesThreadStream()
     }
 
-    func signOut() async {}
+    func signOut() async throws {}
 
     func waitForExistingAccountRequest() async {
         guard existingAccountContinuation == nil else {

@@ -30,9 +30,10 @@ actor WebexSDKAdapter: WebexClientProviding {
         }
 
         let loadedClient = try await registry.client(for: account.id)
+        let summary = try await accountSummary(for: account, client: loadedClient, grantedScopes: [])
         client = loadedClient
         activeAccountID = account.id
-        return await accountSummary(for: account, client: loadedClient, grantedScopes: [])
+        return summary
     }
 
     func authorize(credentials: SetupCredentials) async throws -> WebexAccountSummary {
@@ -44,13 +45,19 @@ actor WebexSDKAdapter: WebexClientProviding {
             openAuthorizationURL: openAuthorizationURL
         )
 
-        client = authorized.client
-        activeAccountID = authorized.account.id
-        return await accountSummary(
-            for: authorized.account,
-            client: authorized.client,
-            grantedScopes: configuration.scopes
-        )
+        do {
+            let summary = try await accountSummary(
+                for: authorized.account,
+                client: authorized.client,
+                grantedScopes: configuration.scopes
+            )
+            client = authorized.client
+            activeAccountID = authorized.account.id
+            return summary
+        } catch {
+            try? await registry.removeAccount(authorized.account.id)
+            throw error
+        }
     }
 
     func startRealtime() async -> AsyncStream<RealtimeStateDTO> {
@@ -98,15 +105,18 @@ actor WebexSDKAdapter: WebexClientProviding {
         )
     }
 
-    func signOut() async {
+    func signOut() async throws {
         let accountID = activeAccountID
         cancelRealtime()
+
+        guard let accountID else {
+            client = nil
+            return
+        }
+
+        try await registry.removeAccount(accountID)
         client = nil
         activeAccountID = nil
-
-        if let accountID {
-            try? await registry.removeAccount(accountID)
-        }
     }
 
     private func cancelRealtime() {
@@ -139,12 +149,15 @@ actor WebexSDKAdapter: WebexClientProviding {
         for record: WebexAccountRecord,
         client: WebexClient,
         grantedScopes: [String]
-    ) async -> WebexAccountSummary {
+    ) async throws -> WebexAccountSummary {
         do {
             let person = try await client.people.me()
             return Self.mapCurrentPerson(person, grantedScopes: grantedScopes)
         } catch {
-            return Self.mapAccount(record, grantedScopes: grantedScopes)
+            return try Self.mapAccountAfterCurrentPersonLookupFailure(
+                record,
+                grantedScopes: grantedScopes
+            )
         }
     }
 
@@ -160,6 +173,17 @@ actor WebexSDKAdapter: WebexClientProviding {
                 ?? "Webex Account",
             grantedScopes: grantedScopes
         )
+    }
+
+    static func mapAccountAfterCurrentPersonLookupFailure(
+        _ record: WebexAccountRecord,
+        grantedScopes: [String] = []
+    ) throws -> WebexAccountSummary {
+        guard record.metadata.webexUserID != nil else {
+            throw WebexSDKError.network("Current Webex profile could not be loaded")
+        }
+
+        return mapAccount(record, grantedScopes: grantedScopes)
     }
 
     static func mapCurrentPerson(

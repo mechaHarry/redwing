@@ -49,6 +49,34 @@ final class WebexSDKAdapterTests: XCTestCase {
         XCTAssertEqual(summary.grantedScopes, ["spark:all", "spark:kms"])
     }
 
+    func testProfileLookupFailureDoesNotUseInternalAccountIDWithoutMetadata() {
+        let record = WebexAccountRecord(id: WebexAccountID(), metadata: WebexAccountMetadata())
+
+        XCTAssertThrowsError(
+            try WebexSDKAdapter.mapAccountAfterCurrentPersonLookupFailure(record)
+        )
+    }
+
+    func testProfileLookupFailureCanUseStoredWebexUserID() throws {
+        let record = WebexAccountRecord(
+            id: WebexAccountID(),
+            metadata: WebexAccountMetadata(
+                webexUserID: "person-123",
+                email: "alex@example.com",
+                displayName: "Alex Rivera"
+            )
+        )
+
+        let summary = try WebexSDKAdapter.mapAccountAfterCurrentPersonLookupFailure(
+            record,
+            grantedScopes: ["spark:all"]
+        )
+
+        XCTAssertEqual(summary.id, "person-123")
+        XCTAssertEqual(summary.displayName, "Alex Rivera")
+        XCTAssertEqual(summary.grantedScopes, ["spark:all"])
+    }
+
     func testMapsRealtimeStates() {
         XCTAssertEqual(WebexSDKAdapter.mapRealtimeState(.disconnected), .disconnected)
         XCTAssertEqual(WebexSDKAdapter.mapRealtimeState(.discovering), .connecting)

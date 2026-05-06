@@ -39,10 +39,15 @@ final class AppRootModel: ObservableObject {
 
     func configure(clientProvider: WebexClientProviding, currentUserID: String) {
         let session = AccountSession(clientProvider: clientProvider, diagnostics: diagnostics)
+        let attentionFeed = AttentionFeedStore(currentUserID: currentUserID)
         accountSession = session
         spacesCoordinator = SpacesCoordinator(session: session, diagnostics: diagnostics)
-        messagesCoordinator = MessagesCoordinator(session: session, diagnostics: diagnostics)
-        attentionFeed = AttentionFeedStore(currentUserID: currentUserID)
+        messagesCoordinator = MessagesCoordinator(
+            session: session,
+            diagnostics: diagnostics,
+            attentionFeed: attentionFeed
+        )
+        self.attentionFeed = attentionFeed
     }
 
     func updateCurrentUserID(_ currentUserID: String) {

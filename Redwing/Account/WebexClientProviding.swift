@@ -70,5 +70,5 @@ protocol WebexClientProviding: Sendable {
     func startRealtime() async -> AsyncStream<RealtimeStateDTO>
     func makeSpacesStream() async throws -> SpacesStreamProviding
     func makeMessagesThreadStream(spaceID: String) async throws -> MessagesThreadStreamProviding
-    func signOut() async
+    func signOut() async throws
 }

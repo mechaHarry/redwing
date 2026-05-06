@@ -98,11 +98,25 @@ final class AccountSession: ObservableObject {
     }
 
     func signOut() async {
+        let previousAccount = activeAccount
         let generation = clearSessionState()
-        phase = .setupRequired
-        await clientProvider.signOut()
-        guard isCurrent(generation) else {
-            return
+        do {
+            try await clientProvider.signOut()
+            guard isCurrent(generation) else {
+                return
+            }
+
+            phase = .setupRequired
+        } catch {
+            guard isCurrent(generation) else {
+                return
+            }
+
+            let message = String(describing: error)
+            activeAccount = previousAccount
+            phase = .failed("Sign out failed")
+            tokenStatus = .failed("Sign out failed")
+            diagnostics.append(source: .auth, severity: .error, message: "Sign out failed", detail: message)
         }
     }
 

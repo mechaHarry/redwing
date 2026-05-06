@@ -173,7 +173,7 @@ final class FakeWebexClientProviding: WebexClientProviding {
         }
     }
 
-    func signOut() async {
+    func signOut() async throws {
         state.withValue { $0.didSignOut = true }
     }
 }

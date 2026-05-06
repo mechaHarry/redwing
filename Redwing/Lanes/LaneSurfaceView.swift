@@ -35,7 +35,7 @@ struct LaneSurfaceView: View {
                 Button {
                     spaces.select(spaceID: row.id)
                     Task {
-                        await messages.select(spaceID: row.id)
+                        await messages.select(spaceID: row.id, spaceTitle: row.title)
                     }
                 } label: {
                     VStack(alignment: .leading, spacing: 3) {

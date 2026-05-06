@@ -68,6 +68,45 @@ final class MessagesCoordinatorTests: XCTestCase {
         XCTAssertEqual(coordinator.threadRows.map(\.id), ["parent", "child"])
     }
 
+    func testLiveSnapshotsUpdateAttentionFeedForSelectedSpace() async throws {
+        let fake = FakeWebexClientProviding()
+        let session = AccountSession(clientProvider: fake, diagnostics: DiagnosticsStore())
+        let attentionFeed = AttentionFeedStore(currentUserID: "person-123")
+        let coordinator = MessagesCoordinator(
+            session: session,
+            diagnostics: DiagnosticsStore(),
+            attentionFeed: attentionFeed
+        )
+
+        await coordinator.select(spaceID: "space-1", spaceTitle: "General")
+        let stream = try XCTUnwrap(fake.messagesStreamsBySpaceID["space-1"])
+        stream.probe.yield(MessageThreadSnapshotDTO(
+            topLevelMessageIDs: ["mention"],
+            entriesByID: [
+                "mention": MessageThreadEntryDTO(
+                    id: "mention",
+                    parentID: nil,
+                    childIDs: [],
+                    sender: "a@example.com",
+                    body: "Can you review?",
+                    created: Date(timeIntervalSince1970: 1),
+                    mentionedPeople: ["person-123"],
+                    mentionedGroups: [],
+                    isPlaceholderParent: false,
+                    isDeletedTombstone: false
+                )
+            ],
+            isRefreshing: false,
+            isLoadingNextPage: false,
+            hasMore: false,
+            lastErrorDescription: nil
+        ))
+        await waitUntil { attentionFeed.items.map(\.id) == ["mention"] }
+
+        XCTAssertEqual(attentionFeed.items.first?.spaceID, "space-1")
+        XCTAssertEqual(attentionFeed.items.first?.spaceTitle, "General")
+    }
+
     func testSameSpaceSelectionIsNoOpAfterUnavailableStream() async {
         let coordinator = MessagesCoordinator(session: nil, diagnostics: DiagnosticsStore())
 
@@ -253,7 +292,7 @@ private actor SuspendedMessagesProvider: WebexClientProviding {
         }
     }
 
-    func signOut() async {}
+    func signOut() async throws {}
 
     func waitForMessageStreamRequestCount(_ count: Int) async {
         while messageStreamContinuations.count < count {

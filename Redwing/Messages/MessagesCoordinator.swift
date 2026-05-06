@@ -16,14 +16,21 @@ final class MessagesCoordinator: ObservableObject {
 
     private let session: AccountSession?
     private let diagnostics: DiagnosticsStore
+    private let attentionFeed: AttentionFeedStore?
     private var stream: MessagesThreadStreamProviding?
     private var task: Task<Void, Never>?
     private var latestSnapshot: MessageThreadSnapshotDTO?
+    private var selectedSpaceTitle: String?
     private var generation = 0
 
-    init(session: AccountSession?, diagnostics: DiagnosticsStore) {
+    init(
+        session: AccountSession?,
+        diagnostics: DiagnosticsStore,
+        attentionFeed: AttentionFeedStore? = nil
+    ) {
         self.session = session
         self.diagnostics = diagnostics
+        self.attentionFeed = attentionFeed
     }
 
     deinit {
@@ -31,11 +38,15 @@ final class MessagesCoordinator: ObservableObject {
         stream?.cancel()
     }
 
-    func select(spaceID: String) async {
-        guard selectedSpaceID != spaceID else { return }
+    func select(spaceID: String, spaceTitle: String? = nil) async {
+        guard selectedSpaceID != spaceID else {
+            selectedSpaceTitle = spaceTitle ?? selectedSpaceTitle
+            return
+        }
 
         let generation = replaceStreamState()
         selectedSpaceID = spaceID
+        selectedSpaceTitle = spaceTitle ?? spaceID
         selectedMessageID = nil
         latestSnapshot = nil
         threadRows = []
@@ -86,6 +97,13 @@ final class MessagesCoordinator: ObservableObject {
 
         latestSnapshot = snapshot
         hasMore = snapshot.hasMore
+        if let selectedSpaceID {
+            attentionFeed?.apply(
+                snapshot: snapshot,
+                spaceID: selectedSpaceID,
+                spaceTitle: selectedSpaceTitle ?? selectedSpaceID
+            )
+        }
         status = snapshot.lastErrorDescription.map { _ in SessionStatus.failed("Messages refresh failed") } ?? (snapshot.isRefreshing ? .refreshing : .connected)
         if let error = snapshot.lastErrorDescription {
             diagnostics.append(source: .messages, severity: .error, message: "Messages refresh failed", detail: error)

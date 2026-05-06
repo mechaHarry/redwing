@@ -157,7 +157,7 @@ private actor SuspendedSpacesProvider: WebexClientProviding {
         FakeMessagesThreadStream()
     }
 
-    func signOut() async {}
+    func signOut() async throws {}
 
     func waitForStreamRequestCount(_ count: Int) async {
         while streamContinuations.count < count {
