@@ -13,7 +13,8 @@ final class AttentionFeedStore: ObservableObject {
     }
 
     func apply(snapshot: MessageThreadSnapshotDTO, spaceID: String, spaceTitle: String) {
-        status = snapshot.lastErrorDescription.map { _ in SessionStatus.failed("Attention refresh failed") } ?? .connected
+        status = snapshot.lastErrorDescription.map { _ in SessionStatus.failed("Attention refresh failed") }
+            ?? (snapshot.isRefreshing ? .refreshing : .connected)
         var byID = Dictionary(uniqueKeysWithValues: items.map { ($0.id, $0) })
 
         for entry in snapshot.entriesByID.values {

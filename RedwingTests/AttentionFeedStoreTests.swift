@@ -99,6 +99,22 @@ final class AttentionFeedStoreTests: XCTestCase {
         XCTAssertEqual(store.status.label, "Failed: Attention refresh failed")
     }
 
+    func testRefreshingSnapshotPublishesRefreshingStatus() {
+        let store = AttentionFeedStore(currentUserID: "me")
+
+        store.apply(snapshot: MessageThreadSnapshotDTO(
+            topLevelMessageIDs: [],
+            entriesByID: [:],
+            isRefreshing: true,
+            isLoadingNextPage: false,
+            hasMore: false,
+            lastErrorDescription: nil
+        ), spaceID: "space-1", spaceTitle: "General")
+
+        XCTAssertEqual(store.status, .refreshing)
+        XCTAssertEqual(store.status.label, "Refreshing")
+    }
+
     func testSortsNewestFirstWithIDTieBreaksAndNilDatesLast() {
         let store = AttentionFeedStore(currentUserID: "me")
         store.apply(snapshot: MessageThreadSnapshotDTO(
