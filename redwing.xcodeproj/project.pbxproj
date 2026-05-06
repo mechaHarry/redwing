@@ -12,6 +12,9 @@
 		A10000000000000000000003 /* RedwingEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000013 /* RedwingEnvironment.swift */; };
 		A10000000000000000000004 /* SmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000014 /* SmokeTests.swift */; };
 		A10000000000000000000005 /* WebexSwiftSDK in Frameworks */ = {isa = PBXBuildFile; productRef = A10000000000000000000061 /* WebexSwiftSDK */; };
+		A10000000000000000000006 /* DiagnosticsStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000018 /* DiagnosticsStoreTests.swift */; };
+		A10000000000000000000007 /* DiagnosticsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000019 /* DiagnosticsStore.swift */; };
+		A10000000000000000000008 /* SessionStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000001A /* SessionStatus.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -33,6 +36,9 @@
 		A10000000000000000000015 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A10000000000000000000016 /* Redwing.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Redwing.entitlements; sourceTree = "<group>"; };
 		A10000000000000000000017 /* RedwingTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RedwingTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A10000000000000000000018 /* DiagnosticsStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsStoreTests.swift; sourceTree = "<group>"; };
+		A10000000000000000000019 /* DiagnosticsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsStore.swift; sourceTree = "<group>"; };
+		A1000000000000000000001A /* SessionStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStatus.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -67,6 +73,7 @@
 			isa = PBXGroup;
 			children = (
 				A10000000000000000000028 /* App */,
+				A1000000000000000000002A /* Diagnostics */,
 				A10000000000000000000029 /* Resources */,
 			);
 			path = Redwing;
@@ -75,6 +82,7 @@
 		A10000000000000000000026 /* RedwingTests */ = {
 			isa = PBXGroup;
 			children = (
+				A10000000000000000000018 /* DiagnosticsStoreTests.swift */,
 				A10000000000000000000014 /* SmokeTests.swift */,
 			);
 			path = RedwingTests;
@@ -106,6 +114,15 @@
 				A10000000000000000000016 /* Redwing.entitlements */,
 			);
 			path = Resources;
+			sourceTree = "<group>";
+		};
+		A1000000000000000000002A /* Diagnostics */ = {
+			isa = PBXGroup;
+			children = (
+				A10000000000000000000019 /* DiagnosticsStore.swift */,
+				A1000000000000000000001A /* SessionStatus.swift */,
+			);
+			path = Diagnostics;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -213,8 +230,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				A10000000000000000000002 /* AppRootModel.swift in Sources */,
+				A10000000000000000000007 /* DiagnosticsStore.swift in Sources */,
 				A10000000000000000000003 /* RedwingEnvironment.swift in Sources */,
 				A10000000000000000000001 /* RedwingApp.swift in Sources */,
+				A10000000000000000000008 /* SessionStatus.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -222,6 +241,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A10000000000000000000006 /* DiagnosticsStoreTests.swift in Sources */,
 				A10000000000000000000004 /* SmokeTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
