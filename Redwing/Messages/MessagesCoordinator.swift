@@ -32,7 +32,7 @@ final class MessagesCoordinator: ObservableObject {
     }
 
     func select(spaceID: String) async {
-        guard selectedSpaceID != spaceID || stream == nil else { return }
+        guard selectedSpaceID != spaceID else { return }
 
         let generation = replaceStreamState()
         selectedSpaceID = spaceID
@@ -128,7 +128,7 @@ final class MessagesCoordinator: ObservableObject {
         }
 
         isThreadLaneVisible = true
-        threadRows = walkThread(from: selectedMessageID, in: snapshot, depth: 0, visited: [])
+        threadRows = walkThread(from: selectedEntry.parentID ?? selectedEntry.id, in: snapshot, depth: 0, visited: [])
     }
 
     private func walkThread(

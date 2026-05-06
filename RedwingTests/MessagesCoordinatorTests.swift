@@ -62,6 +62,31 @@ final class MessagesCoordinatorTests: XCTestCase {
         coordinator.select(messageID: "parent")
         XCTAssertTrue(coordinator.isThreadLaneVisible)
         XCTAssertEqual(coordinator.threadRows.map(\.id), ["parent", "child"])
+
+        coordinator.select(messageID: "child")
+        XCTAssertTrue(coordinator.isThreadLaneVisible)
+        XCTAssertEqual(coordinator.threadRows.map(\.id), ["parent", "child"])
+    }
+
+    func testSameSpaceSelectionIsNoOpAfterUnavailableStream() async {
+        let coordinator = MessagesCoordinator(session: nil, diagnostics: DiagnosticsStore())
+
+        await coordinator.select(spaceID: "space-1")
+        coordinator.apply(snapshot: MessageThreadSnapshotDTO(
+            topLevelMessageIDs: ["cached"],
+            entriesByID: ["cached": message(id: "cached", body: "Cached")],
+            isRefreshing: false,
+            isLoadingNextPage: false,
+            hasMore: true,
+            lastErrorDescription: nil
+        ))
+
+        await coordinator.select(spaceID: "space-1")
+
+        XCTAssertEqual(coordinator.messageRows.map(\.id), ["cached"])
+        XCTAssertEqual(coordinator.status, .connected)
+        XCTAssertFalse(coordinator.isShowingSkeletons)
+        XCTAssertTrue(coordinator.hasMore)
     }
 
     func testRepeatedSelectCancelsOldStreamAndIgnoresStaleSnapshots() async {
