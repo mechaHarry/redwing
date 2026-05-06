@@ -13,6 +13,8 @@ final class MessagesCoordinator: ObservableObject {
     @Published private(set) var isShowingSkeletons = true
     @Published private(set) var status: SessionStatus = .idle
     @Published private(set) var hasMore = false
+    @Published private(set) var messageScrollTargetID: String?
+    @Published private(set) var threadScrollTargetID: String?
 
     private let session: AccountSession?
     private let diagnostics: DiagnosticsStore
@@ -21,6 +23,7 @@ final class MessagesCoordinator: ObservableObject {
     private var task: Task<Void, Never>?
     private var latestSnapshot: MessageThreadSnapshotDTO?
     private var selectedSpaceTitle: String?
+    private var selectedMessageIDBySpaceID: [String: String] = [:]
     private var generation = 0
 
     init(
@@ -44,15 +47,18 @@ final class MessagesCoordinator: ObservableObject {
             return
         }
 
+        rememberSelectedMessageForCurrentSpace()
         let generation = replaceStreamState()
         selectedSpaceID = spaceID
         selectedSpaceTitle = spaceTitle ?? spaceID
-        selectedMessageID = nil
+        selectedMessageID = selectedMessageIDBySpaceID[spaceID]
         latestSnapshot = nil
         threadRows = []
         isThreadLaneVisible = false
         isShowingSkeletons = true
         messageRows = (0..<Self.skeletonRowCount).map(MessageRowViewModel.skeleton)
+        messageScrollTargetID = nil
+        threadScrollTargetID = nil
         hasMore = false
         status = .refreshing
 
@@ -85,7 +91,12 @@ final class MessagesCoordinator: ObservableObject {
 
     func select(messageID: String) {
         selectedMessageID = messageID
-        rebuildThreadRows()
+        rememberSelectedMessageForCurrentSpace()
+        if let snapshot = latestSnapshot,
+           let selectedEntry = snapshot.entriesByID[messageID] {
+            messageScrollTargetID = messageLaneTargetID(for: selectedEntry, in: snapshot)
+        }
+        rebuildThreadRows(anchor: .selected)
     }
 
     func loadNextPage() async {
@@ -116,13 +127,15 @@ final class MessagesCoordinator: ObservableObject {
         guard !rows.isEmpty else {
             messageRows = snapshot.isRefreshing ? messageRows : []
             isShowingSkeletons = snapshot.isRefreshing
-            rebuildThreadRows()
+            messageScrollTargetID = nil
+            rebuildThreadRows(anchor: .newest)
             return
         }
 
         messageRows = rows
         isShowingSkeletons = false
-        rebuildThreadRows()
+        updateMessageScrollTarget(rows: rows, snapshot: snapshot)
+        rebuildThreadRows(anchor: .newest)
     }
 
     private func subscribe(to stream: MessagesThreadStreamProviding, generation: Int) {
@@ -134,7 +147,12 @@ final class MessagesCoordinator: ObservableObject {
         }
     }
 
-    private func rebuildThreadRows() {
+    private enum ThreadScrollAnchor {
+        case selected
+        case newest
+    }
+
+    private func rebuildThreadRows(anchor: ThreadScrollAnchor) {
         guard let selectedMessageID,
               let snapshot = latestSnapshot,
               let selectedEntry = snapshot.entriesByID[selectedMessageID],
@@ -142,11 +160,41 @@ final class MessagesCoordinator: ObservableObject {
         else {
             threadRows = []
             isThreadLaneVisible = false
+            threadScrollTargetID = nil
             return
         }
 
         isThreadLaneVisible = true
         threadRows = walkThread(from: rootMessageID(for: selectedEntry, in: snapshot), in: snapshot, depth: 0, visited: [])
+        switch anchor {
+        case .selected:
+            threadScrollTargetID = selectedMessageID
+        case .newest:
+            threadScrollTargetID = threadRows.last?.id
+        }
+    }
+
+    private func updateMessageScrollTarget(rows: [MessageRowViewModel], snapshot: MessageThreadSnapshotDTO) {
+        if let selectedMessageID,
+           let selectedEntry = snapshot.entriesByID[selectedMessageID] {
+            let targetID = messageLaneTargetID(for: selectedEntry, in: snapshot)
+            messageScrollTargetID = rows.contains { $0.id == targetID } ? targetID : rows.last?.id
+        } else {
+            messageScrollTargetID = rows.last?.id
+        }
+    }
+
+    private func messageLaneTargetID(for entry: MessageThreadEntryDTO, in snapshot: MessageThreadSnapshotDTO) -> String {
+        rootMessageID(for: entry, in: snapshot)
+    }
+
+    private func rememberSelectedMessageForCurrentSpace() {
+        guard let selectedSpaceID,
+              let selectedMessageID else {
+            return
+        }
+
+        selectedMessageIDBySpaceID[selectedSpaceID] = selectedMessageID
     }
 
     private func rootMessageID(for entry: MessageThreadEntryDTO, in snapshot: MessageThreadSnapshotDTO) -> String {

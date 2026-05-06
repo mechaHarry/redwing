@@ -55,21 +55,35 @@ struct LaneSurfaceView: View {
     }
 
     private func messagesLane(width: CGFloat) -> some View {
-        List(messages.messageRows) { row in
-            messageRow(row) {
-                messages.select(messageID: row.id)
+        ScrollViewReader { proxy in
+            List(messages.messageRows) { row in
+                messageRow(row) {
+                    messages.select(messageID: row.id)
+                }
+                .id(row.id)
+            }
+            .listStyle(.inset)
+            .onReceive(messages.$messageScrollTargetID.compactMap { $0 }) { targetID in
+                scroll(proxy, to: targetID)
             }
         }
-        .listStyle(.inset)
         .frame(width: width)
     }
 
     private func threadLane(width: CGFloat) -> some View {
-        List(messages.threadRows) { row in
-            messageRow(row) {}
+        ScrollViewReader { proxy in
+            List(messages.threadRows) { row in
+                messageRow(row) {
+                    messages.select(messageID: row.id)
+                }
+                .id(row.id)
                 .padding(.leading, CGFloat(row.depth) * 16)
+            }
+            .listStyle(.inset)
+            .onReceive(messages.$threadScrollTargetID.compactMap { $0 }) { targetID in
+                scroll(proxy, to: targetID)
+            }
         }
-        .listStyle(.inset)
         .frame(width: width)
     }
 
@@ -100,6 +114,15 @@ struct LaneSurfaceView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private func scroll(_ proxy: ScrollViewProxy, to targetID: String) {
+        Task { @MainActor in
+            await Task.yield()
+            withAnimation(.easeInOut(duration: 0.18)) {
+                proxy.scrollTo(targetID, anchor: .bottom)
             }
         }
     }

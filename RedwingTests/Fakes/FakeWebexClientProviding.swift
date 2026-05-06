@@ -164,7 +164,8 @@ final class FakeWebexClientProviding: WebexClientProviding {
 
     func makeMessagesThreadStream(spaceID: String) async throws -> MessagesThreadStreamProviding {
         state.withValue { state in
-            if let stream = state.messagesStreamsBySpaceID[spaceID] {
+            if let stream = state.messagesStreamsBySpaceID[spaceID],
+               !stream.isCancelled {
                 return stream
             }
             let stream = FakeMessagesThreadStream()

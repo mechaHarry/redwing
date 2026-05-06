@@ -68,6 +68,119 @@ final class MessagesCoordinatorTests: XCTestCase {
         XCTAssertEqual(coordinator.threadRows.map(\.id), ["parent", "child"])
     }
 
+    func testActiveThreadSnapshotTargetsNewestThreadReply() async {
+        let fake = FakeWebexClientProviding()
+        let session = AccountSession(clientProvider: fake, diagnostics: DiagnosticsStore())
+        let coordinator = MessagesCoordinator(session: session, diagnostics: DiagnosticsStore())
+
+        await coordinator.select(spaceID: "space-1")
+        let stream = fake.messagesStreamsBySpaceID["space-1"]!
+        stream.probe.yield(MessageThreadSnapshotDTO(
+            topLevelMessageIDs: ["parent"],
+            entriesByID: [
+                "parent": message(id: "parent", childIDs: ["child"], body: "Parent"),
+                "child": message(id: "child", parentID: "parent", body: "Child")
+            ],
+            isRefreshing: false,
+            isLoadingNextPage: false,
+            hasMore: false,
+            lastErrorDescription: nil
+        ))
+        await waitUntil { coordinator.messageRows.map(\.id) == ["parent"] }
+        coordinator.select(messageID: "parent")
+
+        stream.probe.yield(MessageThreadSnapshotDTO(
+            topLevelMessageIDs: ["parent"],
+            entriesByID: [
+                "parent": message(id: "parent", childIDs: ["child", "new-reply"], body: "Parent"),
+                "child": message(id: "child", parentID: "parent", body: "Child"),
+                "new-reply": message(id: "new-reply", parentID: "parent", body: "Newest")
+            ],
+            isRefreshing: false,
+            isLoadingNextPage: false,
+            hasMore: false,
+            lastErrorDescription: nil
+        ))
+        await waitUntil { coordinator.threadRows.map(\.id) == ["parent", "child", "new-reply"] }
+
+        XCTAssertEqual(coordinator.threadRows.map(\.id), ["parent", "child", "new-reply"])
+        XCTAssertEqual(coordinator.threadScrollTargetID, "new-reply")
+    }
+
+    func testSelectingSpaceRestoresLastOpenedThread() async {
+        let fake = FakeWebexClientProviding()
+        let session = AccountSession(clientProvider: fake, diagnostics: DiagnosticsStore())
+        let coordinator = MessagesCoordinator(session: session, diagnostics: DiagnosticsStore())
+
+        await coordinator.select(spaceID: "space-1")
+        let firstStream = fake.messagesStreamsBySpaceID["space-1"]!
+        firstStream.probe.yield(MessageThreadSnapshotDTO(
+            topLevelMessageIDs: ["parent"],
+            entriesByID: [
+                "parent": message(id: "parent", childIDs: ["child"], body: "Parent"),
+                "child": message(id: "child", parentID: "parent", body: "Child")
+            ],
+            isRefreshing: false,
+            isLoadingNextPage: false,
+            hasMore: false,
+            lastErrorDescription: nil
+        ))
+        await waitUntil { coordinator.messageRows.map(\.id) == ["parent"] }
+        coordinator.select(messageID: "parent")
+
+        await coordinator.select(spaceID: "space-2")
+        let secondStream = fake.messagesStreamsBySpaceID["space-2"]!
+        secondStream.probe.yield(MessageThreadSnapshotDTO(
+            topLevelMessageIDs: ["other"],
+            entriesByID: ["other": message(id: "other", body: "Other")],
+            isRefreshing: false,
+            isLoadingNextPage: false,
+            hasMore: false,
+            lastErrorDescription: nil
+        ))
+        await waitUntil { coordinator.messageRows.map(\.id) == ["other"] }
+        XCTAssertFalse(coordinator.isThreadLaneVisible)
+
+        await coordinator.select(spaceID: "space-1")
+        let restoredFirstStream = fake.messagesStreamsBySpaceID["space-1"]!
+        XCTAssertFalse(restoredFirstStream.isCancelled)
+        restoredFirstStream.probe.yield(MessageThreadSnapshotDTO(
+            topLevelMessageIDs: ["parent"],
+            entriesByID: [
+                "parent": message(id: "parent", childIDs: ["child"], body: "Parent"),
+                "child": message(id: "child", parentID: "parent", body: "Child")
+            ],
+            isRefreshing: false,
+            isLoadingNextPage: false,
+            hasMore: false,
+            lastErrorDescription: nil
+        ))
+        await waitUntil { coordinator.threadRows.map(\.id) == ["parent", "child"] }
+
+        XCTAssertEqual(coordinator.selectedMessageID, "parent")
+        XCTAssertTrue(coordinator.isThreadLaneVisible)
+        XCTAssertEqual(coordinator.messageScrollTargetID, "parent")
+        XCTAssertEqual(coordinator.threadScrollTargetID, "child")
+    }
+
+    func testMessagesLaneTargetsBottommostMessageWithoutPriorFocus() {
+        let coordinator = MessagesCoordinator(session: nil, diagnostics: DiagnosticsStore())
+
+        coordinator.apply(snapshot: MessageThreadSnapshotDTO(
+            topLevelMessageIDs: ["older", "newer"],
+            entriesByID: [
+                "older": message(id: "older", body: "Older"),
+                "newer": message(id: "newer", body: "Newer")
+            ],
+            isRefreshing: false,
+            isLoadingNextPage: false,
+            hasMore: false,
+            lastErrorDescription: nil
+        ))
+
+        XCTAssertEqual(coordinator.messageScrollTargetID, "newer")
+    }
+
     func testLiveSnapshotsUpdateAttentionFeedForSelectedSpace() async throws {
         let fake = FakeWebexClientProviding()
         let session = AccountSession(clientProvider: fake, diagnostics: DiagnosticsStore())
