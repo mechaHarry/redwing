@@ -1,6 +1,6 @@
 import Foundation
 
-final class StreamProbe<Value>: @unchecked Sendable {
+final class StreamProbe<Value: Sendable>: Sendable {
     let stream: AsyncStream<Value>
     private let continuation: AsyncStream<Value>.Continuation
 
