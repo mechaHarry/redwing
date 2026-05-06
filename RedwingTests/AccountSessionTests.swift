@@ -128,6 +128,79 @@ final class AccountSessionTests: XCTestCase {
         XCTAssertFalse(diagnostics.entries.last?.detail?.contains("example.test") ?? true)
     }
 
+    func testSuspendedExistingAccountAfterSignOutDoesNotRestoreSession() async {
+        let provider = SuspendedWebexClientProviding(
+            existingAccountResult: WebexAccountSummary(id: "a1", displayName: "User", grantedScopes: ["spark:all", "spark:kms"]),
+            suspendExistingAccount: true
+        )
+        let session = AccountSession(clientProvider: provider, diagnostics: DiagnosticsStore())
+
+        let startTask = Task {
+            await session.start()
+        }
+        await provider.waitForExistingAccountRequest()
+        await session.signOut()
+        await provider.resumeExistingAccount()
+        await startTask.value
+        await provider.yieldRealtime(.connected)
+        await Task.yield()
+
+        XCTAssertEqual(session.phase, .setupRequired)
+        XCTAssertNil(session.activeAccount)
+        XCTAssertEqual(session.tokenStatus, .idle)
+        XCTAssertEqual(session.realtimeStatus, .idle)
+        let startRealtimeCount = await provider.startRealtimeCallCount()
+        XCTAssertEqual(startRealtimeCount, 0)
+    }
+
+    func testSuspendedAuthorizeAfterSignOutDoesNotRestoreSession() async {
+        let provider = SuspendedWebexClientProviding(
+            authorizeResult: .success(WebexAccountSummary(id: "a1", displayName: "User", grantedScopes: ["spark:all", "spark:kms"])),
+            suspendAuthorize: true
+        )
+        let session = AccountSession(clientProvider: provider, diagnostics: DiagnosticsStore())
+
+        let authorizeTask = Task {
+            await session.authorize(credentials: validCredentials())
+        }
+        await provider.waitForAuthorizeRequest()
+        await session.signOut()
+        await provider.resumeAuthorize()
+        await authorizeTask.value
+        await provider.yieldRealtime(.connected)
+        await Task.yield()
+
+        XCTAssertEqual(session.phase, .setupRequired)
+        XCTAssertNil(session.activeAccount)
+        XCTAssertEqual(session.tokenStatus, .idle)
+        XCTAssertEqual(session.realtimeStatus, .idle)
+        let startRealtimeCount = await provider.startRealtimeCallCount()
+        XCTAssertEqual(startRealtimeCount, 0)
+    }
+
+    func testSuspendedRealtimeStartAfterSignOutDoesNotUpdateStatus() async {
+        let provider = SuspendedWebexClientProviding(
+            existingAccountResult: WebexAccountSummary(id: "a1", displayName: "User", grantedScopes: ["spark:all", "spark:kms"]),
+            suspendRealtime: true
+        )
+        let session = AccountSession(clientProvider: provider, diagnostics: DiagnosticsStore())
+
+        let startTask = Task {
+            await session.start()
+        }
+        await provider.waitForStartRealtimeRequest()
+        await session.signOut()
+        await provider.resumeStartRealtime()
+        await startTask.value
+        await provider.yieldRealtime(.connected)
+        await Task.yield()
+
+        XCTAssertEqual(session.phase, .setupRequired)
+        XCTAssertNil(session.activeAccount)
+        XCTAssertEqual(session.tokenStatus, .idle)
+        XCTAssertEqual(session.realtimeStatus, .idle)
+    }
+
     private func validCredentials() -> SetupCredentials {
         SetupCredentials(
             clientID: "client-id",
@@ -227,5 +300,148 @@ private final class SpyWebexClientProviding: WebexClientProviding, @unchecked Se
 
     func signOut() async {
         state.withValue { $0.didSignOut = true }
+    }
+}
+
+private actor SuspendedWebexClientProviding: WebexClientProviding {
+    private let realtimeProbe = StreamProbe<RealtimeStateDTO>()
+    private let existingAccountResult: WebexAccountSummary?
+    private let authorizeResult: Result<WebexAccountSummary, Error>
+    private let suspendExistingAccount: Bool
+    private let suspendAuthorize: Bool
+    private let suspendRealtime: Bool
+
+    private var existingAccountContinuation: CheckedContinuation<WebexAccountSummary?, Error>?
+    private var authorizeContinuation: CheckedContinuation<WebexAccountSummary, Error>?
+    private var startRealtimeContinuation: CheckedContinuation<AsyncStream<RealtimeStateDTO>, Never>?
+    private var existingAccountWaiters: [CheckedContinuation<Void, Never>] = []
+    private var authorizeWaiters: [CheckedContinuation<Void, Never>] = []
+    private var startRealtimeWaiters: [CheckedContinuation<Void, Never>] = []
+    private(set) var startRealtimeCount = 0
+
+    init(
+        existingAccountResult: WebexAccountSummary? = nil,
+        authorizeResult: Result<WebexAccountSummary, Error> = .success(WebexAccountSummary(
+            id: "account-1",
+            displayName: "Test User",
+            grantedScopes: ["spark:all", "spark:kms"]
+        )),
+        suspendExistingAccount: Bool = false,
+        suspendAuthorize: Bool = false,
+        suspendRealtime: Bool = false
+    ) {
+        self.existingAccountResult = existingAccountResult
+        self.authorizeResult = authorizeResult
+        self.suspendExistingAccount = suspendExistingAccount
+        self.suspendAuthorize = suspendAuthorize
+        self.suspendRealtime = suspendRealtime
+    }
+
+    func existingAccount() async throws -> WebexAccountSummary? {
+        guard suspendExistingAccount else {
+            return existingAccountResult
+        }
+
+        return try await withCheckedThrowingContinuation { continuation in
+            existingAccountContinuation = continuation
+            resumeWaiters(&existingAccountWaiters)
+        }
+    }
+
+    func authorize(credentials: SetupCredentials) async throws -> WebexAccountSummary {
+        guard suspendAuthorize else {
+            return try authorizeResult.get()
+        }
+
+        return try await withCheckedThrowingContinuation { continuation in
+            authorizeContinuation = continuation
+            resumeWaiters(&authorizeWaiters)
+        }
+    }
+
+    func startRealtime() async -> AsyncStream<RealtimeStateDTO> {
+        startRealtimeCount += 1
+        guard suspendRealtime else {
+            return realtimeProbe.stream
+        }
+
+        return await withCheckedContinuation { continuation in
+            startRealtimeContinuation = continuation
+            resumeWaiters(&startRealtimeWaiters)
+        }
+    }
+
+    func makeSpacesStream() async throws -> SpacesStreamProviding {
+        FakeSpacesStream()
+    }
+
+    func makeMessagesThreadStream(spaceID: String) async throws -> MessagesThreadStreamProviding {
+        FakeMessagesThreadStream()
+    }
+
+    func signOut() async {}
+
+    func waitForExistingAccountRequest() async {
+        guard existingAccountContinuation == nil else {
+            return
+        }
+
+        await withCheckedContinuation { continuation in
+            existingAccountWaiters.append(continuation)
+        }
+    }
+
+    func resumeExistingAccount() {
+        existingAccountContinuation?.resume(returning: existingAccountResult)
+        existingAccountContinuation = nil
+    }
+
+    func waitForAuthorizeRequest() async {
+        guard authorizeContinuation == nil else {
+            return
+        }
+
+        await withCheckedContinuation { continuation in
+            authorizeWaiters.append(continuation)
+        }
+    }
+
+    func resumeAuthorize() {
+        switch authorizeResult {
+        case .success(let account):
+            authorizeContinuation?.resume(returning: account)
+        case .failure(let error):
+            authorizeContinuation?.resume(throwing: error)
+        }
+        authorizeContinuation = nil
+    }
+
+    func waitForStartRealtimeRequest() async {
+        guard startRealtimeContinuation == nil else {
+            return
+        }
+
+        await withCheckedContinuation { continuation in
+            startRealtimeWaiters.append(continuation)
+        }
+    }
+
+    func resumeStartRealtime() {
+        startRealtimeContinuation?.resume(returning: realtimeProbe.stream)
+        startRealtimeContinuation = nil
+    }
+
+    func yieldRealtime(_ state: RealtimeStateDTO) {
+        realtimeProbe.yield(state)
+    }
+
+    func startRealtimeCallCount() -> Int {
+        startRealtimeCount
+    }
+
+    private func resumeWaiters(_ waiters: inout [CheckedContinuation<Void, Never>]) {
+        let currentWaiters = waiters
+        waiters.removeAll()
+        currentWaiters.forEach { $0.resume() }
     }
 }
