@@ -22,6 +22,8 @@
 		A1000000000000000000000D /* FakeWebexClientProviding.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000001F /* FakeWebexClientProviding.swift */; };
 		A1000000000000000000000E /* WebexClientProviding.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000020 /* WebexClientProviding.swift */; };
 		A1000000000000000000000F /* FakeWebexClientProvidingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000002E /* FakeWebexClientProvidingTests.swift */; };
+		B50000000000000000000003 /* AccountSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = B50000000000000000000004 /* AccountSession.swift */; };
+		B50000000000000000000001 /* AccountSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B50000000000000000000002 /* AccountSessionTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -53,6 +55,8 @@
 		A1000000000000000000001F /* FakeWebexClientProviding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FakeWebexClientProviding.swift; sourceTree = "<group>"; };
 		A10000000000000000000020 /* WebexClientProviding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebexClientProviding.swift; sourceTree = "<group>"; };
 		A1000000000000000000002E /* FakeWebexClientProvidingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FakeWebexClientProvidingTests.swift; sourceTree = "<group>"; };
+		B50000000000000000000004 /* AccountSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountSession.swift; sourceTree = "<group>"; };
+		B50000000000000000000002 /* AccountSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountSessionTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -99,6 +103,7 @@
 			isa = PBXGroup;
 			children = (
 				A1000000000000000000002C /* Fakes */,
+				B50000000000000000000002 /* AccountSessionTests.swift */,
 				A10000000000000000000018 /* DiagnosticsStoreTests.swift */,
 				A1000000000000000000002E /* FakeWebexClientProvidingTests.swift */,
 				A1000000000000000000001B /* SetupValidationTests.swift */,
@@ -165,6 +170,7 @@
 		A1000000000000000000002D /* Account */ = {
 			isa = PBXGroup;
 			children = (
+				B50000000000000000000004 /* AccountSession.swift */,
 				A10000000000000000000020 /* WebexClientProviding.swift */,
 			);
 			path = Account;
@@ -274,6 +280,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B50000000000000000000003 /* AccountSession.swift in Sources */,
 				A10000000000000000000002 /* AppRootModel.swift in Sources */,
 				A10000000000000000000007 /* DiagnosticsStore.swift in Sources */,
 				A10000000000000000000003 /* RedwingEnvironment.swift in Sources */,
@@ -289,6 +296,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B50000000000000000000001 /* AccountSessionTests.swift in Sources */,
 				A1000000000000000000000C /* AsyncStreamTestSupport.swift in Sources */,
 				A10000000000000000000006 /* DiagnosticsStoreTests.swift in Sources */,
 				A1000000000000000000000D /* FakeWebexClientProviding.swift in Sources */,
