@@ -32,6 +32,9 @@
 		D70000000000000000000005 /* MessageRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D70000000000000000000006 /* MessageRowViewModel.swift */; };
 		D70000000000000000000007 /* ThreadLanePolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = D70000000000000000000008 /* ThreadLanePolicy.swift */; };
 		D70000000000000000000009 /* MessagesCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7000000000000000000000A /* MessagesCoordinator.swift */; };
+		E80000000000000000000001 /* AttentionFeedStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80000000000000000000002 /* AttentionFeedStoreTests.swift */; };
+		E80000000000000000000003 /* AttentionItemViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80000000000000000000005 /* AttentionItemViewModel.swift */; };
+		E80000000000000000000004 /* AttentionFeedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80000000000000000000006 /* AttentionFeedStore.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -73,6 +76,9 @@
 		D70000000000000000000006 /* MessageRowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageRowViewModel.swift; sourceTree = "<group>"; };
 		D70000000000000000000008 /* ThreadLanePolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThreadLanePolicy.swift; sourceTree = "<group>"; };
 		D7000000000000000000000A /* MessagesCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagesCoordinator.swift; sourceTree = "<group>"; };
+		E80000000000000000000002 /* AttentionFeedStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttentionFeedStoreTests.swift; sourceTree = "<group>"; };
+		E80000000000000000000005 /* AttentionItemViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttentionItemViewModel.swift; sourceTree = "<group>"; };
+		E80000000000000000000006 /* AttentionFeedStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttentionFeedStore.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -108,6 +114,7 @@
 			children = (
 				A1000000000000000000002D /* Account */,
 				A10000000000000000000028 /* App */,
+				E80000000000000000000007 /* Attention */,
 				A1000000000000000000002A /* Diagnostics */,
 				D7000000000000000000000B /* Messages */,
 				A10000000000000000000029 /* Resources */,
@@ -122,6 +129,7 @@
 			children = (
 				A1000000000000000000002C /* Fakes */,
 				B50000000000000000000002 /* AccountSessionTests.swift */,
+				E80000000000000000000002 /* AttentionFeedStoreTests.swift */,
 				A10000000000000000000018 /* DiagnosticsStoreTests.swift */,
 				A1000000000000000000002E /* FakeWebexClientProvidingTests.swift */,
 				D70000000000000000000004 /* MessagesCoordinatorTests.swift */,
@@ -214,6 +222,15 @@
 				D70000000000000000000008 /* ThreadLanePolicy.swift */,
 			);
 			path = Messages;
+			sourceTree = "<group>";
+		};
+		E80000000000000000000007 /* Attention */ = {
+			isa = PBXGroup;
+			children = (
+				E80000000000000000000006 /* AttentionFeedStore.swift */,
+				E80000000000000000000005 /* AttentionItemViewModel.swift */,
+			);
+			path = Attention;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -322,6 +339,8 @@
 			files = (
 				B50000000000000000000003 /* AccountSession.swift in Sources */,
 				A10000000000000000000002 /* AppRootModel.swift in Sources */,
+				E80000000000000000000004 /* AttentionFeedStore.swift in Sources */,
+				E80000000000000000000003 /* AttentionItemViewModel.swift in Sources */,
 				A10000000000000000000007 /* DiagnosticsStore.swift in Sources */,
 				D70000000000000000000005 /* MessageRowViewModel.swift in Sources */,
 				D70000000000000000000009 /* MessagesCoordinator.swift in Sources */,
@@ -343,6 +362,7 @@
 			files = (
 				B50000000000000000000001 /* AccountSessionTests.swift in Sources */,
 				A1000000000000000000000C /* AsyncStreamTestSupport.swift in Sources */,
+				E80000000000000000000001 /* AttentionFeedStoreTests.swift in Sources */,
 				A10000000000000000000006 /* DiagnosticsStoreTests.swift in Sources */,
 				A1000000000000000000000D /* FakeWebexClientProviding.swift in Sources */,
 				A1000000000000000000000F /* FakeWebexClientProvidingTests.swift in Sources */,
