@@ -34,7 +34,8 @@ enum SetupValidation {
 
         guard let url = URL(string: credentials.redirectURI),
               url.scheme != nil,
-              url.host != nil else {
+              let host = url.host,
+              !host.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             throw ValidationError.invalidRedirectURI
         }
 
