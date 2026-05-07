@@ -97,7 +97,23 @@ final class WebexSDKAdapterTests: XCTestCase {
         let date = Date(timeIntervalSince1970: 12)
         let snapshot = WebexStreamSnapshot(
             items: [
-                WebexSpace(id: "space-1", title: "General", lastActivity: date),
+                WebexSpace(
+                    id: "space-1",
+                    title: "General",
+                    type: .group,
+                    isLocked: true,
+                    teamID: "team-123",
+                    lastActivity: date,
+                    creatorID: "creator-1",
+                    created: date.addingTimeInterval(-100),
+                    ownerID: "owner-1",
+                    description: "General discussion",
+                    isPublic: true,
+                    isReadOnly: false,
+                    isAnnouncementOnly: true,
+                    classificationID: "class-1",
+                    madePublic: date.addingTimeInterval(-50)
+                ),
                 WebexSpace(id: "space-2")
             ],
             revision: 1,
@@ -117,7 +133,23 @@ final class WebexSDKAdapterTests: XCTestCase {
         let dto = WebexSDKAdapter.mapSpaceSnapshot(snapshot)
 
         XCTAssertEqual(dto.spaces, [
-            SpaceItem(id: "space-1", title: "General", lastActivity: date),
+            SpaceItem(
+                id: "space-1",
+                title: "General",
+                type: .group,
+                isLocked: true,
+                teamID: "team-123",
+                lastActivity: date,
+                creatorID: "creator-1",
+                created: date.addingTimeInterval(-100),
+                ownerID: "owner-1",
+                description: "General discussion",
+                isPublic: true,
+                isReadOnly: false,
+                isAnnouncementOnly: true,
+                classificationID: "class-1",
+                madePublic: date.addingTimeInterval(-50)
+            ),
             SpaceItem(id: "space-2", title: "Untitled Space", lastActivity: nil)
         ])
         XCTAssertTrue(dto.isRefreshing)

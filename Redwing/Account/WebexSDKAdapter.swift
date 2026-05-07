@@ -220,7 +220,22 @@ actor WebexSDKAdapter: WebexClientProviding {
                 SpaceItem(
                     id: space.id,
                     title: nonEmpty(space.title) ?? "Untitled Space",
-                    lastActivity: space.lastActivity
+                    type: mapSpaceType(space.type),
+                    isLocked: space.isLocked,
+                    teamID: nonEmpty(space.teamID),
+                    lastActivity: space.lastActivity,
+                    creatorID: nonEmpty(space.creatorID),
+                    created: space.created,
+                    ownerID: nonEmpty(space.ownerID),
+                    description: nonEmpty(space.description),
+                    isPublic: space.isPublic,
+                    isReadOnly: space.isReadOnly,
+                    isAnnouncementOnly: space.isAnnouncementOnly,
+                    classificationID: nonEmpty(space.classificationID),
+                    madePublic: space.madePublic,
+                    errors: space.errors?.mapValues { error in
+                        SpacePartialResourceErrorDTO(code: error.code, reason: error.reason)
+                    }
                 )
             },
             isRefreshing: snapshot.isRefreshing,
@@ -239,6 +254,19 @@ actor WebexSDKAdapter: WebexClientProviding {
             hasMore: snapshot.pagination.hasMore,
             lastErrorDescription: snapshot.lastError.map { redacted(String(describing: $0)) }
         )
+    }
+
+    private static func mapSpaceType(_ type: WebexSpaceType?) -> SpaceTypeDTO? {
+        switch type {
+        case .direct:
+            return .direct
+        case .group:
+            return .group
+        case .unknown(let value):
+            return .unknown(value)
+        case nil:
+            return nil
+        }
     }
 
     private static func mapMessageThreadEntry(_ entry: WebexMessageThreadEntry) -> MessageThreadEntryDTO {

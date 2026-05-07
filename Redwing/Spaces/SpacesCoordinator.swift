@@ -79,7 +79,8 @@ final class SpacesCoordinator: ObservableObject {
             SpaceRowViewModel(
                 id: space.id,
                 title: space.title,
-                detail: space.lastActivity.map { "Updated \($0.formatted(date: .omitted, time: .shortened))" } ?? "No recent activity",
+                teamLabel: space.teamID ?? "No team",
+                iconURL: space.iconURL,
                 isSkeleton: false
             )
         }

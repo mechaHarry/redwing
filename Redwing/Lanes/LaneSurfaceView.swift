@@ -2,168 +2,96 @@ import SwiftUI
 
 struct LaneSurfaceView: View {
     @ObservedObject var spaces: SpacesCoordinator
-    @ObservedObject var messages: MessagesCoordinator
 
     var body: some View {
-        GeometryReader { geometry in
-            let layout = LaneLayoutModel(
-                threadVisible: messages.isThreadLaneVisible,
-                focusedLane: messages.isThreadLaneVisible ? .thread : .messages
-            )
-
-            ScrollView(.horizontal) {
-                HStack(spacing: 0) {
-                    spacesLane(width: layout.width(for: .spaces, totalWidth: geometry.size.width))
-                    Divider()
-                    messagesLane(width: layout.width(for: .messages, totalWidth: geometry.size.width))
-
-                    if messages.isThreadLaneVisible {
-                        Divider()
-                        threadLane(width: layout.width(for: .thread, totalWidth: geometry.size.width))
-                    }
-                }
-                .frame(minHeight: geometry.size.height)
-            }
-        }
-    }
-
-    private func spacesLane(width: CGFloat) -> some View {
-        List(spaces.rows) { row in
-            if row.isSkeleton {
-                SkeletonRowView()
-            } else {
-                Button {
-                    spaces.select(spaceID: row.id)
-                    Task {
-                        await messages.select(spaceID: row.id, spaceTitle: row.title)
-                    }
-                } label: {
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(row.title)
-                            .lineLimit(1)
-                        Text(row.detail)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                    }
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .listStyle(.sidebar)
-        .frame(width: width)
-    }
-
-    private func messagesLane(width: CGFloat) -> some View {
-        return ScrollViewReader { proxy in
+        GlassEffectContainer {
             ScrollView(.vertical) {
-                LazyVStack(spacing: 0) {
-                    ForEach(messages.messageRows) { row in
-                        messageRow(row) {
-                            messages.select(messageID: row.id)
+                LazyVStack(spacing: 12) {
+                    ForEach(spaces.rows) { row in
+                        SpaceGlassRow(row: row) {
+                            spaces.select(spaceID: row.id)
                         }
-                        .id(row.id)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
-                .padding(.vertical, 6)
+                .padding(18)
             }
-            .defaultScrollAnchor(.bottom)
-            .onReceive(messages.$messageScrollRequest.compactMap { $0 }) { request in
-                scroll(proxy, to: request.targetID)
-            }
-            .onChange(of: messages.messageRows) { _, _ in
-                scrollToCurrentMessageTarget(proxy)
-            }
+            .scrollClipDisabled()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .padding(20)
         }
-        .frame(width: width)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
+}
 
-    private func threadLane(width: CGFloat) -> some View {
-        return ScrollViewReader { proxy in
-            ScrollView(.vertical) {
-                LazyVStack(spacing: 0) {
-                    ForEach(messages.threadRows) { row in
-                        messageRow(row) {
-                            messages.select(messageID: row.id)
-                        }
-                        .id(row.id)
-                        .padding(.leading, CGFloat(row.depth) * 16)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                }
-                .padding(.vertical, 6)
-            }
-            .defaultScrollAnchor(.bottom)
-            .onReceive(messages.$threadScrollRequest.compactMap { $0 }) { request in
-                scroll(proxy, to: request.targetID)
-            }
-            .onChange(of: messages.threadRows) { _, _ in
-                scrollToCurrentThreadTarget(proxy)
-            }
-        }
-        .frame(width: width)
-    }
+private struct SpaceGlassRow: View {
+    let row: SpaceRowViewModel
+    let action: () -> Void
 
-    private func messageRow(_ row: MessageRowViewModel, action: @escaping () -> Void) -> some View {
+    var body: some View {
         Group {
             if row.isSkeleton {
                 SkeletonRowView()
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             } else {
                 Button(action: action) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack(spacing: 8) {
-                            Text(row.sender)
+                    HStack(spacing: 14) {
+                        SpaceIconView(iconURL: row.iconURL)
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(row.title)
                                 .font(.headline)
                                 .lineLimit(1)
 
-                            if !row.detail.isEmpty {
-                                Text(row.detail)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(1)
-                            }
+                            Text(row.teamLabel)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
                         }
 
-                        Text(row.body)
-                            .foregroundStyle(row.isDeletedTombstone ? .secondary : .primary)
-                            .lineLimit(2)
+                        Spacer(minLength: 0)
                     }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .buttonStyle(.plain)
+                .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
             }
         }
     }
+}
 
-    private func scrollToCurrentMessageTarget(_ proxy: ScrollViewProxy) {
-        guard let targetID = messages.messageScrollTargetID else {
-            return
-        }
+private struct SpaceIconView: View {
+    let iconURL: URL?
 
-        scroll(proxy, to: targetID)
-    }
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(.thinMaterial)
+                .frame(width: 44, height: 44)
 
-    private func scrollToCurrentThreadTarget(_ proxy: ScrollViewProxy) {
-        guard let targetID = messages.threadScrollTargetID else {
-            return
-        }
-
-        scroll(proxy, to: targetID)
-    }
-
-    private func scroll(_ proxy: ScrollViewProxy, to targetID: String) {
-        Task { @MainActor in
-            for _ in 0..<3 {
-                await Task.yield()
+            if let iconURL {
+                AsyncImage(url: iconURL) { image in
+                    image
+                        .resizable()
+                        .scaledToFill()
+                } placeholder: {
+                    Image(systemName: "circle")
+                        .font(.title3)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(width: 44, height: 44)
+                .clipShape(Circle())
+            } else {
+                Image(systemName: "circle")
+                    .font(.title3)
+                    .foregroundStyle(.secondary)
             }
-            withAnimation(.easeInOut(duration: 0.18)) {
-                proxy.scrollTo(targetID, anchor: .bottom)
-            }
         }
+        .frame(width: 44, height: 44)
+        .accessibilityHidden(true)
     }
 }

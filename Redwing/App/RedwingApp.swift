@@ -85,12 +85,10 @@ private struct RedwingRootView: View {
         Group {
             if let accountSession = rootModel.accountSession,
                let spaces = rootModel.spacesCoordinator,
-               let messages = rootModel.messagesCoordinator,
                let attentionFeed = rootModel.attentionFeed {
                 RedwingSessionView(
                     accountSession: accountSession,
                     spaces: spaces,
-                    messages: messages,
                     attentionFeed: attentionFeed,
                     isShowingDiagnostics: $isShowingDiagnostics
                 )
@@ -127,7 +125,6 @@ private struct RedwingRootView: View {
 private struct RedwingSessionView: View {
     @ObservedObject var accountSession: AccountSession
     @ObservedObject var spaces: SpacesCoordinator
-    @ObservedObject var messages: MessagesCoordinator
     @ObservedObject var attentionFeed: AttentionFeedStore
     @Binding var isShowingDiagnostics: Bool
 
@@ -136,15 +133,13 @@ private struct RedwingSessionView: View {
             switch accountSession.phase {
             case .idle, .loading, .ready:
                 VStack(spacing: 0) {
-                    LaneSurfaceView(spaces: spaces, messages: messages)
+                    LaneSurfaceView(spaces: spaces)
 
                     Divider()
 
                     StatusBarView(
                         accountSession: accountSession,
                         spaces: spaces,
-                        messages: messages,
-                        attentionFeed: attentionFeed
                     ) {
                         isShowingDiagnostics = true
                     }

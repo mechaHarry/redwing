@@ -15,15 +15,17 @@ final class SceneConfigurationTests: XCTestCase {
         XCTAssertTrue(redwingAppSource.contains("applicationShouldHandleReopen"))
     }
 
-    func testLaneSurfacesUseScrollViewsForStableProgrammaticScrolling() throws {
+    func testLaneSurfaceIsSpacesOnlyGlassPane() throws {
         let laneSurfaceSource = try String(contentsOf: laneSurfaceViewSourceURL(), encoding: .utf8)
 
         XCTAssertTrue(laneSurfaceSource.contains("ScrollView(.vertical)"))
         XCTAssertTrue(laneSurfaceSource.contains("LazyVStack"))
-        XCTAssertTrue(laneSurfaceSource.contains(".onChange(of: messages.messageRows)"))
-        XCTAssertTrue(laneSurfaceSource.contains(".onChange(of: messages.threadRows)"))
-        XCTAssertFalse(laneSurfaceSource.contains("List(messages.messageRows)"))
-        XCTAssertFalse(laneSurfaceSource.contains("List(messages.threadRows)"))
+        XCTAssertTrue(laneSurfaceSource.contains("GlassEffectContainer"))
+        XCTAssertTrue(laneSurfaceSource.contains("glassEffect"))
+        XCTAssertTrue(laneSurfaceSource.contains("Image(systemName: \"circle\")"))
+        XCTAssertFalse(laneSurfaceSource.contains("@ObservedObject var messages"))
+        XCTAssertFalse(laneSurfaceSource.contains("messagesLane"))
+        XCTAssertFalse(laneSurfaceSource.contains("threadLane"))
     }
 
     private func redwingAppSourceURL() -> URL {

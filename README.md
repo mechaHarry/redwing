@@ -1,13 +1,13 @@
 # Redwing
 
-Redwing is a native macOS Webex client foundation. It uses the local
-`webex-swift-sdk` package for OAuth, Keychain-backed account storage, realtime
-connection state, Spaces, Messages, and threaded message snapshots.
+Redwing is a native macOS Webex client foundation. It uses the tagged
+`webex-swift-sdk` Swift package for OAuth, Keychain-backed account storage,
+realtime connection state, Spaces, Messages, and threaded message snapshots.
 
 The current app is read-only. It provides:
 
 - A Webex setup flow for one active account
-- A native Spaces -> Messages -> Threads lane surface
+- A native spaces-first Liquid Glass pane
 - A menu bar attention feed
 - A shared realtime Webex connection
 - Diagnostics and status reporting for local testing
@@ -16,20 +16,15 @@ The current app is read-only. It provides:
 
 - macOS 26.4 or newer with Xcode installed
 - The `redwing.xcodeproj` project in this repository
-- The local SDK checkout at:
+- Network access for Xcode to resolve Swift package dependencies
+
+The SDK package is pinned to a released tag from:
 
 ```sh
-/Users/harriche/gits/github.com/mechaHarry/webex-swift-sdk
+https://github.com/mechaHarry/webex-swift-sdk.git
 ```
 
-The SDK remote is:
-
-```sh
-git@github.com:mechaHarry/webex-swift-sdk.git
-```
-
-If Xcode cannot resolve `webex-swift-sdk`, make sure that local checkout exists
-at the path above or update the package reference in Xcode.
+The current pinned SDK version is `2.5.1`.
 
 ## Versioning
 
@@ -99,8 +94,9 @@ On first launch, Redwing shows Webex setup. Enter:
 - Redirect URI, defaulting to `http://127.0.0.1:8282/oauth/callback`
 - Scopes including `spark:all spark:kms`
 
-After authorization, the app loads Spaces, Messages, thread details when a
-threaded message is selected, and attention items in the menu bar.
+After authorization, the app loads Spaces into a single glass pane. Message and
+thread lane code remains archived in the source tree while the client surface is
+reset around Spaces.
 
 ## Notes
 

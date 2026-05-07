@@ -42,6 +42,23 @@ final class SpacesCoordinatorTests: XCTestCase {
         XCTAssertEqual(coordinator.selectedSpaceID, "s1")
     }
 
+    func testRowsDisplayRawTeamIDWhenPresent() {
+        let coordinator = SpacesCoordinator(session: nil, diagnostics: DiagnosticsStore())
+        coordinator.apply(snapshot: SpaceSnapshot(
+            spaces: [
+                SpaceItem(id: "s1", title: "General", teamID: "team-123", lastActivity: nil),
+                SpaceItem(id: "s2", title: "Direct", teamID: nil, lastActivity: nil)
+            ],
+            isRefreshing: false,
+            isLoadingNextPage: false,
+            hasMore: false,
+            lastErrorDescription: nil
+        ))
+
+        XCTAssertEqual(coordinator.rows.map(\.teamLabel), ["team-123", "No team"])
+        XCTAssertEqual(coordinator.rows.map(\.iconURL), [nil, nil])
+    }
+
     func testRepeatedStartCancelsOldStreamAndIgnoresStaleSnapshots() async {
         let provider = SuspendedSpacesProvider()
         let session = AccountSession(clientProvider: provider, diagnostics: DiagnosticsStore())

@@ -4,9 +4,9 @@
 
 **Goal:** Build the first native macOS Redwing foundation: Xcode app shell, setup/auth, one-account session, shared Webex realtime, Spaces -> Messages -> conditional Threads lanes, attention-only menu bar, status bar, diagnostics, and strict tests.
 
-**Architecture:** Redwing owns app state, setup, session orchestration, lane UI, attention projection, status, diagnostics, and window placement. The `webex-swift-sdk` v2.5.0 owns OAuth/token lifecycle, Keychain-backed storage, REST transport, retry/backoff, realtime, snapshots, and `MessagesThreadStream`; Redwing accesses it through narrow protocols so unit tests use fakes.
+**Architecture:** Redwing owns app state, setup, session orchestration, lane UI, attention projection, status, diagnostics, and window placement. The `webex-swift-sdk` v2.5.1 owns OAuth/token lifecycle, Keychain-backed storage, REST transport, retry/backoff, realtime, snapshots, and `MessagesThreadStream`; Redwing accesses it through narrow protocols so unit tests use fakes.
 
-**Tech Stack:** macOS SwiftUI + AppKit bridge, Xcode project, XCTest, local Swift package dependency `/Users/harriche/gits/github.com/mechaHarry/webex-swift-sdk`, SDK product `WebexSwiftSDK`.
+**Tech Stack:** macOS SwiftUI + AppKit bridge, Xcode project, XCTest, tagged remote Swift package dependency `https://github.com/mechaHarry/webex-swift-sdk.git`, SDK product `WebexSwiftSDK`.
 
 ---
 
@@ -267,7 +267,7 @@ Create `redwing.xcodeproj/project.pbxproj` with:
 - bundle identifier `com.mechaharry.redwing`
 - latest installed macOS only, currently deployment target `26.4`
 - Swift language version inherited from Xcode
-- local package reference `../webex-swift-sdk` if relative to `/Users/harriche/gits/github.com/mechaHarry/redwing`, or absolute local package path if Xcode rejects the relative path
+- remote package reference to `https://github.com/mechaHarry/webex-swift-sdk.git` pinned to a released tag
 - product dependency `WebexSwiftSDK` linked to the app target
 - app sources from `Redwing/**/*.swift`
 - test sources from `RedwingTests/**/*.swift`
@@ -2903,7 +2903,7 @@ Expected: no commit is created if no fixes were needed.
 Spec coverage:
 
 - Xcode app scaffold: Task 1
-- local SDK v2.5.0 dependency: Tasks 1 and 12
+- remote SDK v2.5.1 dependency: Tasks 1 and 12
 - native setup screen: Tasks 3 and 10
 - one active account: Task 5
 - shared realtime connection: Tasks 5 and 12

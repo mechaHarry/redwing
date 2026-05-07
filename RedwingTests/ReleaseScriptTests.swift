@@ -50,10 +50,76 @@ final class ReleaseScriptTests: XCTestCase {
         XCTAssertTrue(releaseScript.contains("upload_asset \"${SHA_PATH}\" \"text/plain\""))
     }
 
+    func testProjectUsesRemoteTaggedWebexSwiftSDKWithoutLocalPathLeaks() throws {
+        let rootURL = repositoryRootURL()
+        let project = try String(
+            contentsOf: rootURL.appendingPathComponent("redwing.xcodeproj/project.pbxproj"),
+            encoding: .utf8
+        )
+        let readme = try String(
+            contentsOf: rootURL.appendingPathComponent("README.md"),
+            encoding: .utf8
+        )
+        let localRelativeSDKPath = ".." + "/webex-swift-sdk"
+
+        XCTAssertTrue(project.contains("XCRemoteSwiftPackageReference \"webex-swift-sdk\""))
+        XCTAssertTrue(project.contains("repositoryURL = \"https://github.com/mechaHarry/webex-swift-sdk.git\";"))
+        XCTAssertTrue(project.contains("kind = exactVersion;"))
+        XCTAssertTrue(project.contains("version = 2.5.1;"))
+        XCTAssertFalse(project.contains("XCLocalSwiftPackageReference"))
+        XCTAssertFalse(project.contains(localRelativeSDKPath))
+
+        XCTAssertNoLocalPathLeaks(in: rootURL)
+        XCTAssertFalse(readme.contains(localRelativeSDKPath))
+        XCTAssertFalse(readme.localizedCaseInsensitiveContains("local SDK checkout"))
+    }
+
     private func repositoryRootURL() -> URL {
         URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
             .deletingLastPathComponent()
+    }
+
+    private func XCTAssertNoLocalPathLeaks(
+        in rootURL: URL,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        let localHomePath = "/Users/" + "harriche"
+        let skippedPathComponents: Set<String> = [
+            ".git",
+            ".superpowers",
+            "dist",
+            "project.xcworkspace",
+            "xcuserdata"
+        ]
+
+        guard let enumerator = FileManager.default.enumerator(
+            at: rootURL,
+            includingPropertiesForKeys: [.isRegularFileKey],
+            options: [.skipsHiddenFiles]
+        ) else {
+            return XCTFail("Could not enumerate repository", file: file, line: line)
+        }
+
+        for case let url as URL in enumerator {
+            if !skippedPathComponents.isDisjoint(with: url.pathComponents) {
+                enumerator.skipDescendants()
+                continue
+            }
+
+            guard (try? url.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true,
+                  let contents = try? String(contentsOf: url, encoding: .utf8) else {
+                continue
+            }
+
+            XCTAssertFalse(
+                contents.contains(localHomePath),
+                "Local path leaked in \(url.path)",
+                file: file,
+                line: line
+            )
+        }
     }
 }
 

@@ -3,8 +3,6 @@ import SwiftUI
 struct StatusBarView: View {
     @ObservedObject var accountSession: AccountSession
     @ObservedObject var spaces: SpacesCoordinator
-    @ObservedObject var messages: MessagesCoordinator
-    @ObservedObject var attentionFeed: AttentionFeedStore
 
     let onShowDiagnostics: () -> Void
 
@@ -13,8 +11,6 @@ struct StatusBarView: View {
             StatusItemView(title: "WebSocket", status: accountSession.realtimeStatus)
             StatusItemView(title: "Token", status: accountSession.tokenStatus)
             StatusItemView(title: "Spaces", status: spaces.status)
-            StatusItemView(title: "Messages", status: messages.status)
-            StatusItemView(title: "Attention", status: attentionFeed.status)
 
             Spacer()
 

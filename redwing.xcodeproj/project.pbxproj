@@ -379,7 +379,7 @@
 			);
 			mainGroup = A10000000000000000000024;
 			packageReferences = (
-				A10000000000000000000060 /* XCLocalSwiftPackageReference "../webex-swift-sdk" */,
+				A10000000000000000000060 /* XCRemoteSwiftPackageReference "webex-swift-sdk" */,
 			);
 			productRefGroup = A10000000000000000000027 /* Products */;
 			projectDirPath = "";
@@ -707,17 +707,21 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCLocalSwiftPackageReference section */
-		A10000000000000000000060 /* XCLocalSwiftPackageReference "../webex-swift-sdk" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = "../webex-swift-sdk";
+/* Begin XCRemoteSwiftPackageReference section */
+		A10000000000000000000060 /* XCRemoteSwiftPackageReference "webex-swift-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/mechaHarry/webex-swift-sdk.git";
+			requirement = {
+				kind = exactVersion;
+				version = 2.5.1;
+			};
 		};
-/* End XCLocalSwiftPackageReference section */
+/* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		A10000000000000000000061 /* WebexSwiftSDK */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A10000000000000000000060 /* XCLocalSwiftPackageReference "../webex-swift-sdk" */;
+			package = A10000000000000000000060 /* XCRemoteSwiftPackageReference "webex-swift-sdk" */;
 			productName = WebexSwiftSDK;
 		};
 /* End XCSwiftPackageProductDependency section */

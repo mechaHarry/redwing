@@ -10,10 +10,9 @@ REST orchestration. The first foundation creates the native app shell, setup
 flow, account session, shared realtime connection, attention-oriented menu bar,
 and horizontal Spaces -> Messages -> Threads experience.
 
-The SDK baseline is `webex-swift-sdk` `v2.5.0` from:
+The SDK baseline is `webex-swift-sdk` `v2.5.1` from:
 
-- Local path: `/Users/harriche/gits/github.com/mechaHarry/webex-swift-sdk`
-- Remote: `git@github.com:mechaHarry/webex-swift-sdk.git`
+- Package: `https://github.com/mechaHarry/webex-swift-sdk.git`
 
 The SDK owns OAuth, token refresh, Keychain-backed credential storage,
 authenticated REST transport, graceful retry/backoff, snapshot streams,
@@ -25,7 +24,7 @@ Redwing v1 is a native macOS Xcode app foundation, not a full Webex clone. It
 includes:
 
 - `redwing.xcodeproj`
-- local Swift package dependency wiring to `webex-swift-sdk` `v2.5.0`
+- tagged remote Swift package dependency wiring to `webex-swift-sdk` `v2.5.1`
 - local development signing and entitlements
 - a native first-run setup screen
 - one active Webex account
@@ -175,7 +174,7 @@ remain visible during refresh or pagination.
 
 The menu bar defaults to an attention-only feed, not all recent messages.
 
-The SDK does not expose a separate Webex notifications API in `v2.5.0`, so
+The SDK does not expose a separate Webex notifications API in `v2.5.1`, so
 Redwing owns an attention projection over loaded and realtime-refreshed message
 data.
 
