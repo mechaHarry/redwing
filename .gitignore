@@ -2,3 +2,7 @@
 .superpowers/
 DerivedData/
 *.xcuserdata/
+*.xcworkspace/
+xcuserdata/
+dist/
+*.profraw

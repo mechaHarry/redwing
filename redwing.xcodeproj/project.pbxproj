@@ -43,6 +43,7 @@
 		F90000000000000000000003 /* LaneLayoutModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F90000000000000000000005 /* LaneLayoutModel.swift */; };
 		F90000000000000000000004 /* SkeletonViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = F90000000000000000000006 /* SkeletonViews.swift */; };
 		F90000000000000000000008 /* LaneSurfaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F90000000000000000000009 /* LaneSurfaceView.swift */; };
+		AB1300000000000000000001 /* ReleaseScriptTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1300000000000000000002 /* ReleaseScriptTests.swift */; };
 		AB1100000000000000000001 /* WindowFocusControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1100000000000000000002 /* WindowFocusControllerTests.swift */; };
 		AB1100000000000000000003 /* WindowFocusController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1100000000000000000004 /* WindowFocusController.swift */; };
 		AB1200000000000000000001 /* SceneConfigurationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1200000000000000000002 /* SceneConfigurationTests.swift */; };
@@ -102,6 +103,7 @@
 		F90000000000000000000005 /* LaneLayoutModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaneLayoutModel.swift; sourceTree = "<group>"; };
 		F90000000000000000000006 /* SkeletonViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkeletonViews.swift; sourceTree = "<group>"; };
 		F90000000000000000000009 /* LaneSurfaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaneSurfaceView.swift; sourceTree = "<group>"; };
+		AB1300000000000000000002 /* ReleaseScriptTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReleaseScriptTests.swift; sourceTree = "<group>"; };
 		AB1100000000000000000002 /* WindowFocusControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowFocusControllerTests.swift; sourceTree = "<group>"; };
 		AB1100000000000000000004 /* WindowFocusController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowFocusController.swift; sourceTree = "<group>"; };
 		AB1200000000000000000002 /* SceneConfigurationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneConfigurationTests.swift; sourceTree = "<group>"; };
@@ -168,6 +170,7 @@
 				A1000000000000000000002E /* FakeWebexClientProvidingTests.swift */,
 				F90000000000000000000002 /* LaneLayoutModelTests.swift */,
 				D70000000000000000000004 /* MessagesCoordinatorTests.swift */,
+				AB1300000000000000000002 /* ReleaseScriptTests.swift */,
 				AB1200000000000000000002 /* SceneConfigurationTests.swift */,
 				A1000000000000000000001B /* SetupValidationTests.swift */,
 				A10000000000000000000014 /* SmokeTests.swift */,
@@ -451,6 +454,7 @@
 				A1000000000000000000000F /* FakeWebexClientProvidingTests.swift in Sources */,
 				F90000000000000000000001 /* LaneLayoutModelTests.swift in Sources */,
 				D70000000000000000000003 /* MessagesCoordinatorTests.swift in Sources */,
+				AB1300000000000000000001 /* ReleaseScriptTests.swift in Sources */,
 				AB1200000000000000000001 /* SceneConfigurationTests.swift in Sources */,
 				A10000000000000000000009 /* SetupValidationTests.swift in Sources */,
 				A10000000000000000000004 /* SmokeTests.swift in Sources */,

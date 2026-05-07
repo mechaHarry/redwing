@@ -43,6 +43,9 @@ Redwing/Config/Version.xcconfig
 bundle plists consume it through Xcode build settings for both
 `CFBundleShortVersionString` and `CFBundleVersion`.
 
+Use `MAJOR.MINOR.PATCH` without a leading `v`; the release script creates the
+signed git tag as `v<REDWING_SEMVER>`.
+
 ## Building
 
 List the available schemes:
@@ -104,3 +107,24 @@ threaded message is selected, and attention items in the menu bar.
 - Secrets are stored through the SDK-backed Keychain store.
 - The app is sandboxed and has network client entitlement enabled.
 - UI code is native SwiftUI/AppKit and does not call Webex REST directly.
+
+## Releasing
+
+Create only the local versioned zip and checksum:
+
+```sh
+./release.sh --package-only
+```
+
+Run the full release flow:
+
+```sh
+GITHUB_TOKEN=... ./release.sh
+```
+
+The script reads `REDWING_SEMVER`, builds the Release app, writes
+`dist/Redwing-<version>-macos-<arch>.zip` and `.sha256`, creates and verifies a
+signed tag named `v<version>`, pushes it, creates a GitHub release with generated
+notes, uploads both assets, and publishes the release. By default it passes
+`CODE_SIGNING_ALLOWED=NO` to Xcode; set `CODE_SIGNING_ALLOWED=YES` when the
+project has a working signing team/certificate configured.
