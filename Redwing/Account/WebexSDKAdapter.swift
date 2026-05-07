@@ -248,7 +248,7 @@ actor WebexSDKAdapter: WebexClientProviding {
             parentID: entry.parentID,
             childIDs: entry.childIDs,
             sender: nonEmpty(message?.personEmail) ?? nonEmpty(message?.personID) ?? "Unknown sender",
-            body: nonEmpty(message?.text) ?? nonEmpty(message?.markdown) ?? nonEmpty(message?.html) ?? "",
+            body: nonEmpty(message?.markdown) ?? nonEmpty(message?.html) ?? nonEmpty(message?.text) ?? "",
             created: entry.effectiveCreated,
             mentionedPeople: message?.mentionedPeople ?? [],
             mentionedGroups: message?.mentionedGroups ?? [],

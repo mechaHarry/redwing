@@ -209,6 +209,70 @@ final class WebexSDKAdapterTests: XCTestCase {
         XCTAssertTrue(dto.hasMore)
     }
 
+    func testMessageThreadSnapshotPrefersRichMessageVariants() {
+        let snapshot = WebexMessageThreadSnapshot(
+            topLevelMessageIDs: ["markdown", "html", "text"],
+            threadEntryByID: [
+                "markdown": WebexMessageThreadEntry(
+                    id: "markdown",
+                    message: WebexMessage(
+                        id: "markdown",
+                        text: "Plain text",
+                        markdown: "**Markdown**",
+                        html: "<strong>HTML</strong>"
+                    ),
+                    parentID: nil,
+                    childIDs: [],
+                    effectiveCreated: nil,
+                    isPlaceholderParent: false
+                ),
+                "html": WebexMessageThreadEntry(
+                    id: "html",
+                    message: WebexMessage(
+                        id: "html",
+                        text: "Plain text",
+                        markdown: "  \n",
+                        html: "<em>HTML</em>"
+                    ),
+                    parentID: nil,
+                    childIDs: [],
+                    effectiveCreated: nil,
+                    isPlaceholderParent: false
+                ),
+                "text": WebexMessageThreadEntry(
+                    id: "text",
+                    message: WebexMessage(
+                        id: "text",
+                        text: "Plain text"
+                    ),
+                    parentID: nil,
+                    childIDs: [],
+                    effectiveCreated: nil,
+                    isPlaceholderParent: false
+                )
+            ],
+            chronologicalMessageIDs: ["markdown", "html", "text"],
+            revision: 1,
+            lastUpdatedAt: nil,
+            isRefreshing: false,
+            isLoadingNextPage: false,
+            lastError: nil,
+            pagination: WebexStreamPagination(
+                hasMore: false,
+                nextPage: nil,
+                pagesLoaded: 1,
+                pageLimit: nil,
+                capReached: false
+            )
+        )
+
+        let dto = WebexSDKAdapter.mapMessageThreadSnapshot(snapshot)
+
+        XCTAssertEqual(dto.entriesByID["markdown"]?.body, "**Markdown**")
+        XCTAssertEqual(dto.entriesByID["html"]?.body, "<em>HTML</em>")
+        XCTAssertEqual(dto.entriesByID["text"]?.body, "Plain text")
+    }
+
     func testRefreshTriggerFiltersByResourceAndRoomID() {
         XCTAssertTrue(WebexSDKSpacesStreamAdapter.shouldRefresh(for: WebexStreamTrigger(resource: "rooms", event: "created")))
         XCTAssertTrue(WebexSDKSpacesStreamAdapter.shouldRefresh(for: WebexStreamTrigger(resource: "spaces", event: "updated", resourceID: "space-1")))
