@@ -22,10 +22,22 @@ final class SceneConfigurationTests: XCTestCase {
         XCTAssertTrue(laneSurfaceSource.contains("LazyVStack"))
         XCTAssertTrue(laneSurfaceSource.contains("GlassEffectContainer"))
         XCTAssertTrue(laneSurfaceSource.contains("glassEffect"))
+        XCTAssertTrue(laneSurfaceSource.contains(".clipShape(paneShape)"))
+        XCTAssertFalse(laneSurfaceSource.contains(".scrollClipDisabled()"))
         XCTAssertTrue(laneSurfaceSource.contains("Image(systemName: \"circle\")"))
         XCTAssertFalse(laneSurfaceSource.contains("@ObservedObject var messages"))
         XCTAssertFalse(laneSurfaceSource.contains("messagesLane"))
         XCTAssertFalse(laneSurfaceSource.contains("threadLane"))
+    }
+
+    func testSpaceRowsOwnIndividualGlassSurfaces() throws {
+        let laneSurfaceSource = try String(contentsOf: laneSurfaceViewSourceURL(), encoding: .utf8)
+
+        XCTAssertTrue(laneSurfaceSource.contains("private struct SpaceGlassRow"))
+        XCTAssertTrue(laneSurfaceSource.contains("let rowShape = RoundedRectangle"))
+        XCTAssertTrue(laneSurfaceSource.contains(".frame(maxWidth: .infinity, minHeight:"))
+        XCTAssertTrue(laneSurfaceSource.contains(".contentShape(rowShape)"))
+        XCTAssertTrue(laneSurfaceSource.contains(".glassEffect(.regular.interactive(), in: rowShape)"))
     }
 
     private func redwingAppSourceURL() -> URL {

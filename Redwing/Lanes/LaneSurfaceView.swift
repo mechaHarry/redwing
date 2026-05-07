@@ -4,6 +4,8 @@ struct LaneSurfaceView: View {
     @ObservedObject var spaces: SpacesCoordinator
 
     var body: some View {
+        let paneShape = RoundedRectangle(cornerRadius: 28, style: .continuous)
+
         GlassEffectContainer {
             ScrollView(.vertical) {
                 LazyVStack(spacing: 12) {
@@ -15,9 +17,9 @@ struct LaneSurfaceView: View {
                 }
                 .padding(18)
             }
-            .scrollClipDisabled()
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .clipShape(paneShape)
+            .glassEffect(.regular, in: paneShape)
             .padding(20)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -29,6 +31,8 @@ private struct SpaceGlassRow: View {
     let action: () -> Void
 
     var body: some View {
+        let rowShape = RoundedRectangle(cornerRadius: 18, style: .continuous)
+
         Group {
             if row.isSkeleton {
                 SkeletonRowView()
@@ -58,9 +62,11 @@ private struct SpaceGlassRow: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .buttonStyle(.plain)
-                .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
             }
         }
+        .frame(maxWidth: .infinity, minHeight: 84, alignment: .leading)
+        .contentShape(rowShape)
+        .glassEffect(.regular.interactive(), in: rowShape)
     }
 }
 
