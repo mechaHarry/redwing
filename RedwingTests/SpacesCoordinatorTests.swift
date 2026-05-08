@@ -59,6 +59,37 @@ final class SpacesCoordinatorTests: XCTestCase {
         XCTAssertEqual(coordinator.rows.map(\.iconURL), [nil, nil])
     }
 
+    func testRowsDisplaySpaceTypeCreatedDateAndLastActiveDate() {
+        let coordinator = SpacesCoordinator(session: nil, diagnostics: DiagnosticsStore())
+        let created = Date(timeIntervalSince1970: 1_704_110_400)
+        let lastActivity = Date(timeIntervalSince1970: 1_704_114_000)
+
+        coordinator.apply(snapshot: SpaceSnapshot(
+            spaces: [
+                SpaceItem(
+                    id: "s1",
+                    title: "General",
+                    type: .group,
+                    lastActivity: lastActivity,
+                    created: created
+                ),
+                SpaceItem(id: "s2", title: "Direct", type: .direct, lastActivity: nil, created: nil)
+            ],
+            isRefreshing: false,
+            isLoadingNextPage: false,
+            hasMore: false,
+            lastErrorDescription: nil
+        ))
+
+        XCTAssertEqual(coordinator.rows.map(\.typeLabel), ["Group", "Direct"])
+        XCTAssertTrue(coordinator.rows[0].createdLabel.hasPrefix("Created "))
+        XCTAssertTrue(coordinator.rows[0].createdLabel.contains("2024"))
+        XCTAssertTrue(coordinator.rows[0].lastActivityLabel.hasPrefix("Last active "))
+        XCTAssertTrue(coordinator.rows[0].lastActivityLabel.contains("2024"))
+        XCTAssertEqual(coordinator.rows[1].createdLabel, "Created unknown")
+        XCTAssertEqual(coordinator.rows[1].lastActivityLabel, "Last active unknown")
+    }
+
     func testRepeatedStartCancelsOldStreamAndIgnoresStaleSnapshots() async {
         let provider = SuspendedSpacesProvider()
         let session = AccountSession(clientProvider: provider, diagnostics: DiagnosticsStore())

@@ -38,6 +38,8 @@ final class SceneConfigurationTests: XCTestCase {
         XCTAssertTrue(laneSurfaceSource.contains(".frame(maxWidth: .infinity, minHeight:"))
         XCTAssertTrue(laneSurfaceSource.contains(".contentShape(rowShape)"))
         XCTAssertTrue(laneSurfaceSource.contains(".glassEffect(.regular.interactive(), in: rowShape)"))
+        XCTAssertTrue(laneSurfaceSource.contains(".strokeBorder(Color.primary.opacity"))
+        XCTAssertTrue(laneSurfaceSource.contains("lineWidth: 1"))
     }
 
     private func redwingAppSourceURL() -> URL {

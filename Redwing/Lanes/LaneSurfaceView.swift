@@ -53,6 +53,15 @@ private struct SpaceGlassRow: View {
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
+
+                            HStack(spacing: 8) {
+                                Text(row.typeLabel)
+                                Text(row.createdLabel)
+                                Text(row.lastActivityLabel)
+                            }
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                            .lineLimit(1)
                         }
 
                         Spacer(minLength: 0)
@@ -67,6 +76,10 @@ private struct SpaceGlassRow: View {
         .frame(maxWidth: .infinity, minHeight: 84, alignment: .leading)
         .contentShape(rowShape)
         .glassEffect(.regular.interactive(), in: rowShape)
+        .overlay {
+            rowShape
+                .strokeBorder(Color.primary.opacity(0.18), lineWidth: 1)
+        }
     }
 }
 

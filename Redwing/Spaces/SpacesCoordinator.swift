@@ -80,6 +80,9 @@ final class SpacesCoordinator: ObservableObject {
                 id: space.id,
                 title: space.title,
                 teamLabel: space.teamID ?? "No team",
+                typeLabel: Self.typeLabel(for: space.type),
+                createdLabel: Self.dateLabel(prefix: "Created", date: space.created),
+                lastActivityLabel: Self.dateLabel(prefix: "Last active", date: space.lastActivity),
                 iconURL: space.iconURL,
                 isSkeleton: false
             )
@@ -107,5 +110,26 @@ final class SpacesCoordinator: ObservableObject {
 
     private func isCurrent(_ generation: Int) -> Bool {
         generation == self.generation
+    }
+
+    private static func typeLabel(for type: SpaceTypeDTO?) -> String {
+        switch type {
+        case .direct:
+            return "Direct"
+        case .group:
+            return "Group"
+        case .unknown(let value):
+            return value.isEmpty ? "Unknown" : "Unknown: \(value)"
+        case nil:
+            return "Unknown"
+        }
+    }
+
+    private static func dateLabel(prefix: String, date: Date?) -> String {
+        guard let date else {
+            return "\(prefix) unknown"
+        }
+
+        return "\(prefix) \(date.formatted(date: .abbreviated, time: .shortened))"
     }
 }
