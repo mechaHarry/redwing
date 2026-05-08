@@ -42,6 +42,13 @@ final class SceneConfigurationTests: XCTestCase {
         XCTAssertTrue(laneSurfaceSource.contains("lineWidth: 1"))
     }
 
+    func testSpaceRowsTriggerPaginationWhenBottomRowAppears() throws {
+        let laneSurfaceSource = try String(contentsOf: laneSurfaceViewSourceURL(), encoding: .utf8)
+
+        XCTAssertTrue(laneSurfaceSource.contains(".onAppear"))
+        XCTAssertTrue(laneSurfaceSource.contains("loadNextPageIfNeeded(visibleRowID: row.id)"))
+    }
+
     private func redwingAppSourceURL() -> URL {
         URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()

@@ -9,6 +9,7 @@ final class SpacesCoordinator: ObservableObject {
     @Published private(set) var selectedSpaceID: String?
     @Published private(set) var status: SessionStatus = .idle
     @Published private(set) var hasMore = false
+    @Published private(set) var isLoadingNextPage = false
     @Published private(set) var isShowingSkeletons = true
 
     private let session: AccountSession?
@@ -60,10 +61,23 @@ final class SpacesCoordinator: ObservableObject {
         await stream?.loadNextPage()
     }
 
+    func loadNextPageIfNeeded(visibleRowID: String) async {
+        guard rows.last?.id == visibleRowID,
+              hasMore,
+              !isLoadingNextPage,
+              let stream else {
+            return
+        }
+
+        isLoadingNextPage = true
+        await stream.loadNextPage()
+    }
+
     private func apply(snapshot: SpaceSnapshot, generation: Int) {
         guard isCurrent(generation) else { return }
 
         hasMore = snapshot.hasMore
+        isLoadingNextPage = snapshot.isLoadingNextPage
         status = snapshot.lastErrorDescription.map { _ in SessionStatus.failed("Spaces refresh failed") } ?? (snapshot.isRefreshing ? .refreshing : .connected)
         if let error = snapshot.lastErrorDescription {
             diagnostics.append(source: .spaces, severity: .error, message: "Spaces refresh failed", detail: error)

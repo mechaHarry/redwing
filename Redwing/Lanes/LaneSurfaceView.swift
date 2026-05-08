@@ -13,6 +13,11 @@ struct LaneSurfaceView: View {
                         SpaceGlassRow(row: row) {
                             spaces.select(spaceID: row.id)
                         }
+                        .onAppear {
+                            Task {
+                                await spaces.loadNextPageIfNeeded(visibleRowID: row.id)
+                            }
+                        }
                     }
                 }
                 .padding(18)

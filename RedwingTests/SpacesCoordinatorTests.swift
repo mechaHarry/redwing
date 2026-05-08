@@ -162,6 +162,47 @@ final class SpacesCoordinatorTests: XCTestCase {
 
         XCTAssertEqual(fake.spacesStream.loadNextPageCount, 1)
     }
+
+    func testBottomVisibleRowLoadsNextPageOnlyWhenMorePagesExist() async {
+        let fake = FakeWebexClientProviding()
+        let session = AccountSession(clientProvider: fake, diagnostics: DiagnosticsStore())
+        let coordinator = SpacesCoordinator(session: session, diagnostics: DiagnosticsStore())
+
+        await coordinator.start()
+        coordinator.apply(snapshot: SpaceSnapshot(
+            spaces: [
+                SpaceItem(id: "s1", title: "First", lastActivity: nil),
+                SpaceItem(id: "s2", title: "Second", lastActivity: nil)
+            ],
+            isRefreshing: false,
+            isLoadingNextPage: false,
+            hasMore: true,
+            lastErrorDescription: nil
+        ))
+
+        await coordinator.loadNextPageIfNeeded(visibleRowID: "s1")
+        XCTAssertEqual(fake.spacesStream.loadNextPageCount, 0)
+
+        await coordinator.loadNextPageIfNeeded(visibleRowID: "s2")
+        XCTAssertEqual(fake.spacesStream.loadNextPageCount, 1)
+
+        await coordinator.loadNextPageIfNeeded(visibleRowID: "s2")
+        XCTAssertEqual(fake.spacesStream.loadNextPageCount, 1)
+
+        coordinator.apply(snapshot: SpaceSnapshot(
+            spaces: [
+                SpaceItem(id: "s1", title: "First", lastActivity: nil),
+                SpaceItem(id: "s2", title: "Second", lastActivity: nil)
+            ],
+            isRefreshing: false,
+            isLoadingNextPage: false,
+            hasMore: false,
+            lastErrorDescription: nil
+        ))
+        await coordinator.loadNextPageIfNeeded(visibleRowID: "s2")
+
+        XCTAssertEqual(fake.spacesStream.loadNextPageCount, 1)
+    }
 }
 
 @MainActor
