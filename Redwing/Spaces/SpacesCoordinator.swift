@@ -94,7 +94,6 @@ final class SpacesCoordinator: ObservableObject {
                 id: space.id,
                 title: space.title,
                 teamLabel: Self.teamLabel(for: space),
-                typeLabel: Self.typeLabel(for: space.type),
                 createdLabel: Self.dateLabel(prefix: "Created", date: space.created),
                 lastActivityLabel: Self.dateLabel(prefix: "Last active", date: space.lastActivity),
                 iconURL: space.iconURL,
@@ -127,32 +126,15 @@ final class SpacesCoordinator: ObservableObject {
     }
 
     private static func teamLabel(for space: SpaceItem) -> String {
-        if let teamName = nonEmpty(space.teamName) {
-            return teamName
-        }
-
-        if let teamID = nonEmpty(space.teamID) {
-            return teamID
-        }
-
         if space.type == .direct {
             return "Direct Message"
         }
 
-        return "No team"
-    }
-
-    private static func typeLabel(for type: SpaceTypeDTO?) -> String {
-        switch type {
-        case .direct:
-            return "Direct"
-        case .group:
-            return "Group"
-        case .unknown(let value):
-            return value.isEmpty ? "Unknown" : "Unknown: \(value)"
-        case nil:
-            return "Unknown"
+        if let teamName = nonEmpty(space.teamName) {
+            return teamName
         }
+
+        return "Unknown Team"
     }
 
     private static func dateLabel(prefix: String, date: Date?) -> String {

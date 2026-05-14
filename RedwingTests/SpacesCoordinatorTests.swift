@@ -42,12 +42,13 @@ final class SpacesCoordinatorTests: XCTestCase {
         XCTAssertEqual(coordinator.selectedSpaceID, "s1")
     }
 
-    func testRowsDisplayRawTeamIDWhenPresent() {
+    func testRowsDisplayTeamContextWithoutRawIDsOrTypeDuplication() {
         let coordinator = SpacesCoordinator(session: nil, diagnostics: DiagnosticsStore())
         coordinator.apply(snapshot: SpaceSnapshot(
             spaces: [
-                SpaceItem(id: "s1", title: "General", teamID: "team-123", lastActivity: nil),
-                SpaceItem(id: "s2", title: "Direct", teamID: nil, lastActivity: nil)
+                SpaceItem(id: "s1", title: "General", type: .group, teamID: "team-123", lastActivity: nil),
+                SpaceItem(id: "s2", title: "Direct", type: .direct, teamID: nil, lastActivity: nil),
+                SpaceItem(id: "s3", title: "Unresolved", type: .group, teamID: nil, lastActivity: nil)
             ],
             isRefreshing: false,
             isLoadingNextPage: false,
@@ -55,8 +56,8 @@ final class SpacesCoordinatorTests: XCTestCase {
             lastErrorDescription: nil
         ))
 
-        XCTAssertEqual(coordinator.rows.map(\.teamLabel), ["team-123", "No team"])
-        XCTAssertEqual(coordinator.rows.map(\.iconURL), [nil, nil])
+        XCTAssertEqual(coordinator.rows.map(\.teamLabel), ["Unknown Team", "Direct Message", "Unknown Team"])
+        XCTAssertEqual(coordinator.rows.map(\.iconURL), [nil, nil, nil])
     }
 
     func testRowsFleshInSpaceEnrichmentWithoutResettingSkeletonsOrIDs() {
@@ -76,7 +77,7 @@ final class SpacesCoordinatorTests: XCTestCase {
 
         let baseRowIDs = coordinator.rows.map(\.id)
         XCTAssertFalse(coordinator.isShowingSkeletons)
-        XCTAssertEqual(coordinator.rows.map(\.teamLabel), ["team-123", "Direct Message"])
+        XCTAssertEqual(coordinator.rows.map(\.teamLabel), ["Unknown Team", "Direct Message"])
         XCTAssertEqual(coordinator.rows.map(\.iconURL), [nil, nil])
 
         coordinator.apply(snapshot: SpaceSnapshot(
@@ -110,7 +111,7 @@ final class SpacesCoordinatorTests: XCTestCase {
         XCTAssertEqual(coordinator.rows.map(\.iconURL), [nil, avatarURL])
     }
 
-    func testRowsDisplaySpaceTypeCreatedDateAndLastActiveDate() {
+    func testRowsDisplayCreatedDateAndLastActiveDate() {
         let coordinator = SpacesCoordinator(session: nil, diagnostics: DiagnosticsStore())
         let created = Date(timeIntervalSince1970: 1_704_110_400)
         let lastActivity = Date(timeIntervalSince1970: 1_704_114_000)
@@ -132,7 +133,6 @@ final class SpacesCoordinatorTests: XCTestCase {
             lastErrorDescription: nil
         ))
 
-        XCTAssertEqual(coordinator.rows.map(\.typeLabel), ["Group", "Direct"])
         XCTAssertTrue(coordinator.rows[0].createdLabel.hasPrefix("Created "))
         XCTAssertTrue(coordinator.rows[0].createdLabel.contains("2024"))
         XCTAssertTrue(coordinator.rows[0].lastActivityLabel.hasPrefix("Last active "))

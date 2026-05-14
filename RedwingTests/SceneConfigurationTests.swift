@@ -42,6 +42,15 @@ final class SceneConfigurationTests: XCTestCase {
         XCTAssertTrue(laneSurfaceSource.contains("lineWidth: 1"))
     }
 
+    func testSpaceRowsRenderOnlyTeamContextAndDateMetadata() throws {
+        let laneSurfaceSource = try String(contentsOf: laneSurfaceViewSourceURL(), encoding: .utf8)
+
+        XCTAssertTrue(laneSurfaceSource.contains("Text(row.teamLabel)"))
+        XCTAssertTrue(laneSurfaceSource.contains("Text(row.createdLabel)"))
+        XCTAssertTrue(laneSurfaceSource.contains("Text(row.lastActivityLabel)"))
+        XCTAssertFalse(laneSurfaceSource.contains("Text(row.typeLabel)"))
+    }
+
     func testSpaceRowsTriggerPaginationWhenBottomRowAppears() throws {
         let laneSurfaceSource = try String(contentsOf: laneSurfaceViewSourceURL(), encoding: .utf8)
 

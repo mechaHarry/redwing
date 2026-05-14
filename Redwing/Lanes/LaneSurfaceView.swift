@@ -60,7 +60,6 @@ private struct SpaceGlassRow: View {
                                 .lineLimit(1)
 
                             HStack(spacing: 8) {
-                                Text(row.typeLabel)
                                 Text(row.createdLabel)
                                 Text(row.lastActivityLabel)
                             }
