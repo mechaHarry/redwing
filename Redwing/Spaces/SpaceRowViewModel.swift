@@ -3,7 +3,7 @@ import Foundation
 struct SpaceRowViewModel: Identifiable, Equatable {
     let id: String
     let title: String
-    let teamLabel: String
+    let teamLabel: String?
     let createdLabel: String
     let lastActivityLabel: String
     let iconURL: URL?
@@ -13,7 +13,7 @@ struct SpaceRowViewModel: Identifiable, Equatable {
         SpaceRowViewModel(
             id: "space-skeleton-\(id)",
             title: "",
-            teamLabel: "",
+            teamLabel: nil,
             createdLabel: "",
             lastActivityLabel: "",
             iconURL: nil,

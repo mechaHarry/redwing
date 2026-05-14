@@ -54,10 +54,12 @@ private struct SpaceGlassRow: View {
                                 .font(.headline)
                                 .lineLimit(1)
 
-                            Text(row.teamLabel)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .lineLimit(1)
+                            if let teamLabel = row.teamLabel {
+                                Text(teamLabel)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
+                            }
 
                             HStack(spacing: 8) {
                                 Text(row.createdLabel)

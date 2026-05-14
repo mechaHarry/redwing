@@ -125,16 +125,12 @@ final class SpacesCoordinator: ObservableObject {
         generation == self.generation
     }
 
-    private static func teamLabel(for space: SpaceItem) -> String {
+    private static func teamLabel(for space: SpaceItem) -> String? {
         if space.type == .direct {
             return "Direct Message"
         }
 
-        if let teamName = nonEmpty(space.teamName) {
-            return teamName
-        }
-
-        return "Unknown Team"
+        return nonEmpty(space.teamName)
     }
 
     private static func dateLabel(prefix: String, date: Date?) -> String {

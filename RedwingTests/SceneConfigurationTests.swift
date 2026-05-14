@@ -45,7 +45,8 @@ final class SceneConfigurationTests: XCTestCase {
     func testSpaceRowsRenderOnlyTeamContextAndDateMetadata() throws {
         let laneSurfaceSource = try String(contentsOf: laneSurfaceViewSourceURL(), encoding: .utf8)
 
-        XCTAssertTrue(laneSurfaceSource.contains("Text(row.teamLabel)"))
+        XCTAssertTrue(laneSurfaceSource.contains("if let teamLabel = row.teamLabel"))
+        XCTAssertTrue(laneSurfaceSource.contains("Text(teamLabel)"))
         XCTAssertTrue(laneSurfaceSource.contains("Text(row.createdLabel)"))
         XCTAssertTrue(laneSurfaceSource.contains("Text(row.lastActivityLabel)"))
         XCTAssertFalse(laneSurfaceSource.contains("Text(row.typeLabel)"))

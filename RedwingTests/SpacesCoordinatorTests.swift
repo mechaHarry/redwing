@@ -42,13 +42,14 @@ final class SpacesCoordinatorTests: XCTestCase {
         XCTAssertEqual(coordinator.selectedSpaceID, "s1")
     }
 
-    func testRowsDisplayTeamContextWithoutRawIDsOrTypeDuplication() {
+    func testRowsDisplayTeamContextOnlyForResolvedTeamsAndDirectMessages() {
         let coordinator = SpacesCoordinator(session: nil, diagnostics: DiagnosticsStore())
         coordinator.apply(snapshot: SpaceSnapshot(
             spaces: [
                 SpaceItem(id: "s1", title: "General", type: .group, teamID: "team-123", lastActivity: nil),
                 SpaceItem(id: "s2", title: "Direct", type: .direct, teamID: nil, lastActivity: nil),
-                SpaceItem(id: "s3", title: "Unresolved", type: .group, teamID: nil, lastActivity: nil)
+                SpaceItem(id: "s3", title: "Unresolved", type: .group, teamID: nil, lastActivity: nil),
+                SpaceItem(id: "s4", title: "Resolved", type: .group, teamID: "team-456", teamName: "Platform Team", lastActivity: nil)
             ],
             isRefreshing: false,
             isLoadingNextPage: false,
@@ -56,8 +57,11 @@ final class SpacesCoordinatorTests: XCTestCase {
             lastErrorDescription: nil
         ))
 
-        XCTAssertEqual(coordinator.rows.map(\.teamLabel), ["Unknown Team", "Direct Message", "Unknown Team"])
-        XCTAssertEqual(coordinator.rows.map(\.iconURL), [nil, nil, nil])
+        XCTAssertNil(coordinator.rows[0].teamLabel)
+        XCTAssertEqual(coordinator.rows[1].teamLabel, "Direct Message")
+        XCTAssertNil(coordinator.rows[2].teamLabel)
+        XCTAssertEqual(coordinator.rows[3].teamLabel, "Platform Team")
+        XCTAssertEqual(coordinator.rows.map(\.iconURL), [nil, nil, nil, nil])
     }
 
     func testRowsFleshInSpaceEnrichmentWithoutResettingSkeletonsOrIDs() {
@@ -77,7 +81,8 @@ final class SpacesCoordinatorTests: XCTestCase {
 
         let baseRowIDs = coordinator.rows.map(\.id)
         XCTAssertFalse(coordinator.isShowingSkeletons)
-        XCTAssertEqual(coordinator.rows.map(\.teamLabel), ["Unknown Team", "Direct Message"])
+        XCTAssertNil(coordinator.rows[0].teamLabel)
+        XCTAssertEqual(coordinator.rows[1].teamLabel, "Direct Message")
         XCTAssertEqual(coordinator.rows.map(\.iconURL), [nil, nil])
 
         coordinator.apply(snapshot: SpaceSnapshot(
@@ -107,7 +112,8 @@ final class SpacesCoordinatorTests: XCTestCase {
 
         XCTAssertEqual(coordinator.rows.map(\.id), baseRowIDs)
         XCTAssertFalse(coordinator.isShowingSkeletons)
-        XCTAssertEqual(coordinator.rows.map(\.teamLabel), ["Platform Team", "Direct Message"])
+        XCTAssertEqual(coordinator.rows[0].teamLabel, "Platform Team")
+        XCTAssertEqual(coordinator.rows[1].teamLabel, "Direct Message")
         XCTAssertEqual(coordinator.rows.map(\.iconURL), [nil, avatarURL])
     }
 
