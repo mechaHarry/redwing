@@ -93,7 +93,7 @@ final class SpacesCoordinator: ObservableObject {
             SpaceRowViewModel(
                 id: space.id,
                 title: space.title,
-                teamLabel: space.teamID ?? "No team",
+                teamLabel: Self.teamLabel(for: space),
                 typeLabel: Self.typeLabel(for: space.type),
                 createdLabel: Self.dateLabel(prefix: "Created", date: space.created),
                 lastActivityLabel: Self.dateLabel(prefix: "Last active", date: space.lastActivity),
@@ -126,6 +126,22 @@ final class SpacesCoordinator: ObservableObject {
         generation == self.generation
     }
 
+    private static func teamLabel(for space: SpaceItem) -> String {
+        if let teamName = nonEmpty(space.teamName) {
+            return teamName
+        }
+
+        if let teamID = nonEmpty(space.teamID) {
+            return teamID
+        }
+
+        if space.type == .direct {
+            return "Direct Message"
+        }
+
+        return "No team"
+    }
+
     private static func typeLabel(for type: SpaceTypeDTO?) -> String {
         switch type {
         case .direct:
@@ -145,5 +161,10 @@ final class SpacesCoordinator: ObservableObject {
         }
 
         return "\(prefix) \(date.formatted(date: .abbreviated, time: .shortened))"
+    }
+
+    private static func nonEmpty(_ value: String?) -> String? {
+        let trimmed = value?.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed?.isEmpty == false ? trimmed : nil
     }
 }

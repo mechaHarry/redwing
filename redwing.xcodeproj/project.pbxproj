@@ -713,7 +713,7 @@
 			repositoryURL = "https://github.com/mechaHarry/webex-swift-sdk.git";
 			requirement = {
 				kind = exactVersion;
-				version = 2.5.1;
+				version = 2.6.1;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

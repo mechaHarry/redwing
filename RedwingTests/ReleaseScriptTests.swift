@@ -65,7 +65,7 @@ final class ReleaseScriptTests: XCTestCase {
         XCTAssertTrue(project.contains("XCRemoteSwiftPackageReference \"webex-swift-sdk\""))
         XCTAssertTrue(project.contains("repositoryURL = \"https://github.com/mechaHarry/webex-swift-sdk.git\";"))
         XCTAssertTrue(project.contains("kind = exactVersion;"))
-        XCTAssertTrue(project.contains("version = 2.5.1;"))
+        XCTAssertTrue(project.contains("version = 2.6.1;"))
         XCTAssertFalse(project.contains("XCLocalSwiftPackageReference"))
         XCTAssertFalse(project.contains(localRelativeSDKPath))
 

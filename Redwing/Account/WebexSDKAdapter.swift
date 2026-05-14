@@ -223,6 +223,7 @@ actor WebexSDKAdapter: WebexClientProviding {
                     type: mapSpaceType(space.type),
                     isLocked: space.isLocked,
                     teamID: nonEmpty(space.teamID),
+                    teamName: nonEmpty(space.enriched.teamName),
                     lastActivity: space.lastActivity,
                     creatorID: nonEmpty(space.creatorID),
                     created: space.created,
@@ -233,6 +234,7 @@ actor WebexSDKAdapter: WebexClientProviding {
                     isAnnouncementOnly: space.isAnnouncementOnly,
                     classificationID: nonEmpty(space.classificationID),
                     madePublic: space.madePublic,
+                    iconURL: url(from: space.enriched.spaceAvatar),
                     errors: space.errors?.mapValues { error in
                         SpacePartialResourceErrorDTO(code: error.code, reason: error.reason)
                     }
@@ -288,6 +290,17 @@ actor WebexSDKAdapter: WebexClientProviding {
     private static func nonEmpty(_ value: String?) -> String? {
         let trimmed = value?.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed?.isEmpty == false ? trimmed : nil
+    }
+
+    private static func url(from value: String?) -> URL? {
+        guard let url = nonEmpty(value).flatMap(URL.init(string:)),
+              let scheme = url.scheme?.lowercased(),
+              ["http", "https"].contains(scheme),
+              url.host?.isEmpty == false else {
+            return nil
+        }
+
+        return url
     }
 
     private static func redacted(_ value: String) -> String {

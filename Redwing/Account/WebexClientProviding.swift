@@ -31,6 +31,7 @@ struct SpaceItem: Identifiable, Equatable, Sendable {
     let type: SpaceTypeDTO?
     let isLocked: Bool?
     let teamID: String?
+    let teamName: String?
     let lastActivity: Date?
     let creatorID: String?
     let created: Date?
@@ -50,6 +51,7 @@ struct SpaceItem: Identifiable, Equatable, Sendable {
         type: SpaceTypeDTO? = nil,
         isLocked: Bool? = nil,
         teamID: String? = nil,
+        teamName: String? = nil,
         lastActivity: Date? = nil,
         creatorID: String? = nil,
         created: Date? = nil,
@@ -68,6 +70,7 @@ struct SpaceItem: Identifiable, Equatable, Sendable {
         self.type = type
         self.isLocked = isLocked
         self.teamID = teamID
+        self.teamName = teamName
         self.lastActivity = lastActivity
         self.creatorID = creatorID
         self.created = created

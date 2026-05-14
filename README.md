@@ -24,7 +24,7 @@ The SDK package is pinned to a released tag from:
 https://github.com/mechaHarry/webex-swift-sdk.git
 ```
 
-The current pinned SDK version is `2.5.1`.
+The current pinned SDK version is `2.6.1`.
 
 ## Versioning
 

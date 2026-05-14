@@ -158,6 +158,62 @@ final class WebexSDKAdapterTests: XCTestCase {
         XCTAssertEqual(dto.lastErrorDescription, "Rate limited; retry after 5.0 seconds")
     }
 
+    func testMapsSpaceSnapshotEnrichmentFields() {
+        let avatarURL = URL(string: "https://example.com/avatar.png")!
+        let snapshot = WebexStreamSnapshot(
+            items: [
+                WebexSpace(
+                    id: "group-space",
+                    title: "General",
+                    type: .group,
+                    teamID: "team-123",
+                    enriched: WebexSpaceEnrichment(
+                        teamName: "Platform Team",
+                        status: .complete
+                    )
+                ),
+                WebexSpace(
+                    id: "direct-space",
+                    title: "Direct",
+                    type: .direct,
+                    enriched: WebexSpaceEnrichment(
+                        spaceAvatar: avatarURL.absoluteString,
+                        status: .complete
+                    )
+                ),
+                WebexSpace(
+                    id: "invalid-avatar-space",
+                    title: "Invalid Avatar",
+                    type: .direct,
+                    enriched: WebexSpaceEnrichment(
+                        spaceAvatar: "file:///tmp/avatar.png",
+                        status: .partial
+                    )
+                )
+            ],
+            revision: 1,
+            lastUpdatedAt: nil,
+            isRefreshing: false,
+            isLoadingNextPage: false,
+            lastError: nil,
+            pagination: WebexStreamPagination(
+                hasMore: false,
+                nextPage: nil,
+                pagesLoaded: 1,
+                pageLimit: nil,
+                capReached: false
+            )
+        )
+
+        let dto = WebexSDKAdapter.mapSpaceSnapshot(snapshot)
+
+        XCTAssertEqual(dto.spaces[0].teamName, "Platform Team")
+        XCTAssertNil(dto.spaces[0].iconURL)
+        XCTAssertNil(dto.spaces[1].teamName)
+        XCTAssertEqual(dto.spaces[1].iconURL, avatarURL)
+        XCTAssertNil(dto.spaces[2].iconURL)
+    }
+
     func testMapsMessageThreadSnapshotFromSingleSDKThreadSnapshot() {
         let date = Date(timeIntervalSince1970: 24)
         let parent = WebexMessage(

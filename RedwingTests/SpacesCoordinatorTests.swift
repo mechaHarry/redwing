@@ -59,6 +59,57 @@ final class SpacesCoordinatorTests: XCTestCase {
         XCTAssertEqual(coordinator.rows.map(\.iconURL), [nil, nil])
     }
 
+    func testRowsFleshInSpaceEnrichmentWithoutResettingSkeletonsOrIDs() {
+        let coordinator = SpacesCoordinator(session: nil, diagnostics: DiagnosticsStore())
+        let avatarURL = URL(string: "https://example.com/direct.png")!
+
+        coordinator.apply(snapshot: SpaceSnapshot(
+            spaces: [
+                SpaceItem(id: "group-space", title: "General", type: .group, teamID: "team-123", lastActivity: nil),
+                SpaceItem(id: "direct-space", title: "Alex", type: .direct, teamID: nil, lastActivity: nil)
+            ],
+            isRefreshing: false,
+            isLoadingNextPage: false,
+            hasMore: false,
+            lastErrorDescription: nil
+        ))
+
+        let baseRowIDs = coordinator.rows.map(\.id)
+        XCTAssertFalse(coordinator.isShowingSkeletons)
+        XCTAssertEqual(coordinator.rows.map(\.teamLabel), ["team-123", "Direct Message"])
+        XCTAssertEqual(coordinator.rows.map(\.iconURL), [nil, nil])
+
+        coordinator.apply(snapshot: SpaceSnapshot(
+            spaces: [
+                SpaceItem(
+                    id: "group-space",
+                    title: "General",
+                    type: .group,
+                    teamID: "team-123",
+                    teamName: "Platform Team",
+                    lastActivity: nil
+                ),
+                SpaceItem(
+                    id: "direct-space",
+                    title: "Alex",
+                    type: .direct,
+                    teamID: nil,
+                    lastActivity: nil,
+                    iconURL: avatarURL
+                )
+            ],
+            isRefreshing: false,
+            isLoadingNextPage: false,
+            hasMore: false,
+            lastErrorDescription: nil
+        ))
+
+        XCTAssertEqual(coordinator.rows.map(\.id), baseRowIDs)
+        XCTAssertFalse(coordinator.isShowingSkeletons)
+        XCTAssertEqual(coordinator.rows.map(\.teamLabel), ["Platform Team", "Direct Message"])
+        XCTAssertEqual(coordinator.rows.map(\.iconURL), [nil, avatarURL])
+    }
+
     func testRowsDisplaySpaceTypeCreatedDateAndLastActiveDate() {
         let coordinator = SpacesCoordinator(session: nil, diagnostics: DiagnosticsStore())
         let created = Date(timeIntervalSince1970: 1_704_110_400)
