@@ -56,6 +56,40 @@ final class FakeSpacesStream: SpacesStreamProviding {
     }
 }
 
+final class FakeTeamsStream: TeamsStreamProviding {
+    let probe = StreamProbe<TeamSnapshot>()
+    private let state = LockIsolated(FakeStreamState())
+
+    private(set) var refreshCount: Int {
+        get { state.withValue { $0.refreshCount } }
+        set { state.withValue { $0.refreshCount = newValue } }
+    }
+
+    private(set) var loadNextPageCount: Int {
+        get { state.withValue { $0.loadNextPageCount } }
+        set { state.withValue { $0.loadNextPageCount = newValue } }
+    }
+
+    private(set) var isCancelled: Bool {
+        get { state.withValue { $0.isCancelled } }
+        set { state.withValue { $0.isCancelled = newValue } }
+    }
+
+    var snapshots: AsyncStream<TeamSnapshot> { probe.stream }
+
+    func refresh() async {
+        state.withValue { $0.refreshCount += 1 }
+    }
+
+    func loadNextPage() async {
+        state.withValue { $0.loadNextPageCount += 1 }
+    }
+
+    func cancel() {
+        state.withValue { $0.isCancelled = true }
+    }
+}
+
 final class FakeMessagesThreadStream: MessagesThreadStreamProviding {
     let probe = StreamProbe<MessageThreadSnapshotDTO>()
     private let state = LockIsolated(FakeStreamState())
@@ -94,7 +128,9 @@ private struct FakeWebexClientState {
     var account: WebexAccountSummary?
     var authorizeResult: Result<WebexAccountSummary, Error>?
     var spacesStream = FakeSpacesStream()
+    var teamsStream = FakeTeamsStream()
     var messagesStreamsBySpaceID: [String: FakeMessagesThreadStream] = [:]
+    var managerChainResult: Result<[PersonItem], Error>?
     var didStartRealtime = false
     var didSignOut = false
 }
@@ -118,9 +154,19 @@ final class FakeWebexClientProviding: WebexClientProviding {
         set { state.withValue { $0.spacesStream = newValue } }
     }
 
+    var teamsStream: FakeTeamsStream {
+        get { state.withValue { $0.teamsStream } }
+        set { state.withValue { $0.teamsStream = newValue } }
+    }
+
     var messagesStreamsBySpaceID: [String: FakeMessagesThreadStream] {
         get { state.withValue { $0.messagesStreamsBySpaceID } }
         set { state.withValue { $0.messagesStreamsBySpaceID = newValue } }
+    }
+
+    var managerChainResult: Result<[PersonItem], Error>? {
+        get { state.withValue { $0.managerChainResult } }
+        set { state.withValue { $0.managerChainResult = newValue } }
     }
 
     private(set) var didStartRealtime: Bool {
@@ -162,6 +208,10 @@ final class FakeWebexClientProviding: WebexClientProviding {
         spacesStream
     }
 
+    func makeTeamsStream() async throws -> TeamsStreamProviding {
+        teamsStream
+    }
+
     func makeMessagesThreadStream(spaceID: String) async throws -> MessagesThreadStreamProviding {
         state.withValue { state in
             if let stream = state.messagesStreamsBySpaceID[spaceID],
@@ -171,6 +221,28 @@ final class FakeWebexClientProviding: WebexClientProviding {
             let stream = FakeMessagesThreadStream()
             state.messagesStreamsBySpaceID[spaceID] = stream
             return stream
+        }
+    }
+
+    func loadManagerChain() async throws -> [PersonItem] {
+        try state.withValue { state in
+            switch state.managerChainResult {
+            case .success(let chain):
+                return chain
+            case .failure(let error):
+                throw error
+            case nil:
+                return [
+                    PersonItem(
+                        id: state.account?.id ?? "account-1",
+                        displayName: state.account?.displayName ?? "Test User",
+                        title: nil,
+                        department: nil,
+                        avatarURL: nil,
+                        managerID: nil
+                    ),
+                ]
+            }
         }
     }
 

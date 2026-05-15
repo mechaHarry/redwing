@@ -12,6 +12,8 @@ final class AppRootModel: ObservableObject {
     @Published private(set) var phase: Phase = .setupRequired
     @Published private(set) var accountSession: AccountSession?
     @Published private(set) var spacesCoordinator: SpacesCoordinator?
+    @Published private(set) var teamsCoordinator: TeamsCoordinator?
+    @Published private(set) var peopleCoordinator: PeopleCoordinator?
     @Published private(set) var messagesCoordinator: MessagesCoordinator?
     @Published private(set) var attentionFeed: AttentionFeedStore?
 
@@ -42,6 +44,8 @@ final class AppRootModel: ObservableObject {
         let attentionFeed = AttentionFeedStore(currentUserID: currentUserID)
         accountSession = session
         spacesCoordinator = SpacesCoordinator(session: session, diagnostics: diagnostics)
+        teamsCoordinator = TeamsCoordinator(session: session, diagnostics: diagnostics)
+        peopleCoordinator = PeopleCoordinator(session: session, diagnostics: diagnostics)
         messagesCoordinator = MessagesCoordinator(
             session: session,
             diagnostics: diagnostics,

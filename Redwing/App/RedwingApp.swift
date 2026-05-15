@@ -85,10 +85,14 @@ private struct RedwingRootView: View {
         Group {
             if let accountSession = rootModel.accountSession,
                let spaces = rootModel.spacesCoordinator,
+               let teams = rootModel.teamsCoordinator,
+               let people = rootModel.peopleCoordinator,
                let attentionFeed = rootModel.attentionFeed {
                 RedwingSessionView(
                     accountSession: accountSession,
                     spaces: spaces,
+                    teams: teams,
+                    people: people,
                     attentionFeed: attentionFeed,
                     isShowingDiagnostics: $isShowingDiagnostics
                 )
@@ -117,23 +121,115 @@ private struct RedwingRootView: View {
                     rootModel.updateCurrentUserID(currentUserID)
                 }
                 await rootModel.spacesCoordinator?.start()
+                await rootModel.teamsCoordinator?.start()
+                await rootModel.peopleCoordinator?.start()
             }
         }
+    }
+}
+
+enum RedwingMainTab: String, CaseIterable, Identifiable {
+    case spaces
+    case teams
+    case people
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .spaces:
+            "Spaces"
+        case .teams:
+            "Teams"
+        case .people:
+            "People"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .spaces:
+            "bubble.left.and.bubble.right.fill"
+        case .teams:
+            "person.3.fill"
+        case .people:
+            "person.crop.circle.fill"
+        }
+    }
+}
+
+private struct SessionSidebarView: View {
+    @Binding var selection: RedwingMainTab
+
+    var body: some View {
+        let sidebarShape = RoundedRectangle(cornerRadius: 26, style: .continuous)
+
+        GlassEffectContainer {
+            VStack(spacing: 10) {
+                ForEach(RedwingMainTab.allCases) { tab in
+                    Button {
+                        selection = tab
+                    } label: {
+                        Label(tab.title, systemImage: tab.systemImage)
+                            .labelStyle(.iconOnly)
+                            .font(.title3)
+                            .frame(width: 44, height: 44)
+                            .contentShape(Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(selection == tab ? .primary : .secondary)
+                    .background {
+                        if selection == tab {
+                            Circle()
+                                .fill(.regularMaterial)
+                        }
+                    }
+                    .help(tab.title)
+                    .accessibilityLabel(tab.title)
+                }
+
+                Spacer(minLength: 0)
+            }
+            .padding(.vertical, 14)
+            .frame(width: 68)
+            .glassEffect(.regular, in: sidebarShape)
+        }
+        .padding(.leading, 16)
+        .padding(.vertical, 20)
     }
 }
 
 private struct RedwingSessionView: View {
     @ObservedObject var accountSession: AccountSession
     @ObservedObject var spaces: SpacesCoordinator
+    @ObservedObject var teams: TeamsCoordinator
+    @ObservedObject var people: PeopleCoordinator
     @ObservedObject var attentionFeed: AttentionFeedStore
     @Binding var isShowingDiagnostics: Bool
+    @State private var selectedTab: RedwingMainTab = .spaces
 
     var body: some View {
         Group {
             switch accountSession.phase {
             case .idle, .loading, .ready:
                 VStack(spacing: 0) {
-                    LaneSurfaceView(spaces: spaces)
+                    HStack(spacing: 0) {
+                        SessionSidebarView(selection: $selectedTab)
+
+                        Group {
+                            switch selectedTab {
+                            case .spaces:
+                                LaneSurfaceView(spaces: spaces)
+                            case .teams:
+                                TeamsLaneSurfaceView(teams: teams)
+                            case .people:
+                                PeopleHierarchyView(people: people)
+                            }
+                        }
+                        .id(selectedTab)
+                        .transition(.opacity.combined(with: .scale(scale: 0.99)))
+                        .animation(.easeInOut(duration: 0.2), value: selectedTab)
+                    }
 
                     Divider()
 
@@ -167,6 +263,8 @@ private struct RedwingSessionView: View {
                 attentionFeed.updateCurrentUserID(currentUserID)
             }
             await spaces.start()
+            await teams.start()
+            await people.start()
         }
     }
 
@@ -178,6 +276,8 @@ private struct RedwingSessionView: View {
                     attentionFeed.updateCurrentUserID(currentUserID)
                 }
                 await spaces.start()
+                await teams.start()
+                await people.start()
             }
         }
     }

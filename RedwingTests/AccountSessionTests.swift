@@ -310,8 +310,16 @@ private final class SpyWebexClientProviding: WebexClientProviding, @unchecked Se
         FakeSpacesStream()
     }
 
+    func makeTeamsStream() async throws -> TeamsStreamProviding {
+        FakeTeamsStream()
+    }
+
     func makeMessagesThreadStream(spaceID: String) async throws -> MessagesThreadStreamProviding {
         FakeMessagesThreadStream()
+    }
+
+    func loadManagerChain() async throws -> [PersonItem] {
+        []
     }
 
     func signOut() async throws {
@@ -340,8 +348,16 @@ private final class FailingSignOutProvider: WebexClientProviding, @unchecked Sen
         FakeSpacesStream()
     }
 
+    func makeTeamsStream() async throws -> TeamsStreamProviding {
+        FakeTeamsStream()
+    }
+
     func makeMessagesThreadStream(spaceID: String) async throws -> MessagesThreadStreamProviding {
         FakeMessagesThreadStream()
+    }
+
+    func loadManagerChain() async throws -> [PersonItem] {
+        []
     }
 
     func signOut() async throws {
@@ -421,8 +437,16 @@ private actor SuspendedWebexClientProviding: WebexClientProviding {
         FakeSpacesStream()
     }
 
+    func makeTeamsStream() async throws -> TeamsStreamProviding {
+        FakeTeamsStream()
+    }
+
     func makeMessagesThreadStream(spaceID: String) async throws -> MessagesThreadStreamProviding {
         FakeMessagesThreadStream()
+    }
+
+    func loadManagerChain() async throws -> [PersonItem] {
+        []
     }
 
     func signOut() async throws {}

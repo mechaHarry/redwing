@@ -32,6 +32,17 @@ final class SceneConfigurationTests: XCTestCase {
         XCTAssertFalse(laneSurfaceSource.contains("threadLane"))
     }
 
+    func testSessionShellUsesGlassSidebarTabs() throws {
+        let redwingAppSource = try String(contentsOf: redwingAppSourceURL(), encoding: .utf8)
+
+        XCTAssertTrue(redwingAppSource.contains("enum RedwingMainTab"))
+        XCTAssertTrue(redwingAppSource.contains("SessionSidebarView"))
+        XCTAssertTrue(redwingAppSource.contains("Spaces"))
+        XCTAssertTrue(redwingAppSource.contains("Teams"))
+        XCTAssertTrue(redwingAppSource.contains("People"))
+        XCTAssertTrue(redwingAppSource.contains("glassEffect(.regular"))
+    }
+
     func testSpaceRowsOwnIndividualGlassSurfaces() throws {
         let laneSurfaceSource = try String(contentsOf: laneSurfaceViewSourceURL(), encoding: .utf8)
 
@@ -61,6 +72,19 @@ final class SceneConfigurationTests: XCTestCase {
         XCTAssertTrue(laneSurfaceSource.contains("loadNextPageIfNeeded(visibleRowID: row.id)"))
     }
 
+    func testLaneSurfacesShowAnimatedSkeletonsAndPaginationFooter() throws {
+        let laneSurfaceSource = try String(contentsOf: laneSurfaceViewSourceURL(), encoding: .utf8)
+        let skeletonSource = try String(contentsOf: skeletonViewsSourceURL(), encoding: .utf8)
+
+        XCTAssertTrue(skeletonSource.contains("SkeletonWaveModifier"))
+        XCTAssertTrue(skeletonSource.contains("LinearGradient"))
+        XCTAssertTrue(laneSurfaceSource.contains("LanePaginationFooter"))
+        XCTAssertTrue(laneSurfaceSource.contains("Searching for more..."))
+        XCTAssertTrue(laneSurfaceSource.contains("All found!"))
+        XCTAssertTrue(laneSurfaceSource.contains("BirdLoadingIndicator"))
+        XCTAssertTrue(laneSurfaceSource.contains("BirdNestIndicator"))
+    }
+
     func testSpaceRowsAnimateSnapshotDrivenContentChanges() throws {
         let laneSurfaceSource = try String(contentsOf: laneSurfaceViewSourceURL(), encoding: .utf8)
 
@@ -83,5 +107,12 @@ final class SceneConfigurationTests: XCTestCase {
             .deletingLastPathComponent()
             .deletingLastPathComponent()
             .appendingPathComponent("Redwing/Lanes/LaneSurfaceView.swift")
+    }
+
+    private func skeletonViewsSourceURL() -> URL {
+        URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("Redwing/Lanes/SkeletonViews.swift")
     }
 }

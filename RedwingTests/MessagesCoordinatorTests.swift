@@ -469,10 +469,18 @@ private actor SuspendedMessagesProvider: WebexClientProviding {
         FakeSpacesStream()
     }
 
+    func makeTeamsStream() async throws -> TeamsStreamProviding {
+        FakeTeamsStream()
+    }
+
     func makeMessagesThreadStream(spaceID: String) async throws -> MessagesThreadStreamProviding {
         try await withCheckedThrowingContinuation { continuation in
             messageStreamContinuations.append(continuation)
         }
+    }
+
+    func loadManagerChain() async throws -> [PersonItem] {
+        []
     }
 
     func signOut() async throws {}

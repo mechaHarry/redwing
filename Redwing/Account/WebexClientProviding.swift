@@ -14,6 +14,30 @@ struct SpaceSnapshot: Equatable, Sendable {
     let lastErrorDescription: String?
 }
 
+struct TeamSnapshot: Equatable, Sendable {
+    let teams: [TeamItem]
+    let isRefreshing: Bool
+    let isLoadingNextPage: Bool
+    let hasMore: Bool
+    let lastErrorDescription: String?
+}
+
+struct TeamItem: Identifiable, Equatable, Sendable {
+    let id: String
+    let name: String
+    let creatorID: String?
+    let created: Date?
+}
+
+struct PersonItem: Identifiable, Equatable, Sendable {
+    let id: String
+    let displayName: String
+    let title: String?
+    let department: String?
+    let avatarURL: URL?
+    let managerID: String?
+}
+
 enum SpaceTypeDTO: Equatable, Sendable {
     case direct
     case group
@@ -141,11 +165,20 @@ protocol MessagesThreadStreamProviding: AnyObject, Sendable {
     func cancel()
 }
 
+protocol TeamsStreamProviding: AnyObject, Sendable {
+    var snapshots: AsyncStream<TeamSnapshot> { get }
+    func refresh() async
+    func loadNextPage() async
+    func cancel()
+}
+
 protocol WebexClientProviding: Sendable {
     func existingAccount() async throws -> WebexAccountSummary?
     func authorize(credentials: SetupCredentials) async throws -> WebexAccountSummary
     func startRealtime() async -> AsyncStream<RealtimeStateDTO>
     func makeSpacesStream() async throws -> SpacesStreamProviding
+    func makeTeamsStream() async throws -> TeamsStreamProviding
     func makeMessagesThreadStream(spaceID: String) async throws -> MessagesThreadStreamProviding
+    func loadManagerChain() async throws -> [PersonItem]
     func signOut() async throws
 }

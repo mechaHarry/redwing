@@ -51,6 +51,13 @@
 		A20000000000000000000002 /* DiagnosticsPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000012 /* DiagnosticsPanelView.swift */; };
 		A20000000000000000000003 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000013 /* MenuBarView.swift */; };
 		A20000000000000000000004 /* SetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000014 /* SetupView.swift */; };
+		B80000000000000000000001 /* TeamsCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B80000000000000000000002 /* TeamsCoordinatorTests.swift */; };
+		B80000000000000000000003 /* PeopleCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B80000000000000000000004 /* PeopleCoordinatorTests.swift */; };
+		B81000000000000000000001 /* LanePaginationFooterState.swift in Sources */ = {isa = PBXBuildFile; fileRef = B81000000000000000000002 /* LanePaginationFooterState.swift */; };
+		B81000000000000000000003 /* TeamRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B81000000000000000000004 /* TeamRowViewModel.swift */; };
+		B81000000000000000000005 /* TeamsCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B81000000000000000000006 /* TeamsCoordinator.swift */; };
+		B81000000000000000000007 /* PersonNodeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B81000000000000000000008 /* PersonNodeViewModel.swift */; };
+		B81000000000000000000009 /* PeopleCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8100000000000000000000A /* PeopleCoordinator.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -111,6 +118,13 @@
 		A20000000000000000000012 /* DiagnosticsPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsPanelView.swift; sourceTree = "<group>"; };
 		A20000000000000000000013 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
 		A20000000000000000000014 /* SetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupView.swift; sourceTree = "<group>"; };
+		B80000000000000000000002 /* TeamsCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeamsCoordinatorTests.swift; sourceTree = "<group>"; };
+		B80000000000000000000004 /* PeopleCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeopleCoordinatorTests.swift; sourceTree = "<group>"; };
+		B81000000000000000000002 /* LanePaginationFooterState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanePaginationFooterState.swift; sourceTree = "<group>"; };
+		B81000000000000000000004 /* TeamRowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeamRowViewModel.swift; sourceTree = "<group>"; };
+		B81000000000000000000006 /* TeamsCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeamsCoordinator.swift; sourceTree = "<group>"; };
+		B81000000000000000000008 /* PersonNodeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonNodeViewModel.swift; sourceTree = "<group>"; };
+		B8100000000000000000000A /* PeopleCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeopleCoordinator.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -152,9 +166,11 @@
 				A1000000000000000000002A /* Diagnostics */,
 				F90000000000000000000007 /* Lanes */,
 				D7000000000000000000000B /* Messages */,
+				B8100000000000000000000B /* People */,
 				A10000000000000000000029 /* Resources */,
 				A1000000000000000000002B /* Setup */,
 				C60000000000000000000007 /* Spaces */,
+				B8100000000000000000000C /* Teams */,
 				AB1100000000000000000005 /* Window */,
 			);
 			path = Redwing;
@@ -175,6 +191,8 @@
 				A1000000000000000000001B /* SetupValidationTests.swift */,
 				A10000000000000000000014 /* SmokeTests.swift */,
 				C60000000000000000000002 /* SpacesCoordinatorTests.swift */,
+				B80000000000000000000002 /* TeamsCoordinatorTests.swift */,
+				B80000000000000000000004 /* PeopleCoordinatorTests.swift */,
 				D70000000000000000000002 /* ThreadLanePolicyTests.swift */,
 				B51200000000000000000002 /* WebexSDKAdapterTests.swift */,
 				AB1100000000000000000002 /* WindowFocusControllerTests.swift */,
@@ -292,10 +310,29 @@
 			isa = PBXGroup;
 			children = (
 				F90000000000000000000005 /* LaneLayoutModel.swift */,
+				B81000000000000000000002 /* LanePaginationFooterState.swift */,
 				F90000000000000000000009 /* LaneSurfaceView.swift */,
 				F90000000000000000000006 /* SkeletonViews.swift */,
 			);
 			path = Lanes;
+			sourceTree = "<group>";
+		};
+		B8100000000000000000000B /* People */ = {
+			isa = PBXGroup;
+			children = (
+				B81000000000000000000008 /* PersonNodeViewModel.swift */,
+				B8100000000000000000000A /* PeopleCoordinator.swift */,
+			);
+			path = People;
+			sourceTree = "<group>";
+		};
+		B8100000000000000000000C /* Teams */ = {
+			isa = PBXGroup;
+			children = (
+				B81000000000000000000004 /* TeamRowViewModel.swift */,
+				B81000000000000000000006 /* TeamsCoordinator.swift */,
+			);
+			path = Teams;
 			sourceTree = "<group>";
 		};
 		AB1100000000000000000005 /* Window */ = {
@@ -421,10 +458,13 @@
 				A20000000000000000000002 /* DiagnosticsPanelView.swift in Sources */,
 				A10000000000000000000007 /* DiagnosticsStore.swift in Sources */,
 				F90000000000000000000003 /* LaneLayoutModel.swift in Sources */,
+				B81000000000000000000001 /* LanePaginationFooterState.swift in Sources */,
 				F90000000000000000000008 /* LaneSurfaceView.swift in Sources */,
 				A20000000000000000000003 /* MenuBarView.swift in Sources */,
 				D70000000000000000000005 /* MessageRowViewModel.swift in Sources */,
 				D70000000000000000000009 /* MessagesCoordinator.swift in Sources */,
+				B81000000000000000000007 /* PersonNodeViewModel.swift in Sources */,
+				B81000000000000000000009 /* PeopleCoordinator.swift in Sources */,
 				A10000000000000000000003 /* RedwingEnvironment.swift in Sources */,
 				A10000000000000000000001 /* RedwingApp.swift in Sources */,
 				A1000000000000000000000A /* SetupCredentials.swift in Sources */,
@@ -435,6 +475,8 @@
 				C60000000000000000000003 /* SpaceRowViewModel.swift in Sources */,
 				C60000000000000000000004 /* SpacesCoordinator.swift in Sources */,
 				A20000000000000000000001 /* StatusBarView.swift in Sources */,
+				B81000000000000000000003 /* TeamRowViewModel.swift in Sources */,
+				B81000000000000000000005 /* TeamsCoordinator.swift in Sources */,
 				D70000000000000000000007 /* ThreadLanePolicy.swift in Sources */,
 				A1000000000000000000000E /* WebexClientProviding.swift in Sources */,
 				B51200000000000000000004 /* WebexSDKAdapter.swift in Sources */,
@@ -459,6 +501,8 @@
 				A10000000000000000000009 /* SetupValidationTests.swift in Sources */,
 				A10000000000000000000004 /* SmokeTests.swift in Sources */,
 				C60000000000000000000001 /* SpacesCoordinatorTests.swift in Sources */,
+				B80000000000000000000001 /* TeamsCoordinatorTests.swift in Sources */,
+				B80000000000000000000003 /* PeopleCoordinatorTests.swift in Sources */,
 				D70000000000000000000001 /* ThreadLanePolicyTests.swift in Sources */,
 				B51200000000000000000001 /* WebexSDKAdapterTests.swift in Sources */,
 				AB1100000000000000000001 /* WindowFocusControllerTests.swift in Sources */,
@@ -713,7 +757,7 @@
 			repositoryURL = "https://github.com/mechaHarry/webex-swift-sdk.git";
 			requirement = {
 				kind = exactVersion;
-				version = 2.6.1;
+				version = 2.7.1;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

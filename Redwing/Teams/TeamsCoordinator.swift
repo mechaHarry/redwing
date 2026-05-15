@@ -2,11 +2,11 @@ import Combine
 import Foundation
 
 @MainActor
-final class SpacesCoordinator: ObservableObject {
+final class TeamsCoordinator: ObservableObject {
     static let skeletonRowCount = 8
 
-    @Published private(set) var rows: [SpaceRowViewModel] = (0..<skeletonRowCount).map(SpaceRowViewModel.skeleton)
-    @Published private(set) var selectedSpaceID: String?
+    @Published private(set) var rows: [TeamRowViewModel] = (0..<skeletonRowCount).map(TeamRowViewModel.skeleton)
+    @Published private(set) var selectedTeamID: String?
     @Published private(set) var status: SessionStatus = .idle
     @Published private(set) var hasMore = false
     @Published private(set) var isLoadingNextPage = false
@@ -22,7 +22,7 @@ final class SpacesCoordinator: ObservableObject {
 
     private let session: AccountSession?
     private let diagnostics: DiagnosticsStore
-    private var stream: SpacesStreamProviding?
+    private var stream: TeamsStreamProviding?
     private var task: Task<Void, Never>?
     private var generation = 0
 
@@ -40,7 +40,7 @@ final class SpacesCoordinator: ObservableObject {
         guard let session else { return }
         let generation = replaceStreamState()
         do {
-            let stream = try await session.makeSpacesStream()
+            let stream = try await session.makeTeamsStream()
             guard isCurrent(generation) else {
                 stream.cancel()
                 return
@@ -52,17 +52,17 @@ final class SpacesCoordinator: ObservableObject {
             await stream.refresh()
         } catch {
             guard isCurrent(generation) else { return }
-            status = .failed("Spaces unavailable")
-            diagnostics.append(source: .spaces, severity: .error, message: "Spaces stream failed", detail: String(describing: error))
+            status = .failed("Teams unavailable")
+            diagnostics.append(source: .spaces, severity: .error, message: "Teams stream failed", detail: String(describing: error))
         }
     }
 
-    func apply(snapshot: SpaceSnapshot) {
+    func apply(snapshot: TeamSnapshot) {
         apply(snapshot: snapshot, generation: generation)
     }
 
-    func select(spaceID: String) {
-        selectedSpaceID = spaceID
+    func select(teamID: String) {
+        selectedTeamID = teamID
     }
 
     func loadNextPage() async {
@@ -92,37 +92,35 @@ final class SpacesCoordinator: ObservableObject {
         await stream.loadNextPage()
     }
 
-    private func apply(snapshot: SpaceSnapshot, generation: Int) {
+    private func apply(snapshot: TeamSnapshot, generation: Int) {
         guard isCurrent(generation) else { return }
 
         hasMore = snapshot.hasMore
         isLoadingNextPage = snapshot.isLoadingNextPage
-        status = snapshot.lastErrorDescription.map { _ in SessionStatus.failed("Spaces refresh failed") } ?? (snapshot.isRefreshing ? .refreshing : .connected)
+        status = snapshot.lastErrorDescription.map { _ in SessionStatus.failed("Teams refresh failed") } ?? (snapshot.isRefreshing ? .refreshing : .connected)
         if let error = snapshot.lastErrorDescription {
-            diagnostics.append(source: .spaces, severity: .error, message: "Spaces refresh failed", detail: error)
+            diagnostics.append(source: .spaces, severity: .error, message: "Teams refresh failed", detail: error)
         }
 
-        guard !snapshot.spaces.isEmpty else {
+        guard !snapshot.teams.isEmpty else {
             rows = snapshot.isRefreshing ? rows : []
             isShowingSkeletons = snapshot.isRefreshing
             return
         }
 
-        rows = snapshot.spaces.map { space in
-            SpaceRowViewModel(
-                id: space.id,
-                title: space.title,
-                teamLabel: Self.teamLabel(for: space),
-                createdLabel: Self.dateLabel(prefix: "Created", date: space.created),
-                lastActivityLabel: Self.dateLabel(prefix: "Last active", date: space.lastActivity),
-                avatarState: Self.avatarState(for: space),
+        rows = snapshot.teams.map { team in
+            TeamRowViewModel(
+                id: team.id,
+                name: team.name,
+                creatorLabel: Self.creatorLabel(for: team),
+                createdLabel: Self.dateLabel(prefix: "Created", date: team.created),
                 isSkeleton: false
             )
         }
         isShowingSkeletons = false
     }
 
-    private func subscribe(to stream: SpacesStreamProviding, generation: Int) {
+    private func subscribe(to stream: TeamsStreamProviding, generation: Int) {
         task?.cancel()
         task = Task { [weak self] in
             for await snapshot in stream.snapshots {
@@ -144,28 +142,12 @@ final class SpacesCoordinator: ObservableObject {
         generation == self.generation
     }
 
-    private static func teamLabel(for space: SpaceItem) -> String? {
-        if space.type == .direct {
-            return "Direct Message"
+    private static func creatorLabel(for team: TeamItem) -> String {
+        guard let creatorID = nonEmpty(team.creatorID) else {
+            return "Creator unknown"
         }
 
-        return nonEmpty(space.teamName)
-    }
-
-    private static func avatarState(for space: SpaceItem) -> SpaceAvatarState {
-        if let iconURL = space.iconURL {
-            return .remote(iconURL)
-        }
-
-        if space.enrichmentStatus == .loading {
-            return .loading
-        }
-
-        if space.type == .direct {
-            return .directPlaceholder
-        }
-
-        return .groupPlaceholder
+        return "Creator \(creatorID)"
     }
 
     private static func dateLabel(prefix: String, date: Date?) -> String {

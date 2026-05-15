@@ -89,6 +89,18 @@ actor WebexSDKAdapter: WebexClientProviding {
         return WebexSDKSpacesStreamAdapter(stream: stream, triggers: realtimeConnection?.triggers)
     }
 
+    func makeTeamsStream() async throws -> TeamsStreamProviding {
+        guard let client else {
+            throw WebexSDKError.network("No active Webex account")
+        }
+
+        let stream = client.teams.stream(
+            params: ListTeamsParams(max: 40),
+            pageLimit: 3
+        )
+        return WebexSDKTeamsStreamAdapter(stream: stream, triggers: realtimeConnection?.triggers)
+    }
+
     func makeMessagesThreadStream(spaceID: String) async throws -> MessagesThreadStreamProviding {
         guard let client else {
             throw WebexSDKError.network("No active Webex account")
@@ -103,6 +115,28 @@ actor WebexSDKAdapter: WebexClientProviding {
             spaceID: spaceID,
             triggers: realtimeConnection?.triggers
         )
+    }
+
+    func loadManagerChain() async throws -> [PersonItem] {
+        guard let client else {
+            throw WebexSDKError.network("No active Webex account")
+        }
+
+        var chain: [PersonItem] = []
+        var visited = Set<String>()
+        var person = try await client.people.me()
+
+        while !visited.contains(person.id), chain.count < 20 {
+            visited.insert(person.id)
+            chain.append(Self.mapPerson(person))
+
+            guard let managerID = Self.nonEmpty(person.managerID) else {
+                break
+            }
+            person = try await client.people.get(personID: managerID)
+        }
+
+        return chain
     }
 
     func signOut() async throws {
@@ -248,6 +282,23 @@ actor WebexSDKAdapter: WebexClientProviding {
         )
     }
 
+    static func mapTeamSnapshot(_ snapshot: WebexStreamSnapshot<WebexTeam>) -> TeamSnapshot {
+        TeamSnapshot(
+            teams: snapshot.items.map { team in
+                TeamItem(
+                    id: team.id,
+                    name: nonEmpty(team.name) ?? "Untitled Team",
+                    creatorID: nonEmpty(team.creatorID),
+                    created: team.created
+                )
+            },
+            isRefreshing: snapshot.isRefreshing,
+            isLoadingNextPage: snapshot.isLoadingNextPage,
+            hasMore: snapshot.pagination.hasMore,
+            lastErrorDescription: snapshot.lastError.map { redacted(String(describing: $0)) }
+        )
+    }
+
     static func mapMessageThreadSnapshot(_ snapshot: WebexMessageThreadSnapshot) -> MessageThreadSnapshotDTO {
         MessageThreadSnapshotDTO(
             topLevelMessageIDs: snapshot.topLevelMessageIDs,
@@ -256,6 +307,19 @@ actor WebexSDKAdapter: WebexClientProviding {
             isLoadingNextPage: snapshot.isLoadingNextPage,
             hasMore: snapshot.pagination.hasMore,
             lastErrorDescription: snapshot.lastError.map { redacted(String(describing: $0)) }
+        )
+    }
+
+    static func mapPerson(_ person: WebexPerson) -> PersonItem {
+        PersonItem(
+            id: person.id,
+            displayName: nonEmpty(person.displayName)
+                ?? person.emails.compactMap { nonEmpty($0) }.first
+                ?? person.id,
+            title: nonEmpty(person.title),
+            department: nonEmpty(person.department),
+            avatarURL: url(from: person.avatar),
+            managerID: nonEmpty(person.managerID)
         )
     }
 
@@ -340,6 +404,46 @@ actor WebexSDKAdapter: WebexClientProviding {
         }
 
         return redacted
+    }
+}
+
+final class WebexSDKTeamsStreamAdapter: TeamsStreamProviding {
+    private let stream: TeamsStream
+    private let triggerTask: Task<Void, Never>?
+
+    var snapshots: AsyncStream<TeamSnapshot> {
+        stream.snapshots.mapped { snapshot in
+            WebexSDKAdapter.mapTeamSnapshot(snapshot)
+        }
+    }
+
+    init(stream: TeamsStream, triggers: AsyncStream<WebexStreamTrigger>?) {
+        self.stream = stream
+        self.triggerTask = triggers.map { triggers in
+            stream.refreshOnTriggers(triggers) { trigger in
+                Self.shouldRefresh(for: trigger)
+            }
+        }
+    }
+
+    deinit {
+        cancel()
+    }
+
+    func refresh() async {
+        await stream.refresh()
+    }
+
+    func loadNextPage() async {
+        await stream.loadNextPage()
+    }
+
+    func cancel() {
+        triggerTask?.cancel()
+    }
+
+    static func shouldRefresh(for trigger: WebexStreamTrigger) -> Bool {
+        ["teams", "teamMemberships"].contains(trigger.resource)
     }
 }
 

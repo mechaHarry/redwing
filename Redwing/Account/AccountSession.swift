@@ -93,8 +93,16 @@ final class AccountSession: ObservableObject {
         try await clientProvider.makeSpacesStream()
     }
 
+    func makeTeamsStream() async throws -> TeamsStreamProviding {
+        try await clientProvider.makeTeamsStream()
+    }
+
     func makeMessagesThreadStream(spaceID: String) async throws -> MessagesThreadStreamProviding {
         try await clientProvider.makeMessagesThreadStream(spaceID: spaceID)
+    }
+
+    func loadManagerChain() async throws -> [PersonItem] {
+        try await clientProvider.loadManagerChain()
     }
 
     func signOut() async {
