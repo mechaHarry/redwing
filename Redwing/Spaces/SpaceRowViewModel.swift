@@ -1,12 +1,19 @@
 import Foundation
 
+enum SpaceAvatarState: Equatable, Hashable {
+    case remote(URL)
+    case loading
+    case directPlaceholder
+    case groupPlaceholder
+}
+
 struct SpaceRowViewModel: Identifiable, Equatable {
     let id: String
     let title: String
     let teamLabel: String?
     let createdLabel: String
     let lastActivityLabel: String
-    let iconURL: URL?
+    let avatarState: SpaceAvatarState
     let isSkeleton: Bool
 
     static func skeleton(id: Int) -> SpaceRowViewModel {
@@ -16,7 +23,7 @@ struct SpaceRowViewModel: Identifiable, Equatable {
             teamLabel: nil,
             createdLabel: "",
             lastActivityLabel: "",
-            iconURL: nil,
+            avatarState: .groupPlaceholder,
             isSkeleton: true
         )
     }

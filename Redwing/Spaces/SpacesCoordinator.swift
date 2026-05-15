@@ -96,7 +96,7 @@ final class SpacesCoordinator: ObservableObject {
                 teamLabel: Self.teamLabel(for: space),
                 createdLabel: Self.dateLabel(prefix: "Created", date: space.created),
                 lastActivityLabel: Self.dateLabel(prefix: "Last active", date: space.lastActivity),
-                iconURL: space.iconURL,
+                avatarState: Self.avatarState(for: space),
                 isSkeleton: false
             )
         }
@@ -131,6 +131,22 @@ final class SpacesCoordinator: ObservableObject {
         }
 
         return nonEmpty(space.teamName)
+    }
+
+    private static func avatarState(for space: SpaceItem) -> SpaceAvatarState {
+        if let iconURL = space.iconURL {
+            return .remote(iconURL)
+        }
+
+        if space.enrichmentStatus == .loading {
+            return .loading
+        }
+
+        if space.type == .direct {
+            return .directPlaceholder
+        }
+
+        return .groupPlaceholder
     }
 
     private static func dateLabel(prefix: String, date: Date?) -> String {

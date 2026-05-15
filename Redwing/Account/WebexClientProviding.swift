@@ -20,6 +20,14 @@ enum SpaceTypeDTO: Equatable, Sendable {
     case unknown(String)
 }
 
+enum SpaceEnrichmentStatusDTO: Equatable, Sendable {
+    case empty
+    case loading
+    case partial
+    case complete
+    case failed
+}
+
 struct SpacePartialResourceErrorDTO: Equatable, Sendable {
     let code: String
     let reason: String
@@ -43,6 +51,7 @@ struct SpaceItem: Identifiable, Equatable, Sendable {
     let classificationID: String?
     let madePublic: Date?
     let iconURL: URL?
+    let enrichmentStatus: SpaceEnrichmentStatusDTO
     let errors: [String: SpacePartialResourceErrorDTO]?
 
     init(
@@ -63,6 +72,7 @@ struct SpaceItem: Identifiable, Equatable, Sendable {
         classificationID: String? = nil,
         madePublic: Date? = nil,
         iconURL: URL? = nil,
+        enrichmentStatus: SpaceEnrichmentStatusDTO = .empty,
         errors: [String: SpacePartialResourceErrorDTO]? = nil
     ) {
         self.id = id
@@ -82,6 +92,7 @@ struct SpaceItem: Identifiable, Equatable, Sendable {
         self.classificationID = classificationID
         self.madePublic = madePublic
         self.iconURL = iconURL
+        self.enrichmentStatus = enrichmentStatus
         self.errors = errors
     }
 }

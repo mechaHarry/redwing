@@ -13,6 +13,7 @@ struct LaneSurfaceView: View {
                         SpaceGlassRow(row: row) {
                             spaces.select(spaceID: row.id)
                         }
+                        .transition(.opacity.combined(with: .scale(scale: 0.98)))
                         .onAppear {
                             Task {
                                 await spaces.loadNextPageIfNeeded(visibleRowID: row.id)
@@ -22,6 +23,7 @@ struct LaneSurfaceView: View {
                 }
                 .padding(18)
             }
+            .animation(.easeInOut(duration: 0.24), value: spaces.rows)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .clipShape(paneShape)
             .glassEffect(.regular, in: paneShape)
@@ -47,18 +49,20 @@ private struct SpaceGlassRow: View {
             } else {
                 Button(action: action) {
                     HStack(spacing: 14) {
-                        SpaceIconView(iconURL: row.iconURL)
+                        SpaceIconView(avatarState: row.avatarState)
 
                         VStack(alignment: .leading, spacing: 4) {
                             Text(row.title)
                                 .font(.headline)
                                 .lineLimit(1)
+                                .contentTransition(.opacity)
 
                             if let teamLabel = row.teamLabel {
                                 Text(teamLabel)
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                                     .lineLimit(1)
+                                    .transition(.opacity.combined(with: .scale(scale: 0.98)))
                             }
 
                             HStack(spacing: 8) {
@@ -68,6 +72,7 @@ private struct SpaceGlassRow: View {
                             .font(.caption2)
                             .foregroundStyle(.tertiary)
                             .lineLimit(1)
+                            .contentTransition(.opacity)
                         }
 
                         Spacer(minLength: 0)
@@ -86,11 +91,12 @@ private struct SpaceGlassRow: View {
             rowShape
                 .strokeBorder(Color.primary.opacity(0.18), lineWidth: 1)
         }
+        .animation(.easeInOut(duration: 0.2), value: row)
     }
 }
 
 private struct SpaceIconView: View {
-    let iconURL: URL?
+    let avatarState: SpaceAvatarState
 
     var body: some View {
         ZStack {
@@ -98,25 +104,52 @@ private struct SpaceIconView: View {
                 .fill(.thinMaterial)
                 .frame(width: 44, height: 44)
 
-            if let iconURL {
-                AsyncImage(url: iconURL) { image in
+            iconContent
+                .transition(.opacity.combined(with: .scale(scale: 0.92)))
+                .id(avatarState)
+        }
+        .frame(width: 44, height: 44)
+        .animation(.easeInOut(duration: 0.2), value: avatarState)
+        .accessibilityHidden(true)
+    }
+
+    @ViewBuilder
+    private var iconContent: some View {
+        switch avatarState {
+        case .remote(let url):
+            AsyncImage(url: url, transaction: Transaction(animation: .easeInOut(duration: 0.2))) { phase in
+                switch phase {
+                case .success(let image):
                     image
                         .resizable()
                         .scaledToFill()
-                } placeholder: {
-                    Image(systemName: "circle")
-                        .font(.title3)
-                        .foregroundStyle(.secondary)
+                case .failure:
+                    placeholderImage(systemName: "person.fill")
+                case .empty:
+                    ProgressView()
+                        .controlSize(.small)
+                @unknown default:
+                    placeholderImage(systemName: "person.fill")
                 }
-                .frame(width: 44, height: 44)
-                .clipShape(Circle())
-            } else {
-                Image(systemName: "circle")
-                    .font(.title3)
-                    .foregroundStyle(.secondary)
             }
+            .frame(width: 44, height: 44)
+            .clipShape(Circle())
+
+        case .loading:
+            ProgressView()
+                .controlSize(.small)
+
+        case .directPlaceholder:
+            placeholderImage(systemName: "person.fill")
+
+        case .groupPlaceholder:
+            placeholderImage(systemName: "person.2.fill")
         }
-        .frame(width: 44, height: 44)
-        .accessibilityHidden(true)
+    }
+
+    private func placeholderImage(systemName: String) -> some View {
+        Image(systemName: systemName)
+            .font(.title3)
+            .foregroundStyle(.secondary)
     }
 }

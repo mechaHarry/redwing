@@ -61,7 +61,10 @@ final class SpacesCoordinatorTests: XCTestCase {
         XCTAssertEqual(coordinator.rows[1].teamLabel, "Direct Message")
         XCTAssertNil(coordinator.rows[2].teamLabel)
         XCTAssertEqual(coordinator.rows[3].teamLabel, "Platform Team")
-        XCTAssertEqual(coordinator.rows.map(\.iconURL), [nil, nil, nil, nil])
+        XCTAssertEqual(
+            coordinator.rows.map(\.avatarState),
+            [.groupPlaceholder, .directPlaceholder, .groupPlaceholder, .groupPlaceholder]
+        )
     }
 
     func testRowsFleshInSpaceEnrichmentWithoutResettingSkeletonsOrIDs() {
@@ -83,7 +86,7 @@ final class SpacesCoordinatorTests: XCTestCase {
         XCTAssertFalse(coordinator.isShowingSkeletons)
         XCTAssertNil(coordinator.rows[0].teamLabel)
         XCTAssertEqual(coordinator.rows[1].teamLabel, "Direct Message")
-        XCTAssertEqual(coordinator.rows.map(\.iconURL), [nil, nil])
+        XCTAssertEqual(coordinator.rows.map(\.avatarState), [.groupPlaceholder, .directPlaceholder])
 
         coordinator.apply(snapshot: SpaceSnapshot(
             spaces: [
@@ -114,7 +117,31 @@ final class SpacesCoordinatorTests: XCTestCase {
         XCTAssertFalse(coordinator.isShowingSkeletons)
         XCTAssertEqual(coordinator.rows[0].teamLabel, "Platform Team")
         XCTAssertEqual(coordinator.rows[1].teamLabel, "Direct Message")
-        XCTAssertEqual(coordinator.rows.map(\.iconURL), [nil, avatarURL])
+        XCTAssertEqual(coordinator.rows.map(\.avatarState), [.groupPlaceholder, .remote(avatarURL)])
+    }
+
+    func testRowsDisplayAvatarStateForDirectLoadingAndPlaceholders() {
+        let coordinator = SpacesCoordinator(session: nil, diagnostics: DiagnosticsStore())
+        let avatarURL = URL(string: "https://example.com/direct.png")!
+
+        coordinator.apply(snapshot: SpaceSnapshot(
+            spaces: [
+                SpaceItem(id: "group", title: "Group", type: .group, lastActivity: nil),
+                SpaceItem(id: "direct", title: "Direct", type: .direct, lastActivity: nil),
+                SpaceItem(id: "loading-direct", title: "Loading", type: .direct, lastActivity: nil, enrichmentStatus: .loading),
+                SpaceItem(id: "loaded-direct", title: "Loaded", type: .direct, lastActivity: nil, iconURL: avatarURL, enrichmentStatus: .complete),
+                SpaceItem(id: "loading-group", title: "Loading Team", type: .group, lastActivity: nil, enrichmentStatus: .loading)
+            ],
+            isRefreshing: false,
+            isLoadingNextPage: false,
+            hasMore: false,
+            lastErrorDescription: nil
+        ))
+
+        XCTAssertEqual(
+            coordinator.rows.map(\.avatarState),
+            [.groupPlaceholder, .directPlaceholder, .loading, .remote(avatarURL), .loading]
+        )
     }
 
     func testRowsDisplayCreatedDateAndLastActiveDate() {

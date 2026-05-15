@@ -24,7 +24,9 @@ final class SceneConfigurationTests: XCTestCase {
         XCTAssertTrue(laneSurfaceSource.contains("glassEffect"))
         XCTAssertTrue(laneSurfaceSource.contains(".clipShape(paneShape)"))
         XCTAssertFalse(laneSurfaceSource.contains(".scrollClipDisabled()"))
-        XCTAssertTrue(laneSurfaceSource.contains("Image(systemName: \"circle\")"))
+        XCTAssertTrue(laneSurfaceSource.contains("placeholderImage(systemName: \"person.fill\")"))
+        XCTAssertTrue(laneSurfaceSource.contains("placeholderImage(systemName: \"person.2.fill\")"))
+        XCTAssertTrue(laneSurfaceSource.contains("ProgressView()"))
         XCTAssertFalse(laneSurfaceSource.contains("@ObservedObject var messages"))
         XCTAssertFalse(laneSurfaceSource.contains("messagesLane"))
         XCTAssertFalse(laneSurfaceSource.contains("threadLane"))
@@ -57,6 +59,16 @@ final class SceneConfigurationTests: XCTestCase {
 
         XCTAssertTrue(laneSurfaceSource.contains(".onAppear"))
         XCTAssertTrue(laneSurfaceSource.contains("loadNextPageIfNeeded(visibleRowID: row.id)"))
+    }
+
+    func testSpaceRowsAnimateSnapshotDrivenContentChanges() throws {
+        let laneSurfaceSource = try String(contentsOf: laneSurfaceViewSourceURL(), encoding: .utf8)
+
+        XCTAssertTrue(laneSurfaceSource.contains(".transition("))
+        XCTAssertTrue(laneSurfaceSource.contains(".animation(.easeInOut"))
+        XCTAssertTrue(laneSurfaceSource.contains("value: spaces.rows"))
+        XCTAssertTrue(laneSurfaceSource.contains("value: row"))
+        XCTAssertTrue(laneSurfaceSource.contains(".id(avatarState)"))
     }
 
     private func redwingAppSourceURL() -> URL {

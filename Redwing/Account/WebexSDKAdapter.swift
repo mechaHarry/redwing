@@ -235,6 +235,7 @@ actor WebexSDKAdapter: WebexClientProviding {
                     classificationID: nonEmpty(space.classificationID),
                     madePublic: space.madePublic,
                     iconURL: url(from: space.enriched.spaceAvatar),
+                    enrichmentStatus: mapSpaceEnrichmentStatus(space.enriched.status),
                     errors: space.errors?.mapValues { error in
                         SpacePartialResourceErrorDTO(code: error.code, reason: error.reason)
                     }
@@ -268,6 +269,21 @@ actor WebexSDKAdapter: WebexClientProviding {
             return .unknown(value)
         case nil:
             return nil
+        }
+    }
+
+    private static func mapSpaceEnrichmentStatus(_ status: WebexSpaceEnrichmentStatus) -> SpaceEnrichmentStatusDTO {
+        switch status {
+        case .empty:
+            return .empty
+        case .loading:
+            return .loading
+        case .partial:
+            return .partial
+        case .complete:
+            return .complete
+        case .failed:
+            return .failed
         }
     }
 

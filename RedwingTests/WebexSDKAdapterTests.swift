@@ -208,9 +208,12 @@ final class WebexSDKAdapterTests: XCTestCase {
         let dto = WebexSDKAdapter.mapSpaceSnapshot(snapshot)
 
         XCTAssertEqual(dto.spaces[0].teamName, "Platform Team")
+        XCTAssertEqual(dto.spaces[0].enrichmentStatus, .complete)
         XCTAssertNil(dto.spaces[0].iconURL)
         XCTAssertNil(dto.spaces[1].teamName)
+        XCTAssertEqual(dto.spaces[1].enrichmentStatus, .complete)
         XCTAssertEqual(dto.spaces[1].iconURL, avatarURL)
+        XCTAssertEqual(dto.spaces[2].enrichmentStatus, .partial)
         XCTAssertNil(dto.spaces[2].iconURL)
     }
 
