@@ -143,7 +143,7 @@ private struct SpaceIconView: View {
             placeholderImage(systemName: "person.fill")
 
         case .groupPlaceholder:
-            placeholderImage(systemName: "person.2.fill")
+            placeholderImage(systemName: "person.3.fill")
         }
     }
 

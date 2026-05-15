@@ -25,7 +25,7 @@ final class SceneConfigurationTests: XCTestCase {
         XCTAssertTrue(laneSurfaceSource.contains(".clipShape(paneShape)"))
         XCTAssertFalse(laneSurfaceSource.contains(".scrollClipDisabled()"))
         XCTAssertTrue(laneSurfaceSource.contains("placeholderImage(systemName: \"person.fill\")"))
-        XCTAssertTrue(laneSurfaceSource.contains("placeholderImage(systemName: \"person.2.fill\")"))
+        XCTAssertTrue(laneSurfaceSource.contains("placeholderImage(systemName: \"person.3.fill\")"))
         XCTAssertTrue(laneSurfaceSource.contains("ProgressView()"))
         XCTAssertFalse(laneSurfaceSource.contains("@ObservedObject var messages"))
         XCTAssertFalse(laneSurfaceSource.contains("messagesLane"))
