@@ -54,6 +54,137 @@ final class SceneConfigurationTests: XCTestCase {
         XCTAssertTrue(laneSurfaceSource.contains("spaces.selectedSpaceID == row.id"))
     }
 
+    func testSpacesMessagesSurfaceUsesOneSharedGlassComposition() throws {
+        let source = try String(contentsOf: spacesMessagesSurfaceSourceURL(), encoding: .utf8)
+
+        XCTAssertEqual(source.occurrences(of: "GlassEffectContainer"), 1)
+        XCTAssertTrue(
+            source.contains(
+                "GlassEffectContainer(spacing: SpacesMessagesLayout.preferredSpacing)"
+            )
+        )
+        XCTAssertTrue(source.contains("@Namespace private var glassNamespace"))
+        XCTAssertTrue(source.contains("let contentWidth = geometry.size.width - 40"))
+        XCTAssertTrue(source.contains("let isMessagesOpen = messages.selectedSpaceID != nil"))
+        XCTAssertTrue(source.contains("SpacesMessagesLayout.widths("))
+        XCTAssertTrue(source.contains("totalWidth: contentWidth"))
+        XCTAssertTrue(source.contains("isMessagesOpen: isMessagesOpen"))
+        XCTAssertTrue(source.contains("HStack(spacing: widths.effectiveSpacing)"))
+        XCTAssertTrue(source.contains(".padding(20)"))
+    }
+
+    func testSpacesMessagesSurfaceUsesStableCardsLayoutWidthsAndSpring() throws {
+        let source = try String(contentsOf: spacesMessagesSurfaceSourceURL(), encoding: .utf8)
+
+        XCTAssertTrue(source.contains("LaneSurfaceView("))
+        XCTAssertTrue(source.contains("scrollAnchorID: $navigation.spacesScrollID"))
+        XCTAssertTrue(source.contains(".frame(width: widths.spaces)"))
+        XCTAssertTrue(source.contains(".glassEffectID(\"spaces-card\", in: glassNamespace)"))
+        XCTAssertTrue(source.contains("if isMessagesOpen"))
+        XCTAssertTrue(source.contains("MessagesSurfaceView("))
+        XCTAssertTrue(source.contains("navigation: navigation"))
+        XCTAssertTrue(source.contains(".frame(width: widths.messages)"))
+        XCTAssertTrue(source.contains(".glassEffectID(\"messages-card\", in: glassNamespace)"))
+        XCTAssertTrue(source.contains(".animation(.spring"))
+        XCTAssertTrue(source.contains("value: isMessagesOpen"))
+    }
+
+    func testSpacesMessagesSurfaceDelegatesOpeningOrderAndCloseBehavior() throws {
+        let source = try String(contentsOf: spacesMessagesSurfaceSourceURL(), encoding: .utf8)
+
+        XCTAssertTrue(source.contains("SpaceOpeningAction("))
+        XCTAssertTrue(source.contains("selectSpace: spaces.select(spaceID:)"))
+        XCTAssertTrue(source.contains("selectMessages: messages.select(spaceID:spaceTitle:)"))
+        XCTAssertTrue(source.contains("Task { @MainActor in"))
+        XCTAssertTrue(source.contains("await openSpace(row)"))
+        XCTAssertTrue(source.contains("onClose: messages.close"))
+        XCTAssertFalse(source.contains("spaces.select(spaceID: nil)"))
+        XCTAssertFalse(source.contains("Task.detached"))
+    }
+
+    func testSessionRootInjectsMessagesAndOwnsPersistentNavigation() throws {
+        let source = try String(contentsOf: redwingAppSourceURL(), encoding: .utf8)
+        let rootSource = try sourceRegion(
+            in: source,
+            startingAt: "private struct RedwingRootView",
+            endingAt: "private struct SessionSidebarView"
+        )
+        let sessionSource = try sourceRegion(
+            in: source,
+            startingAt: "private struct RedwingSessionView",
+            endingAt: "    private func start() async"
+        )
+
+        XCTAssertTrue(rootSource.contains("let messages = rootModel.messagesCoordinator"))
+        XCTAssertTrue(rootSource.contains("messages: messages"))
+        XCTAssertTrue(sessionSource.contains("@ObservedObject var messages: MessagesCoordinator"))
+        XCTAssertTrue(
+            sessionSource.contains(
+                "@StateObject private var navigation = SessionNavigationState()"
+            )
+        )
+        XCTAssertTrue(
+            sessionSource.contains("SessionSidebarView(selection: $navigation.selectedTab)")
+        )
+        XCTAssertTrue(sessionSource.contains("switch navigation.selectedTab"))
+        XCTAssertTrue(sessionSource.contains("SpacesMessagesSurface("))
+        XCTAssertTrue(sessionSource.contains("messages: messages"))
+        XCTAssertTrue(sessionSource.contains("navigation: navigation"))
+        XCTAssertFalse(sessionSource.contains("@State private var selectedTab"))
+        XCTAssertFalse(sessionSource.contains(".id(selectedTab)"))
+    }
+
+    func testTeamsAndPeopleSurfacesBindIndependentScrollPositions() throws {
+        let source = try String(contentsOf: laneSurfaceViewSourceURL(), encoding: .utf8)
+        let teamsSource = try sourceRegion(
+            in: source,
+            startingAt: "struct TeamsLaneSurfaceView",
+            endingAt: "struct PeopleHierarchyView"
+        )
+        let peopleSource = try sourceRegion(
+            in: source,
+            startingAt: "struct PeopleHierarchyView",
+            endingAt: "private struct SpaceGlassRow"
+        )
+
+        for scopedSource in [teamsSource, peopleSource] {
+            XCTAssertTrue(scopedSource.contains("@Binding var scrollAnchorID: String?"))
+            XCTAssertTrue(scopedSource.contains(".scrollTargetLayout()"))
+            XCTAssertTrue(
+                scopedSource.contains(".scrollPosition(id: $scrollAnchorID, anchor: .top)")
+            )
+        }
+
+        let appSource = try String(contentsOf: redwingAppSourceURL(), encoding: .utf8)
+        XCTAssertTrue(appSource.contains("scrollAnchorID: $navigation.teamsScrollID"))
+        XCTAssertTrue(appSource.contains("scrollAnchorID: $navigation.peopleScrollID"))
+    }
+
+    func testLaneSurfaceHasNoTemporaryCompatibilityInitializer() throws {
+        let source = try String(contentsOf: laneSurfaceViewSourceURL(), encoding: .utf8)
+        let laneSurfaceSource = try sourceRegion(
+            in: source,
+            startingAt: "struct LaneSurfaceView",
+            endingAt: "struct TeamsLaneSurfaceView"
+        )
+
+        XCTAssertFalse(laneSurfaceSource.contains("init(spaces: SpacesCoordinator)"))
+        XCTAssertFalse(laneSurfaceSource.contains(".constant(nil)"))
+    }
+
+    func testSpacesMessagesSurfaceIsRegisteredExactlyOnce() throws {
+        let project = try String(contentsOf: projectFileURL(), encoding: .utf8)
+
+        XCTAssertEqual(
+            project.occurrences(of: "SpacesMessagesSurface.swift in Sources"),
+            2
+        )
+        XCTAssertEqual(
+            project.occurrences(of: "/* SpacesMessagesSurface.swift */"),
+            3
+        )
+    }
+
     func testSessionShellUsesGlassSidebarTabs() throws {
         let redwingAppSource = try String(contentsOf: redwingAppSourceURL(), encoding: .utf8)
         let sessionNavigationStateSource = try String(
@@ -210,6 +341,20 @@ final class SceneConfigurationTests: XCTestCase {
             .appendingPathComponent("Redwing/Messages/MessagesSurfaceView.swift")
     }
 
+    private func spacesMessagesSurfaceSourceURL() -> URL {
+        URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("Redwing/Lanes/SpacesMessagesSurface.swift")
+    }
+
+    private func projectFileURL() -> URL {
+        URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("redwing.xcodeproj/project.pbxproj")
+    }
+
     private func skeletonViewsSourceURL() -> URL {
         URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
@@ -226,5 +371,11 @@ final class SceneConfigurationTests: XCTestCase {
         let suffix = source[startRange.lowerBound...]
         let endRange = try XCTUnwrap(suffix.range(of: endMarker))
         return String(suffix[..<endRange.lowerBound])
+    }
+}
+
+private extension String {
+    func occurrences(of value: String) -> Int {
+        components(separatedBy: value).count - 1
     }
 }

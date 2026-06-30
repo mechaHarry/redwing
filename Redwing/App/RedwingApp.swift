@@ -85,12 +85,14 @@ private struct RedwingRootView: View {
         Group {
             if let accountSession = rootModel.accountSession,
                let spaces = rootModel.spacesCoordinator,
+               let messages = rootModel.messagesCoordinator,
                let teams = rootModel.teamsCoordinator,
                let people = rootModel.peopleCoordinator,
                let attentionFeed = rootModel.attentionFeed {
                 RedwingSessionView(
                     accountSession: accountSession,
                     spaces: spaces,
+                    messages: messages,
                     teams: teams,
                     people: people,
                     attentionFeed: attentionFeed,
@@ -172,11 +174,12 @@ private struct SessionSidebarView: View {
 private struct RedwingSessionView: View {
     @ObservedObject var accountSession: AccountSession
     @ObservedObject var spaces: SpacesCoordinator
+    @ObservedObject var messages: MessagesCoordinator
     @ObservedObject var teams: TeamsCoordinator
     @ObservedObject var people: PeopleCoordinator
     @ObservedObject var attentionFeed: AttentionFeedStore
     @Binding var isShowingDiagnostics: Bool
-    @State private var selectedTab: RedwingMainTab = .spaces
+    @StateObject private var navigation = SessionNavigationState()
 
     var body: some View {
         Group {
@@ -184,21 +187,30 @@ private struct RedwingSessionView: View {
             case .idle, .loading, .ready:
                 VStack(spacing: 0) {
                     HStack(spacing: 0) {
-                        SessionSidebarView(selection: $selectedTab)
+                        SessionSidebarView(selection: $navigation.selectedTab)
 
                         Group {
-                            switch selectedTab {
+                            switch navigation.selectedTab {
                             case .spaces:
-                                LaneSurfaceView(spaces: spaces)
+                                SpacesMessagesSurface(
+                                    spaces: spaces,
+                                    messages: messages,
+                                    navigation: navigation
+                                )
                             case .teams:
-                                TeamsLaneSurfaceView(teams: teams)
+                                TeamsLaneSurfaceView(
+                                    teams: teams,
+                                    scrollAnchorID: $navigation.teamsScrollID
+                                )
                             case .people:
-                                PeopleHierarchyView(people: people)
+                                PeopleHierarchyView(
+                                    people: people,
+                                    scrollAnchorID: $navigation.peopleScrollID
+                                )
                             }
                         }
-                        .id(selectedTab)
                         .transition(.opacity.combined(with: .scale(scale: 0.99)))
-                        .animation(.easeInOut(duration: 0.2), value: selectedTab)
+                        .animation(.easeInOut(duration: 0.2), value: navigation.selectedTab)
                     }
 
                     Divider()

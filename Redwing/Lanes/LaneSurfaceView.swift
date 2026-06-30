@@ -15,14 +15,6 @@ struct LaneSurfaceView: View {
         self.onSelectSpace = onSelectSpace
     }
 
-    init(spaces: SpacesCoordinator) {
-        self.init(
-            spaces: spaces,
-            scrollAnchorID: .constant(nil),
-            onSelectSpace: { spaces.select(spaceID: $0.id) }
-        )
-    }
-
     var body: some View {
         let paneShape = RoundedRectangle(cornerRadius: 28, style: .continuous)
 
@@ -66,6 +58,7 @@ struct LaneSurfaceView: View {
 
 struct TeamsLaneSurfaceView: View {
     @ObservedObject var teams: TeamsCoordinator
+    @Binding var scrollAnchorID: String?
 
     var body: some View {
         let paneShape = RoundedRectangle(cornerRadius: 28, style: .continuous)
@@ -94,8 +87,10 @@ struct TeamsLaneSurfaceView: View {
                             }
                     }
                 }
+                .scrollTargetLayout()
                 .padding(18)
             }
+            .scrollPosition(id: $scrollAnchorID, anchor: .top)
             .animation(.easeInOut(duration: 0.24), value: teams.rows)
             .animation(.easeInOut(duration: 0.2), value: teams.footerState)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -109,6 +104,7 @@ struct TeamsLaneSurfaceView: View {
 
 struct PeopleHierarchyView: View {
     @ObservedObject var people: PeopleCoordinator
+    @Binding var scrollAnchorID: String?
 
     var body: some View {
         let paneShape = RoundedRectangle(cornerRadius: 28, style: .continuous)
@@ -129,9 +125,11 @@ struct PeopleHierarchyView: View {
                         }
                     }
                 }
+                .scrollTargetLayout()
                 .frame(maxWidth: .infinity)
                 .padding(24)
             }
+            .scrollPosition(id: $scrollAnchorID, anchor: .top)
             .animation(.easeInOut(duration: 0.24), value: people.nodes)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .clipShape(paneShape)
