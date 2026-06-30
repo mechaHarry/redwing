@@ -32,6 +32,7 @@ enum WindowFocusController {
         return false
     }
 
+    @MainActor
     static func mainWindow(from windows: [NSWindow]) -> NSWindow? {
         let candidates = candidates(from: windows)
 
@@ -111,6 +112,7 @@ enum WindowFocusController {
         return updated
     }
 
+    @MainActor
     private static func candidates(from windows: [NSWindow]) -> [Candidate] {
         windows.map {
             Candidate(

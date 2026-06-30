@@ -31,6 +31,12 @@ final class SceneConfigurationTests: XCTestCase {
                 "window.identifier = NSUserInterfaceItemIdentifier(RedwingWindowID.main)"
             )
         )
+        XCTAssertTrue(
+            windowFocusSource.contains("@MainActor\n    static func mainWindow(from windows: [NSWindow])")
+        )
+        XCTAssertTrue(
+            windowFocusSource.contains("@MainActor\n    private static func candidates(from windows: [NSWindow])")
+        )
     }
 
     func testLaneSurfaceIsSpacesOnlyGlassPane() throws {
