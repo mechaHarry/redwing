@@ -154,6 +154,7 @@ final class SceneConfigurationTests: XCTestCase {
 
         XCTAssertTrue(source.contains("ScrollViewReader"))
         XCTAssertTrue(source.contains("messageScrollRequest"))
+        XCTAssertTrue(source.contains("scrollExecutor.submitAfterMutation"))
         XCTAssertTrue(source.contains("rememberMessageAnchor"))
         XCTAssertTrue(source.contains("LanePaginationFooter"))
         XCTAssertTrue(source.contains("loadNextPageFromFooterIfNeeded"))

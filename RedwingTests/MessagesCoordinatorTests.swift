@@ -4,6 +4,48 @@ import XCTest
 
 @MainActor
 final class MessagesCoordinatorTests: XCTestCase {
+    func testMessageScrollExecutorConsumesPublishedRequestWithSavedAnchorAfterStorage() async {
+        let coordinator = MessagesCoordinator(session: nil, diagnostics: DiagnosticsStore())
+        let executor = MessageScrollRequestExecutor()
+        var resolutions: [MessageScrollArbiter.Resolution] = []
+        let subscription = coordinator.$messageScrollRequest
+            .compactMap { $0 }
+            .sink { publishedRequest in
+                executor.submitAfterMutation {
+                    guard let storedRequest = coordinator.messageScrollRequest,
+                          storedRequest.id == publishedRequest.id else {
+                        return
+                    }
+
+                    let resolution = MessageScrollArbiter.resolve(
+                        currentSpaceID: coordinator.selectedSpaceID,
+                        realRowIDs: coordinator.messageRows.map(\.id),
+                        restoredID: "message-1",
+                        request: storedRequest
+                    )
+                    resolutions.append(resolution)
+
+                    if case .restore(_, let requestID) = resolution,
+                       let requestID {
+                        coordinator.acknowledgeMessageScrollRequest(id: requestID)
+                    }
+                }
+            }
+
+        coordinator.apply(snapshot: snapshot(ids: ["message-1"]))
+        await waitUntil { !resolutions.isEmpty }
+
+        XCTAssertEqual(resolutions.count, 1)
+        guard let resolution = resolutions.first,
+              case .restore(let restoredID, let consumedRequestID) = resolution else {
+            return XCTFail("Expected the saved anchor to consume the stored request")
+        }
+        XCTAssertEqual(restoredID, "message-1")
+        XCTAssertNotNil(consumedRequestID)
+        XCTAssertNil(coordinator.messageScrollRequest)
+        withExtendedLifetime(subscription) {}
+    }
+
     func testMessageScrollExecutorCancellationBeforeActionLeavesRequestPending() async {
         let executor = MessageScrollRequestExecutor()
         var didAct = false

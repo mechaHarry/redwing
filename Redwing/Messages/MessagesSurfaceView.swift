@@ -43,6 +43,19 @@ struct MessageScrollArbiter {
 final class MessageScrollRequestExecutor {
     private var task: Task<Void, Never>?
 
+    func submitAfterMutation(_ action: @escaping @MainActor () -> Void) {
+        task?.cancel()
+        task = Task { @MainActor in
+            await Task.yield()
+
+            guard !Task.isCancelled else {
+                return
+            }
+
+            action()
+        }
+    }
+
     func submit(
         isCurrent: @escaping @MainActor () -> Bool,
         action: @escaping @MainActor () -> Void,
@@ -192,8 +205,15 @@ struct MessagesSurfaceView: View {
             .onChange(of: messages.messageRows.map(\.id)) { _, _ in
                 resolveScrollDestination(proxy: proxy, request: messages.messageScrollRequest)
             }
-            .onReceive(messages.$messageScrollRequest.compactMap { $0 }) { request in
-                resolveScrollDestination(proxy: proxy, request: request)
+            .onReceive(messages.$messageScrollRequest.compactMap { $0 }) { publishedRequest in
+                scrollExecutor.submitAfterMutation {
+                    guard let storedRequest = messages.messageScrollRequest,
+                          storedRequest.id == publishedRequest.id else {
+                        return
+                    }
+
+                    resolveScrollDestination(proxy: proxy, request: storedRequest)
+                }
             }
             .onDisappear {
                 scrollExecutor.cancel()
