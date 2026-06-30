@@ -1,23 +1,27 @@
 import Foundation
 
 enum SpacesMessagesLayout {
-    static let spacing: CGFloat = 12
+    static let preferredSpacing: CGFloat = 12
     static let minimumSpacesWidth: CGFloat = 220
     static let minimumMessagesWidth: CGFloat = 420
 
     struct Widths: Equatable {
         let spaces: CGFloat
         let messages: CGFloat
-        let spacing: CGFloat
+        let effectiveSpacing: CGFloat
     }
 
     static func widths(totalWidth: CGFloat, isMessagesOpen: Bool) -> Widths {
-        let safeTotalWidth = max(totalWidth, 0)
-        guard isMessagesOpen else {
-            return Widths(spaces: safeTotalWidth, messages: 0, spacing: 0)
+        guard totalWidth.isFinite else {
+            return Widths(spaces: 0, messages: 0, effectiveSpacing: 0)
         }
 
-        let effectiveSpacing = min(spacing, safeTotalWidth)
+        let safeTotalWidth = max(totalWidth, 0)
+        guard isMessagesOpen else {
+            return Widths(spaces: safeTotalWidth, messages: 0, effectiveSpacing: 0)
+        }
+
+        let effectiveSpacing = min(preferredSpacing, safeTotalWidth)
         let availableWidth = safeTotalWidth - effectiveSpacing
         let combinedMinimumWidth = minimumSpacesWidth + minimumMessagesWidth
 
@@ -26,7 +30,7 @@ enum SpacesMessagesLayout {
             return Widths(
                 spaces: minimumSpacesWidth * scale,
                 messages: minimumMessagesWidth * scale,
-                spacing: effectiveSpacing
+                effectiveSpacing: effectiveSpacing
             )
         }
 
@@ -35,7 +39,7 @@ enum SpacesMessagesLayout {
         return Widths(
             spaces: spacesWidth,
             messages: availableWidth - spacesWidth,
-            spacing: effectiveSpacing
+            effectiveSpacing: effectiveSpacing
         )
     }
 }
