@@ -2,62 +2,68 @@ import XCTest
 @testable import Redwing
 
 final class WindowFocusControllerTests: XCTestCase {
-    func testMainWindowLookupPrefersVisibleRedwingWindow() {
-        let candidates = [
-            WindowFocusController.Candidate(title: "Other", isVisible: true, isMiniaturized: false),
-            WindowFocusController.Candidate(title: "Redwing", isVisible: true, isMiniaturized: false)
-        ]
-
-        XCTAssertEqual(WindowFocusController.preferredMainWindowIndex(from: candidates), 1)
-    }
-
-    func testMainWindowLookupFallsBackToMiniaturizedRedwingWindow() {
-        let candidates = [
-            WindowFocusController.Candidate(title: "Redwing", isVisible: false, isMiniaturized: true)
-        ]
-
-        XCTAssertEqual(WindowFocusController.preferredMainWindowIndex(from: candidates), 0)
-    }
-
-    func testDefaultReopenIsAllowedWhenOnlyVisibleAuxiliaryWindowsExist() {
+    func testReopenWithOnlyVisibleAuxiliaryWindowOpensMainWindow() {
         let candidates = [
             WindowFocusController.Candidate(
-                title: "Item-0",
+                identifier: nil,
+                title: "Redwing",
                 isVisible: true,
                 isMiniaturized: false
             )
         ]
 
-        XCTAssertNil(WindowFocusController.preferredMainWindowIndex(from: candidates))
+        assertReopen(candidates: candidates, expectedOpenCount: 1, expectedFocusedIndices: [])
     }
 
-    func testDefaultReopenIsAllowedWhenOnlyMiniaturizedAuxiliaryWindowsExist() {
-        let candidates = [
-            WindowFocusController.Candidate(
-                title: "Status Item Window",
-                isVisible: false,
-                isMiniaturized: true
-            )
-        ]
-
-        XCTAssertNil(WindowFocusController.preferredMainWindowIndex(from: candidates))
+    func testReopenWithNoWindowsOpensMainWindow() {
+        assertReopen(candidates: [], expectedOpenCount: 1, expectedFocusedIndices: [])
     }
 
-    func testMainWindowLookupSelectsMiniaturizedRedwingWindowFromMixedCandidates() {
+    func testReopenWithMixedWindowsFocusesIdentifiedMainWindow() {
         let candidates = [
             WindowFocusController.Candidate(
+                identifier: nil,
                 title: "Status Item Window",
                 isVisible: true,
                 isMiniaturized: false
             ),
             WindowFocusController.Candidate(
+                identifier: RedwingWindowID.main,
+                title: "Localized Main Window",
+                isVisible: true,
+                isMiniaturized: false
+            )
+        ]
+
+        assertReopen(candidates: candidates, expectedOpenCount: 0, expectedFocusedIndices: [1])
+    }
+
+    func testReopenFocusesMiniaturizedIdentifiedMainWindow() {
+        let candidates = [
+            WindowFocusController.Candidate(
+                identifier: RedwingWindowID.main,
                 title: "Redwing",
                 isVisible: false,
                 isMiniaturized: true
             )
         ]
 
-        XCTAssertEqual(WindowFocusController.preferredMainWindowIndex(from: candidates), 1)
+        assertReopen(candidates: candidates, expectedOpenCount: 0, expectedFocusedIndices: [0])
+    }
+
+    func testReopenFocusesIdentifiedMainWindowRegardlessOfTitle() {
+        for title in ["Wrong Title", ""] {
+            let candidates = [
+                WindowFocusController.Candidate(
+                    identifier: RedwingWindowID.main,
+                    title: title,
+                    isVisible: true,
+                    isMiniaturized: false
+                )
+            ]
+
+            assertReopen(candidates: candidates, expectedOpenCount: 0, expectedFocusedIndices: [0])
+        }
     }
 
     func testCenteredFrameUsesTargetScreenVisibleFrame() {
@@ -89,5 +95,26 @@ final class WindowFocusControllerTests: XCTestCase {
 
         XCTAssertTrue(behavior.contains(.fullScreenPrimary))
         XCTAssertTrue(behavior.contains(.moveToActiveSpace))
+    }
+
+    private func assertReopen(
+        candidates: [WindowFocusController.Candidate],
+        expectedOpenCount: Int,
+        expectedFocusedIndices: [Int],
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        var openCount = 0
+        var focusedIndices: [Int] = []
+
+        let shouldHandleDefaultReopen = WindowFocusController.handleReopen(
+            from: candidates,
+            openMainWindow: { openCount += 1 },
+            focusMainWindowAtIndex: { focusedIndices.append($0) }
+        )
+
+        XCTAssertFalse(shouldHandleDefaultReopen, file: file, line: line)
+        XCTAssertEqual(openCount, expectedOpenCount, file: file, line: line)
+        XCTAssertEqual(focusedIndices, expectedFocusedIndices, file: file, line: line)
     }
 }

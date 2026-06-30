@@ -14,6 +14,8 @@ struct RedwingApp: App {
     @Environment(\.openWindow) private var openWindow
 
     var body: some Scene {
+        let openMainWindow = configureOpenMainWindow()
+
         Window("Redwing", id: RedwingWindowID.main) {
             RedwingRootView(
                 rootModel: rootModel,
@@ -39,11 +41,20 @@ struct RedwingApp: App {
     }
 
     private var openMainWindow: MainWindowOpeningAction {
-        MainWindowOpeningAction(
+        let openWindow = openWindow
+        let focusRequestID = $mainWindowFocusRequestID
+
+        return MainWindowOpeningAction(
             openWindow: { openWindow(id: $0) },
-            requestFocus: { mainWindowFocusRequestID += 1 },
+            requestFocus: { focusRequestID.wrappedValue += 1 },
             activate: { NSApp.activate(ignoringOtherApps: true) }
         )
+    }
+
+    private func configureOpenMainWindow() -> MainWindowOpeningAction {
+        let action = openMainWindow
+        appDelegate.openMainWindow = action.callAsFunction
+        return action
     }
 }
 
@@ -63,16 +74,16 @@ struct MainWindowOpeningAction {
     }
 }
 
+@MainActor
 final class RedwingAppDelegate: NSObject, NSApplicationDelegate {
-    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows _: Bool) -> Bool {
-        guard let mainWindow = WindowFocusController.mainWindow(from: sender.windows) else {
-            return true
-        }
+    var openMainWindow: (() -> Void)?
 
-        Task { @MainActor in
-            WindowFocusController.moveToCurrentDesktop(window: mainWindow)
-        }
-        return false
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows _: Bool) -> Bool {
+        let openMainWindow = openMainWindow
+        return WindowFocusController.handleReopen(
+            windows: sender.windows,
+            openMainWindow: { openMainWindow?() }
+        )
     }
 }
 

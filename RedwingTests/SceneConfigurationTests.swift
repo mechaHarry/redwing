@@ -10,9 +10,27 @@ final class SceneConfigurationTests: XCTestCase {
 
     func testAppDelegateHandlesDockReopenForCurrentDesktopFocus() throws {
         let redwingAppSource = try String(contentsOf: redwingAppSourceURL(), encoding: .utf8)
+        let windowFocusSource = try String(
+            contentsOf: windowFocusControllerSourceURL(),
+            encoding: .utf8
+        )
 
         XCTAssertTrue(redwingAppSource.contains("@NSApplicationDelegateAdaptor(RedwingAppDelegate.self)"))
         XCTAssertTrue(redwingAppSource.contains("applicationShouldHandleReopen"))
+        XCTAssertTrue(redwingAppSource.contains("appDelegate.openMainWindow = action.callAsFunction"))
+        XCTAssertTrue(redwingAppSource.contains("let openWindow = openWindow"))
+        XCTAssertTrue(
+            redwingAppSource.contains("let focusRequestID = $mainWindowFocusRequestID")
+        )
+        XCTAssertTrue(
+            redwingAppSource.contains("focusRequestID.wrappedValue += 1")
+        )
+        XCTAssertFalse(redwingAppSource.contains("return true"))
+        XCTAssertTrue(
+            windowFocusSource.contains(
+                "window.identifier = NSUserInterfaceItemIdentifier(RedwingWindowID.main)"
+            )
+        )
     }
 
     func testLaneSurfaceIsSpacesOnlyGlassPane() throws {
@@ -384,6 +402,13 @@ final class SceneConfigurationTests: XCTestCase {
             .deletingLastPathComponent()
             .deletingLastPathComponent()
             .appendingPathComponent("Redwing/App/SessionNavigationState.swift")
+    }
+
+    private func windowFocusControllerSourceURL() -> URL {
+        URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("Redwing/Window/WindowFocusController.swift")
     }
 
     private func laneSurfaceViewSourceURL() -> URL {
