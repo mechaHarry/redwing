@@ -119,7 +119,7 @@ final class MessagesCoordinator: ObservableObject {
     }
 
     func loadNextPage() async {
-        await stream?.loadNextPage()
+        await loadNextPageFromFooterIfNeeded()
     }
 
     func loadNextPageFromFooterIfNeeded() async {
@@ -186,9 +186,7 @@ final class MessagesCoordinator: ObservableObject {
         guard !rows.isEmpty else {
             messageRows = snapshot.isRefreshing ? messageRows : []
             isShowingSkeletons = snapshot.isRefreshing
-            if isAwaitingInitialMessageScroll {
-                setMessageScrollTarget(nil)
-            }
+            setMessageScrollTarget(nil)
             rebuildThreadRows(anchor: .newest)
             return
         }

@@ -194,6 +194,26 @@ final class MessagesCoordinatorTests: XCTestCase {
         XCTAssertEqual(coordinator.messageScrollRequest?.id, initialRequest?.id)
     }
 
+    func testEmptySnapshotClearsInitialScrollRequestWithoutRearmingRestoration() {
+        let coordinator = MessagesCoordinator(session: nil, diagnostics: DiagnosticsStore())
+
+        coordinator.apply(snapshot: snapshot(ids: ["initial"]))
+        XCTAssertEqual(coordinator.messageScrollTargetID, "initial")
+        XCTAssertNotNil(coordinator.messageScrollRequest)
+
+        coordinator.apply(snapshot: snapshot(ids: []))
+
+        XCTAssertEqual(coordinator.messageRows, [])
+        XCTAssertNil(coordinator.messageScrollTargetID)
+        XCTAssertNil(coordinator.messageScrollRequest)
+
+        coordinator.apply(snapshot: snapshot(ids: ["repopulated"]))
+
+        XCTAssertEqual(coordinator.messageRows.map(\.id), ["repopulated"])
+        XCTAssertNil(coordinator.messageScrollTargetID)
+        XCTAssertNil(coordinator.messageScrollRequest)
+    }
+
     func testThreadLaneIssuesNewScrollRequestWhenNewestReplyTargetRepeats() {
         let coordinator = MessagesCoordinator(session: nil, diagnostics: DiagnosticsStore())
 
@@ -388,15 +408,21 @@ final class MessagesCoordinatorTests: XCTestCase {
         XCTAssertEqual(diagnostics.entries.last?.detail, "Bearer <redacted> client_secret=<redacted>")
     }
 
-    func testLoadNextPageDelegatesToCurrentStream() async {
+    func testLoadNextPageUsesGuardedPagination() async {
         let fake = FakeWebexClientProviding()
         let session = AccountSession(clientProvider: fake, diagnostics: DiagnosticsStore())
         let coordinator = MessagesCoordinator(session: session, diagnostics: DiagnosticsStore())
 
         await coordinator.select(spaceID: "space-1")
         await coordinator.loadNextPage()
+        XCTAssertEqual(fake.messagesStreamsBySpaceID["space-1"]?.loadNextPageCount, 0)
+
+        coordinator.apply(snapshot: snapshot(ids: ["one"], hasMore: true))
+        await coordinator.loadNextPage()
+        await coordinator.loadNextPage()
 
         XCTAssertEqual(fake.messagesStreamsBySpaceID["space-1"]?.loadNextPageCount, 1)
+        XCTAssertTrue(coordinator.isLoadingNextPage)
     }
 
     func testCloseCancelsStreamClearsPresentationAndPreservesRememberedSelection() async throws {
@@ -411,8 +437,10 @@ final class MessagesCoordinatorTests: XCTestCase {
         coordinator.select(messageID: "message-1")
 
         coordinator.close()
+        await waitUntil { stream.probe.isTerminated }
 
         XCTAssertTrue(stream.isCancelled)
+        XCTAssertTrue(stream.probe.isTerminated)
         XCTAssertNil(coordinator.selectedSpaceID)
         XCTAssertNil(coordinator.selectedSpaceTitle)
         XCTAssertNil(coordinator.selectedMessageID)
