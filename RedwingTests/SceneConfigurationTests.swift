@@ -17,19 +17,34 @@ final class SceneConfigurationTests: XCTestCase {
 
     func testLaneSurfaceIsSpacesOnlyGlassPane() throws {
         let laneSurfaceSource = try String(contentsOf: laneSurfaceViewSourceURL(), encoding: .utf8)
+        let spacesSurfaceSource = try XCTUnwrap(
+            laneSurfaceSource.components(separatedBy: "struct TeamsLaneSurfaceView").first
+        )
 
-        XCTAssertTrue(laneSurfaceSource.contains("ScrollView(.vertical)"))
-        XCTAssertTrue(laneSurfaceSource.contains("LazyVStack"))
-        XCTAssertTrue(laneSurfaceSource.contains("GlassEffectContainer"))
-        XCTAssertTrue(laneSurfaceSource.contains("glassEffect"))
-        XCTAssertTrue(laneSurfaceSource.contains(".clipShape(paneShape)"))
-        XCTAssertFalse(laneSurfaceSource.contains(".scrollClipDisabled()"))
+        XCTAssertTrue(spacesSurfaceSource.contains("ScrollView(.vertical)"))
+        XCTAssertTrue(spacesSurfaceSource.contains("LazyVStack"))
+        XCTAssertFalse(spacesSurfaceSource.contains("GlassEffectContainer"))
+        XCTAssertTrue(spacesSurfaceSource.contains("glassEffect"))
+        XCTAssertTrue(spacesSurfaceSource.contains(".clipShape(paneShape)"))
+        XCTAssertFalse(spacesSurfaceSource.contains(".padding(20)"))
+        XCTAssertFalse(spacesSurfaceSource.contains(".scrollClipDisabled()"))
         XCTAssertTrue(laneSurfaceSource.contains("placeholderImage(systemName: \"person.fill\")"))
         XCTAssertTrue(laneSurfaceSource.contains("placeholderImage(systemName: \"person.3.fill\")"))
         XCTAssertTrue(laneSurfaceSource.contains("ProgressView()"))
         XCTAssertFalse(laneSurfaceSource.contains("@ObservedObject var messages"))
         XCTAssertFalse(laneSurfaceSource.contains("messagesLane"))
         XCTAssertFalse(laneSurfaceSource.contains("threadLane"))
+    }
+
+    func testSpacesCardExposesSelectionAndScrollBindings() throws {
+        let source = try String(contentsOf: laneSurfaceViewSourceURL(), encoding: .utf8)
+
+        XCTAssertTrue(source.contains("@Binding var scrollAnchorID: String?"))
+        XCTAssertTrue(source.contains("let onSelectSpace: (SpaceRowViewModel) -> Void"))
+        XCTAssertTrue(source.contains("onSelectSpace(row)"))
+        XCTAssertTrue(source.contains(".scrollTargetLayout()"))
+        XCTAssertTrue(source.contains(".scrollPosition(id: $scrollAnchorID, anchor: .top)"))
+        XCTAssertTrue(source.contains("spaces.selectedSpaceID == row.id"))
     }
 
     func testSessionShellUsesGlassSidebarTabs() throws {
@@ -52,8 +67,10 @@ final class SceneConfigurationTests: XCTestCase {
         XCTAssertTrue(laneSurfaceSource.contains(".frame(maxWidth: .infinity, minHeight:"))
         XCTAssertTrue(laneSurfaceSource.contains(".contentShape(rowShape)"))
         XCTAssertTrue(laneSurfaceSource.contains(".glassEffect(.regular.interactive(), in: rowShape)"))
-        XCTAssertTrue(laneSurfaceSource.contains(".strokeBorder(Color.primary.opacity"))
-        XCTAssertTrue(laneSurfaceSource.contains("lineWidth: 1"))
+        XCTAssertTrue(laneSurfaceSource.contains("Color.primary.opacity(0.18)"))
+        XCTAssertTrue(laneSurfaceSource.contains("Color.accentColor.opacity(0.70)"))
+        XCTAssertTrue(laneSurfaceSource.contains("lineWidth: isSelected ? 1.5 : 1"))
+        XCTAssertTrue(laneSurfaceSource.contains("rowShape.fill(Color.accentColor.opacity(0.10))"))
     }
 
     func testSpaceRowsRenderOnlyTeamContextAndDateMetadata() throws {
