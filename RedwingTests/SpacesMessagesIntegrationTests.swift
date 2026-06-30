@@ -3,10 +3,41 @@ import XCTest
 
 @MainActor
 final class SpacesMessagesIntegrationTests: XCTestCase {
-    func testSelectingSpaceStoresIDBeforeOpeningMessages() async {
+    func testOpeningSpaceSelectsSpaceBeforeMessagesWithRowIdentity() async {
+        var calls: [OpeningCall] = []
+        let action = SpaceOpeningAction(
+            selectSpace: { calls.append(.space(id: $0)) },
+            selectMessages: { calls.append(.messages(id: $0, title: $1)) }
+        )
+
+        await action(makeRow())
+
+        XCTAssertEqual(
+            calls,
+            [
+                .space(id: "space-1"),
+                .messages(id: "space-1", title: "General"),
+            ]
+        )
+    }
+
+    func testOpeningSpaceIntegratesSpacesAndMessagesCoordinators() async {
         let spaces = SpacesCoordinator(session: nil, diagnostics: DiagnosticsStore())
         let messages = MessagesCoordinator(session: nil, diagnostics: DiagnosticsStore())
-        let row = SpaceRowViewModel(
+        let action = SpaceOpeningAction(
+            selectSpace: spaces.select(spaceID:),
+            selectMessages: messages.select(spaceID:spaceTitle:)
+        )
+
+        await action(makeRow())
+
+        XCTAssertEqual(spaces.selectedSpaceID, "space-1")
+        XCTAssertEqual(messages.selectedSpaceID, "space-1")
+        XCTAssertEqual(messages.selectedSpaceTitle, "General")
+    }
+
+    private func makeRow() -> SpaceRowViewModel {
+        SpaceRowViewModel(
             id: "space-1",
             title: "General",
             teamLabel: nil,
@@ -15,12 +46,10 @@ final class SpacesMessagesIntegrationTests: XCTestCase {
             avatarState: .groupPlaceholder,
             isSkeleton: false
         )
-
-        spaces.select(spaceID: row.id)
-        XCTAssertEqual(spaces.selectedSpaceID, "space-1")
-
-        await messages.select(spaceID: row.id, spaceTitle: row.title)
-        XCTAssertEqual(messages.selectedSpaceID, "space-1")
-        XCTAssertEqual(messages.selectedSpaceTitle, "General")
     }
+}
+
+private enum OpeningCall: Equatable {
+    case space(id: String)
+    case messages(id: String, title: String)
 }

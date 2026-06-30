@@ -911,8 +911,11 @@ struct SpacesMessagesSurface: View {
     }
 
     private func openSpace(_ row: SpaceRowViewModel) {
-        spaces.select(spaceID: row.id)
-        Task { await messages.select(spaceID: row.id, spaceTitle: row.title) }
+        let action = SpaceOpeningAction(
+            selectSpace: spaces.select(spaceID:),
+            selectMessages: messages.select(spaceID:spaceTitle:)
+        )
+        Task { await action(row) }
     }
 
     private func closeMessages() {
@@ -920,6 +923,9 @@ struct SpacesMessagesSurface: View {
     }
 }
 ```
+
+Use `SpaceOpeningAction` for the selection sequence so the production ordering covered by
+`SpacesMessagesIntegrationTests` is not duplicated in the shared surface.
 
 Do not clear `spaces.selectedSpaceID` on close; it remains a remembered selection while the open-card state is owned by `messages.selectedSpaceID`. The selected bubble may remain visible after close, and reopening it starts from its remembered message anchor.
 

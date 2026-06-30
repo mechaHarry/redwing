@@ -16,9 +16,11 @@ final class SceneConfigurationTests: XCTestCase {
     }
 
     func testLaneSurfaceIsSpacesOnlyGlassPane() throws {
-        let laneSurfaceSource = try String(contentsOf: laneSurfaceViewSourceURL(), encoding: .utf8)
-        let spacesSurfaceSource = try XCTUnwrap(
-            laneSurfaceSource.components(separatedBy: "struct TeamsLaneSurfaceView").first
+        let source = try String(contentsOf: laneSurfaceViewSourceURL(), encoding: .utf8)
+        let spacesSurfaceSource = try sourceRegion(
+            in: source,
+            startingAt: "struct LaneSurfaceView",
+            endingAt: "struct TeamsLaneSurfaceView"
         )
 
         XCTAssertTrue(spacesSurfaceSource.contains("ScrollView(.vertical)"))
@@ -28,23 +30,28 @@ final class SceneConfigurationTests: XCTestCase {
         XCTAssertTrue(spacesSurfaceSource.contains(".clipShape(paneShape)"))
         XCTAssertFalse(spacesSurfaceSource.contains(".padding(20)"))
         XCTAssertFalse(spacesSurfaceSource.contains(".scrollClipDisabled()"))
-        XCTAssertTrue(laneSurfaceSource.contains("placeholderImage(systemName: \"person.fill\")"))
-        XCTAssertTrue(laneSurfaceSource.contains("placeholderImage(systemName: \"person.3.fill\")"))
-        XCTAssertTrue(laneSurfaceSource.contains("ProgressView()"))
-        XCTAssertFalse(laneSurfaceSource.contains("@ObservedObject var messages"))
-        XCTAssertFalse(laneSurfaceSource.contains("messagesLane"))
-        XCTAssertFalse(laneSurfaceSource.contains("threadLane"))
+        XCTAssertTrue(source.contains("placeholderImage(systemName: \"person.fill\")"))
+        XCTAssertTrue(source.contains("placeholderImage(systemName: \"person.3.fill\")"))
+        XCTAssertTrue(source.contains("ProgressView()"))
+        XCTAssertFalse(source.contains("@ObservedObject var messages"))
+        XCTAssertFalse(source.contains("messagesLane"))
+        XCTAssertFalse(source.contains("threadLane"))
     }
 
     func testSpacesCardExposesSelectionAndScrollBindings() throws {
         let source = try String(contentsOf: laneSurfaceViewSourceURL(), encoding: .utf8)
+        let laneSurfaceSource = try sourceRegion(
+            in: source,
+            startingAt: "struct LaneSurfaceView",
+            endingAt: "struct TeamsLaneSurfaceView"
+        )
 
-        XCTAssertTrue(source.contains("@Binding var scrollAnchorID: String?"))
-        XCTAssertTrue(source.contains("let onSelectSpace: (SpaceRowViewModel) -> Void"))
-        XCTAssertTrue(source.contains("onSelectSpace(row)"))
-        XCTAssertTrue(source.contains(".scrollTargetLayout()"))
-        XCTAssertTrue(source.contains(".scrollPosition(id: $scrollAnchorID, anchor: .top)"))
-        XCTAssertTrue(source.contains("spaces.selectedSpaceID == row.id"))
+        XCTAssertTrue(laneSurfaceSource.contains("@Binding var scrollAnchorID: String?"))
+        XCTAssertTrue(laneSurfaceSource.contains("let onSelectSpace: (SpaceRowViewModel) -> Void"))
+        XCTAssertTrue(laneSurfaceSource.contains("onSelectSpace(row)"))
+        XCTAssertTrue(laneSurfaceSource.contains(".scrollTargetLayout()"))
+        XCTAssertTrue(laneSurfaceSource.contains(".scrollPosition(id: $scrollAnchorID, anchor: .top)"))
+        XCTAssertTrue(laneSurfaceSource.contains("spaces.selectedSpaceID == row.id"))
     }
 
     func testSessionShellUsesGlassSidebarTabs() throws {
@@ -60,17 +67,27 @@ final class SceneConfigurationTests: XCTestCase {
     }
 
     func testSpaceRowsOwnIndividualGlassSurfaces() throws {
-        let laneSurfaceSource = try String(contentsOf: laneSurfaceViewSourceURL(), encoding: .utf8)
+        let source = try String(contentsOf: laneSurfaceViewSourceURL(), encoding: .utf8)
+        let spaceGlassRowSource = try sourceRegion(
+            in: source,
+            startingAt: "private struct SpaceGlassRow",
+            endingAt: "private struct TeamGlassRow"
+        )
 
-        XCTAssertTrue(laneSurfaceSource.contains("private struct SpaceGlassRow"))
-        XCTAssertTrue(laneSurfaceSource.contains("let rowShape = RoundedRectangle"))
-        XCTAssertTrue(laneSurfaceSource.contains(".frame(maxWidth: .infinity, minHeight:"))
-        XCTAssertTrue(laneSurfaceSource.contains(".contentShape(rowShape)"))
-        XCTAssertTrue(laneSurfaceSource.contains(".glassEffect(.regular.interactive(), in: rowShape)"))
-        XCTAssertTrue(laneSurfaceSource.contains("Color.primary.opacity(0.18)"))
-        XCTAssertTrue(laneSurfaceSource.contains("Color.accentColor.opacity(0.70)"))
-        XCTAssertTrue(laneSurfaceSource.contains("lineWidth: isSelected ? 1.5 : 1"))
-        XCTAssertTrue(laneSurfaceSource.contains("rowShape.fill(Color.accentColor.opacity(0.10))"))
+        XCTAssertTrue(spaceGlassRowSource.contains("private struct SpaceGlassRow"))
+        XCTAssertTrue(spaceGlassRowSource.contains("let rowShape = RoundedRectangle"))
+        XCTAssertTrue(spaceGlassRowSource.contains(".frame(maxWidth: .infinity, minHeight:"))
+        XCTAssertTrue(spaceGlassRowSource.contains(".contentShape(rowShape)"))
+        XCTAssertTrue(spaceGlassRowSource.contains(".glassEffect(.regular.interactive(), in: rowShape)"))
+        XCTAssertTrue(spaceGlassRowSource.contains("Color.primary.opacity(0.18)"))
+        XCTAssertTrue(spaceGlassRowSource.contains("Color.accentColor.opacity(0.70)"))
+        XCTAssertTrue(spaceGlassRowSource.contains("lineWidth: isSelected ? 1.5 : 1"))
+        XCTAssertTrue(spaceGlassRowSource.contains("rowShape.fill(Color.accentColor.opacity(0.10))"))
+        XCTAssertTrue(
+            spaceGlassRowSource.contains(
+                ".accessibilityAddTraits(isSelected ? .isSelected : [])"
+            )
+        )
     }
 
     func testSpaceRowsRenderOnlyTeamContextAndDateMetadata() throws {
@@ -139,5 +156,16 @@ final class SceneConfigurationTests: XCTestCase {
             .deletingLastPathComponent()
             .deletingLastPathComponent()
             .appendingPathComponent("Redwing/Lanes/SkeletonViews.swift")
+    }
+
+    private func sourceRegion(
+        in source: String,
+        startingAt startMarker: String,
+        endingAt endMarker: String
+    ) throws -> String {
+        let startRange = try XCTUnwrap(source.range(of: startMarker))
+        let suffix = source[startRange.lowerBound...]
+        let endRange = try XCTUnwrap(suffix.range(of: endMarker))
+        return String(suffix[..<endRange.lowerBound])
     }
 }

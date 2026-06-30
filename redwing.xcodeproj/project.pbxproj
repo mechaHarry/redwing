@@ -63,6 +63,7 @@
 		C23000000000000000000001 /* SpacesMessagesLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C23000000000000000000003 /* SpacesMessagesLayoutTests.swift */; };
 		C23000000000000000000002 /* SpacesMessagesLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = C23000000000000000000004 /* SpacesMessagesLayout.swift */; };
 		C24000000000000000000001 /* SpacesMessagesIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C24000000000000000000002 /* SpacesMessagesIntegrationTests.swift */; };
+		C25000000000000000000001 /* SpaceOpeningAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = C25000000000000000000002 /* SpaceOpeningAction.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -135,6 +136,7 @@
 		C23000000000000000000003 /* SpacesMessagesLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpacesMessagesLayoutTests.swift; sourceTree = "<group>"; };
 		C23000000000000000000004 /* SpacesMessagesLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpacesMessagesLayout.swift; sourceTree = "<group>"; };
 		C24000000000000000000002 /* SpacesMessagesIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpacesMessagesIntegrationTests.swift; sourceTree = "<group>"; };
+		C25000000000000000000002 /* SpaceOpeningAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpaceOpeningAction.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -327,6 +329,7 @@
 				B81000000000000000000002 /* LanePaginationFooterState.swift */,
 				F90000000000000000000009 /* LaneSurfaceView.swift */,
 				F90000000000000000000006 /* SkeletonViews.swift */,
+				C25000000000000000000002 /* SpaceOpeningAction.swift */,
 				C23000000000000000000004 /* SpacesMessagesLayout.swift */,
 			);
 			path = Lanes;
@@ -475,6 +478,7 @@
 				F90000000000000000000003 /* LaneLayoutModel.swift in Sources */,
 				B81000000000000000000001 /* LanePaginationFooterState.swift in Sources */,
 				F90000000000000000000008 /* LaneSurfaceView.swift in Sources */,
+				C25000000000000000000001 /* SpaceOpeningAction.swift in Sources */,
 				A20000000000000000000003 /* MenuBarView.swift in Sources */,
 				D70000000000000000000005 /* MessageRowViewModel.swift in Sources */,
 				D70000000000000000000009 /* MessagesCoordinator.swift in Sources */,

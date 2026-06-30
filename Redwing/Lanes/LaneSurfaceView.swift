@@ -192,6 +192,7 @@ private struct SpaceGlassRow: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .buttonStyle(.plain)
+                .accessibilityAddTraits(isSelected ? .isSelected : [])
             }
         }
         .frame(maxWidth: .infinity, minHeight: 84, alignment: .leading)
