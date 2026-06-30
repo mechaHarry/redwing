@@ -131,7 +131,28 @@ final class SceneConfigurationTests: XCTestCase {
         XCTAssertTrue(sessionSource.contains("messages: messages"))
         XCTAssertTrue(sessionSource.contains("navigation: navigation"))
         XCTAssertFalse(sessionSource.contains("@State private var selectedTab"))
-        XCTAssertFalse(sessionSource.contains(".id(selectedTab)"))
+        XCTAssertFalse(containsTabDerivedIdentityReset(in: sessionSource))
+    }
+
+    func testTabDerivedIdentityResetDetectionIsPrecise() {
+        XCTAssertTrue(containsTabDerivedIdentityReset(in: ".id(selectedTab)"))
+        XCTAssertTrue(
+            containsTabDerivedIdentityReset(in: ".id(navigation.selectedTab)")
+        )
+        XCTAssertTrue(
+            containsTabDerivedIdentityReset(in: ".id( navigation . selectedTab )")
+        )
+        XCTAssertTrue(
+            containsTabDerivedIdentityReset(in: ".id(navigation.selectedTab.rawValue)")
+        )
+        XCTAssertFalse(containsTabDerivedIdentityReset(in: ".id(\"spaces-card\")"))
+        XCTAssertFalse(containsTabDerivedIdentityReset(in: ".id(message.id)"))
+    }
+
+    func testSpacesMessagesSurfaceDoesNotRenderDeferredThreadUI() throws {
+        let source = try String(contentsOf: spacesMessagesSurfaceSourceURL(), encoding: .utf8)
+
+        XCTAssertFalse(source.localizedCaseInsensitiveContains("thread"))
     }
 
     func testTeamsAndPeopleSurfacesBindIndependentScrollPositions() throws {
@@ -378,4 +399,11 @@ private extension String {
     func occurrences(of value: String) -> Int {
         components(separatedBy: value).count - 1
     }
+}
+
+private func containsTabDerivedIdentityReset(in source: String) -> Bool {
+    source.range(
+        of: #"\.id\s*\([^)]*\bselectedTab\b[^)]*\)"#,
+        options: .regularExpression
+    ) != nil
 }
