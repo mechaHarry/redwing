@@ -128,36 +128,6 @@ private struct RedwingRootView: View {
     }
 }
 
-enum RedwingMainTab: String, CaseIterable, Identifiable {
-    case spaces
-    case teams
-    case people
-
-    var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .spaces:
-            "Spaces"
-        case .teams:
-            "Teams"
-        case .people:
-            "People"
-        }
-    }
-
-    var systemImage: String {
-        switch self {
-        case .spaces:
-            "bubble.left.and.bubble.right.fill"
-        case .teams:
-            "person.3.fill"
-        case .people:
-            "person.crop.circle.fill"
-        }
-    }
-}
-
 private struct SessionSidebarView: View {
     @Binding var selection: RedwingMainTab
 

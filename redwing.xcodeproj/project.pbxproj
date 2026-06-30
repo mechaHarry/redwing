@@ -58,6 +58,8 @@
 		B81000000000000000000005 /* TeamsCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B81000000000000000000006 /* TeamsCoordinator.swift */; };
 		B81000000000000000000007 /* PersonNodeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B81000000000000000000008 /* PersonNodeViewModel.swift */; };
 		B81000000000000000000009 /* PeopleCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8100000000000000000000A /* PeopleCoordinator.swift */; };
+		C22000000000000000000001 /* SessionNavigationState.swift in Sources */ = {isa = PBXBuildFile; fileRef = C22000000000000000000003 /* SessionNavigationState.swift */; };
+		C22000000000000000000002 /* SessionNavigationStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C22000000000000000000004 /* SessionNavigationStateTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -125,6 +127,8 @@
 		B81000000000000000000006 /* TeamsCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeamsCoordinator.swift; sourceTree = "<group>"; };
 		B81000000000000000000008 /* PersonNodeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonNodeViewModel.swift; sourceTree = "<group>"; };
 		B8100000000000000000000A /* PeopleCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeopleCoordinator.swift; sourceTree = "<group>"; };
+		C22000000000000000000003 /* SessionNavigationState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionNavigationState.swift; sourceTree = "<group>"; };
+		C22000000000000000000004 /* SessionNavigationStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionNavigationStateTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -188,6 +192,7 @@
 				D70000000000000000000004 /* MessagesCoordinatorTests.swift */,
 				AB1300000000000000000002 /* ReleaseScriptTests.swift */,
 				AB1200000000000000000002 /* SceneConfigurationTests.swift */,
+				C22000000000000000000004 /* SessionNavigationStateTests.swift */,
 				A1000000000000000000001B /* SetupValidationTests.swift */,
 				A10000000000000000000014 /* SmokeTests.swift */,
 				C60000000000000000000002 /* SpacesCoordinatorTests.swift */,
@@ -215,6 +220,7 @@
 				A10000000000000000000012 /* AppRootModel.swift */,
 				A10000000000000000000013 /* RedwingEnvironment.swift */,
 				A10000000000000000000011 /* RedwingApp.swift */,
+				C22000000000000000000003 /* SessionNavigationState.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -467,6 +473,7 @@
 				B81000000000000000000009 /* PeopleCoordinator.swift in Sources */,
 				A10000000000000000000003 /* RedwingEnvironment.swift in Sources */,
 				A10000000000000000000001 /* RedwingApp.swift in Sources */,
+				C22000000000000000000001 /* SessionNavigationState.swift in Sources */,
 				A1000000000000000000000A /* SetupCredentials.swift in Sources */,
 				A1000000000000000000000B /* SetupValidation.swift in Sources */,
 				A20000000000000000000004 /* SetupView.swift in Sources */,
@@ -498,6 +505,7 @@
 				D70000000000000000000003 /* MessagesCoordinatorTests.swift in Sources */,
 				AB1300000000000000000001 /* ReleaseScriptTests.swift in Sources */,
 				AB1200000000000000000001 /* SceneConfigurationTests.swift in Sources */,
+				C22000000000000000000002 /* SessionNavigationStateTests.swift in Sources */,
 				A10000000000000000000009 /* SetupValidationTests.swift in Sources */,
 				A10000000000000000000004 /* SmokeTests.swift in Sources */,
 				C60000000000000000000001 /* SpacesCoordinatorTests.swift in Sources */,
