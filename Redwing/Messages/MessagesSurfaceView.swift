@@ -1,12 +1,98 @@
 import Combine
 import SwiftUI
 
+struct MessageScrollArbiter {
+    enum Resolution: Equatable {
+        case restore(id: String, consuming: LaneScrollRequest.ID?)
+        case scroll(id: String, requestID: LaneScrollRequest.ID)
+        case consume(requestID: LaneScrollRequest.ID)
+        case none
+    }
+
+    static func resolve(
+        currentSpaceID: String?,
+        realRowIDs: [String],
+        restoredID: String?,
+        request: LaneScrollRequest?
+    ) -> Resolution {
+        if let request, request.spaceID != currentSpaceID {
+            return .consume(requestID: request.id)
+        }
+
+        guard !realRowIDs.isEmpty else {
+            return .none
+        }
+
+        if let restoredID, realRowIDs.contains(restoredID) {
+            return .restore(id: restoredID, consuming: request?.id)
+        }
+
+        guard let request else {
+            return .none
+        }
+
+        guard realRowIDs.contains(request.targetID) else {
+            return .consume(requestID: request.id)
+        }
+
+        return .scroll(id: request.targetID, requestID: request.id)
+    }
+}
+
+@MainActor
+final class MessageScrollRequestExecutor {
+    private var task: Task<Void, Never>?
+
+    func submit(
+        isCurrent: @escaping @MainActor () -> Bool,
+        action: @escaping @MainActor () -> Void,
+        acknowledge: @escaping @MainActor () -> Void
+    ) {
+        task?.cancel()
+        task = Task { @MainActor in
+            await Task.yield()
+
+            guard !Task.isCancelled else {
+                return
+            }
+
+            guard isCurrent() else {
+                guard !Task.isCancelled else {
+                    return
+                }
+                acknowledge()
+                return
+            }
+
+            action()
+            await Task.yield()
+
+            guard !Task.isCancelled else {
+                return
+            }
+
+            acknowledge()
+        }
+    }
+
+    func cancel() {
+        task?.cancel()
+        task = nil
+    }
+
+    deinit {
+        task?.cancel()
+    }
+}
+
+@MainActor
 struct MessagesSurfaceView: View {
     @ObservedObject var messages: MessagesCoordinator
     @ObservedObject var navigation: SessionNavigationState
     let onClose: () -> Void
 
     @State private var visibleMessageID: String?
+    @State private var scrollExecutor = MessageScrollRequestExecutor()
 
     var body: some View {
         let paneShape = RoundedRectangle(cornerRadius: 28, style: .continuous)
@@ -71,8 +157,6 @@ struct MessagesSurfaceView: View {
     }
 
     private var timeline: some View {
-        let rowIDs = messages.messageRows.map(\.id)
-
         return ScrollViewReader { proxy in
             ScrollView(.vertical) {
                 LazyVStack(spacing: 10) {
@@ -95,37 +179,59 @@ struct MessagesSurfaceView: View {
                 .padding(16)
             }
             .scrollPosition(id: $visibleMessageID, anchor: .center)
-            .animation(.easeInOut(duration: 0.22), value: messages.messageRows)
-            .animation(.easeInOut(duration: 0.2), value: messages.footerState)
             .onAppear {
-                restoreVisibleMessage(rowIDs: rowIDs)
+                resolveScrollDestination(proxy: proxy, request: messages.messageScrollRequest)
             }
             .onChange(of: messages.selectedSpaceID) { _, _ in
                 visibleMessageID = nil
-                restoreVisibleMessage(rowIDs: messages.messageRows.map(\.id))
+                resolveScrollDestination(proxy: proxy, request: messages.messageScrollRequest)
             }
             .onChange(of: visibleMessageID) { _, id in
                 rememberVisibleMessage(id: id)
             }
-            .onChange(of: rowIDs) { _, newIDs in
-                guard let visibleMessageID, !newIDs.contains(visibleMessageID) else {
-                    return
-                }
-                restoreVisibleMessage(rowIDs: newIDs)
+            .onChange(of: messages.messageRows.map(\.id)) { _, _ in
+                resolveScrollDestination(proxy: proxy, request: messages.messageScrollRequest)
             }
             .onReceive(messages.$messageScrollRequest.compactMap { $0 }) { request in
-                scroll(proxy, to: request.targetID)
+                resolveScrollDestination(proxy: proxy, request: request)
+            }
+            .onDisappear {
+                scrollExecutor.cancel()
             }
         }
     }
 
-    private func restoreVisibleMessage(rowIDs: [String]) {
-        guard let spaceID = messages.selectedSpaceID else {
-            return
+    private func resolveScrollDestination(
+        proxy: ScrollViewProxy,
+        request: LaneScrollRequest?
+    ) {
+        let realRowIDs = messages.isShowingSkeletons ? [] : messages.messageRows.map(\.id)
+        let restoredID = messages.selectedSpaceID.flatMap {
+            navigation.restoredMessageID(spaceID: $0, rowIDs: realRowIDs)
         }
+        let resolution = MessageScrollArbiter.resolve(
+            currentSpaceID: messages.selectedSpaceID,
+            realRowIDs: realRowIDs,
+            restoredID: restoredID,
+            request: request
+        )
 
-        if let restored = navigation.restoredMessageID(spaceID: spaceID, rowIDs: rowIDs) {
-            visibleMessageID = restored
+        switch resolution {
+        case .restore(let id, let requestID):
+            scrollExecutor.cancel()
+            if visibleMessageID != id {
+                visibleMessageID = id
+            }
+            if let requestID {
+                messages.acknowledgeMessageScrollRequest(id: requestID)
+            }
+        case .scroll(let id, let requestID):
+            scroll(proxy, to: id, requestID: requestID)
+        case .consume(let requestID):
+            scrollExecutor.cancel()
+            messages.acknowledgeMessageScrollRequest(id: requestID)
+        case .none:
+            break
         }
     }
 
@@ -140,13 +246,33 @@ struct MessagesSurfaceView: View {
         navigation.rememberMessageAnchor(spaceID: spaceID, id: id, index: index)
     }
 
-    private func scroll(_ proxy: ScrollViewProxy, to targetID: String) {
-        Task { @MainActor in
-            await Task.yield()
-            withAnimation(.easeInOut(duration: 0.18)) {
-                proxy.scrollTo(targetID, anchor: .bottom)
+    private func scroll(
+        _ proxy: ScrollViewProxy,
+        to targetID: String,
+        requestID: LaneScrollRequest.ID
+    ) {
+        scrollExecutor.submit(
+            isCurrent: {
+                guard let request = messages.messageScrollRequest else {
+                    return false
+                }
+
+                return request.id == requestID
+                    && request.spaceID == messages.selectedSpaceID
+                    && request.targetID == targetID
+                    && messages.messageRows.contains(where: {
+                        !$0.isSkeleton && $0.id == targetID
+                    })
+            },
+            action: {
+                withAnimation(.easeInOut(duration: 0.18)) {
+                    proxy.scrollTo(targetID, anchor: .bottom)
+                }
+            },
+            acknowledge: {
+                messages.acknowledgeMessageScrollRequest(id: requestID)
             }
-        }
+        )
     }
 }
 
@@ -188,6 +314,5 @@ private struct MessageTimelineRow: View {
         .padding(12)
         .frame(maxWidth: .infinity, minHeight: 68, alignment: .leading)
         .glassEffect(.regular, in: rowShape)
-        .animation(.easeInOut(duration: 0.2), value: row)
     }
 }

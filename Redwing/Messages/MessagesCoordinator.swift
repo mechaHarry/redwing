@@ -4,6 +4,12 @@ import Foundation
 struct LaneScrollRequest: Equatable, Identifiable {
     let id = UUID()
     let targetID: String
+    let spaceID: String?
+
+    init(targetID: String, spaceID: String? = nil) {
+        self.targetID = targetID
+        self.spaceID = spaceID
+    }
 }
 
 @MainActor
@@ -120,6 +126,14 @@ final class MessagesCoordinator: ObservableObject {
 
     func loadNextPage() async {
         await loadNextPageFromFooterIfNeeded()
+    }
+
+    func acknowledgeMessageScrollRequest(id: LaneScrollRequest.ID) {
+        guard messageScrollRequest?.id == id else {
+            return
+        }
+
+        messageScrollRequest = nil
     }
 
     func loadNextPageFromFooterIfNeeded() async {
@@ -248,12 +262,16 @@ final class MessagesCoordinator: ObservableObject {
 
     private func setMessageScrollTarget(_ targetID: String?) {
         messageScrollTargetID = targetID
-        messageScrollRequest = targetID.map { LaneScrollRequest(targetID: $0) }
+        messageScrollRequest = targetID.map {
+            LaneScrollRequest(targetID: $0, spaceID: selectedSpaceID)
+        }
     }
 
     private func setThreadScrollTarget(_ targetID: String?) {
         threadScrollTargetID = targetID
-        threadScrollRequest = targetID.map { LaneScrollRequest(targetID: $0) }
+        threadScrollRequest = targetID.map {
+            LaneScrollRequest(targetID: $0, spaceID: selectedSpaceID)
+        }
     }
 
     private func messageLaneTargetID(for entry: MessageThreadEntryDTO, in snapshot: MessageThreadSnapshotDTO) -> String {

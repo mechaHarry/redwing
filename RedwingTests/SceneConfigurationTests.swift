@@ -167,6 +167,20 @@ final class SceneConfigurationTests: XCTestCase {
         XCTAssertFalse(source.contains("NSAttributedString.DocumentType.html"))
     }
 
+    func testMessagesTimelineAvoidsGeometryDrivenImplicitAnimation() throws {
+        let source = try String(contentsOf: messagesSurfaceViewSourceURL(), encoding: .utf8)
+
+        XCTAssertTrue(source.contains(".transition(.opacity)"))
+        XCTAssertTrue(source.contains("withAnimation(.easeInOut"))
+        XCTAssertTrue(
+            source.contains("@State private var scrollExecutor = MessageScrollRequestExecutor()")
+        )
+        XCTAssertTrue(source.contains(".onDisappear"))
+        XCTAssertTrue(source.contains("scrollExecutor.cancel()"))
+        XCTAssertFalse(source.contains("value: messages.messageRows"))
+        XCTAssertFalse(source.contains("value: row"))
+    }
+
     private func redwingAppSourceURL() -> URL {
         URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()

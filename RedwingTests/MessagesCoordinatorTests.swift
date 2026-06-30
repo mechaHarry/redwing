@@ -1,8 +1,189 @@
+import Combine
 import XCTest
 @testable import Redwing
 
 @MainActor
 final class MessagesCoordinatorTests: XCTestCase {
+    func testMessageScrollExecutorCancellationBeforeActionLeavesRequestPending() async {
+        let executor = MessageScrollRequestExecutor()
+        var didAct = false
+        var didAcknowledge = false
+
+        executor.submit(
+            isCurrent: { true },
+            action: { didAct = true },
+            acknowledge: { didAcknowledge = true }
+        )
+        executor.cancel()
+        await yieldMainActor()
+
+        XCTAssertFalse(didAct)
+        XCTAssertFalse(didAcknowledge)
+    }
+
+    func testMessageScrollExecutorCancellationAfterActionLeavesRequestPending() async {
+        let executor = MessageScrollRequestExecutor()
+        var didAct = false
+        var didAcknowledge = false
+
+        executor.submit(
+            isCurrent: { true },
+            action: { didAct = true },
+            acknowledge: { didAcknowledge = true }
+        )
+        await waitUntil { didAct }
+        executor.cancel()
+        await yieldMainActor()
+
+        XCTAssertFalse(didAcknowledge)
+    }
+
+    func testMessageScrollExecutorNewRequestReplacesPriorTask() async {
+        let executor = MessageScrollRequestExecutor()
+        var actions: [String] = []
+        var acknowledgements: [String] = []
+
+        executor.submit(
+            isCurrent: { true },
+            action: { actions.append("old") },
+            acknowledge: { acknowledgements.append("old") }
+        )
+        executor.submit(
+            isCurrent: { true },
+            action: { actions.append("new") },
+            acknowledge: { acknowledgements.append("new") }
+        )
+        await waitUntil { acknowledgements.contains("new") }
+
+        XCTAssertEqual(actions, ["new"])
+        XCTAssertEqual(acknowledgements, ["new"])
+    }
+
+    func testAcknowledgingMatchingMessageScrollRequestConsumesIt() throws {
+        let coordinator = MessagesCoordinator(session: nil, diagnostics: DiagnosticsStore())
+        coordinator.apply(snapshot: snapshot(ids: ["message-1"]))
+        let request = try XCTUnwrap(coordinator.messageScrollRequest)
+
+        coordinator.acknowledgeMessageScrollRequest(id: request.id)
+
+        XCTAssertNil(coordinator.messageScrollRequest)
+    }
+
+    func testStaleAcknowledgementDoesNotConsumeNewerMessageScrollRequest() throws {
+        let coordinator = MessagesCoordinator(session: nil, diagnostics: DiagnosticsStore())
+        coordinator.apply(snapshot: snapshot(ids: ["older", "newer"]))
+        let staleRequest = try XCTUnwrap(coordinator.messageScrollRequest)
+        coordinator.select(messageID: "older")
+        let currentRequest = try XCTUnwrap(coordinator.messageScrollRequest)
+        XCTAssertNotEqual(staleRequest.id, currentRequest.id)
+
+        coordinator.acknowledgeMessageScrollRequest(id: staleRequest.id)
+
+        XCTAssertEqual(coordinator.messageScrollRequest, currentRequest)
+        coordinator.acknowledgeMessageScrollRequest(id: currentRequest.id)
+        XCTAssertNil(coordinator.messageScrollRequest)
+    }
+
+    func testConsumedMessageScrollRequestDoesNotReplayToNewSubscriber() throws {
+        let coordinator = MessagesCoordinator(session: nil, diagnostics: DiagnosticsStore())
+        coordinator.apply(snapshot: snapshot(ids: ["message-1"]))
+        let request = try XCTUnwrap(coordinator.messageScrollRequest)
+        coordinator.acknowledgeMessageScrollRequest(id: request.id)
+        var receivedRequests: [LaneScrollRequest] = []
+
+        let subscription = coordinator.$messageScrollRequest
+            .compactMap { $0 }
+            .sink { receivedRequests.append($0) }
+
+        XCTAssertTrue(receivedRequests.isEmpty)
+        withExtendedLifetime(subscription) {}
+    }
+
+    func testMessageScrollRequestCarriesSelectedSpaceIdentity() async throws {
+        let fake = FakeWebexClientProviding()
+        let session = AccountSession(clientProvider: fake, diagnostics: DiagnosticsStore())
+        let coordinator = MessagesCoordinator(session: session, diagnostics: DiagnosticsStore())
+
+        await coordinator.select(spaceID: "space-1")
+        let stream = try XCTUnwrap(fake.messagesStreamsBySpaceID["space-1"])
+        stream.probe.yield(snapshot(ids: ["message-1"]))
+        await waitUntil { coordinator.messageScrollRequest != nil }
+
+        XCTAssertEqual(coordinator.messageScrollRequest?.spaceID, "space-1")
+    }
+
+    func testMessageScrollArbiterPrioritizesRestoredAnchorAndConsumesRequest() {
+        let request = LaneScrollRequest(targetID: "latest", spaceID: "space-1")
+
+        let resolution = MessageScrollArbiter.resolve(
+            currentSpaceID: "space-1",
+            realRowIDs: ["saved", "latest"],
+            restoredID: "saved",
+            request: request
+        )
+
+        XCTAssertEqual(resolution, .restore(id: "saved", consuming: request.id))
+    }
+
+    func testMessageScrollArbiterUsesLatestRequestWhenNoAnchorExists() {
+        let request = LaneScrollRequest(targetID: "latest", spaceID: "space-1")
+
+        let resolution = MessageScrollArbiter.resolve(
+            currentSpaceID: "space-1",
+            realRowIDs: ["older", "latest"],
+            restoredID: nil,
+            request: request
+        )
+
+        XCTAssertEqual(resolution, .scroll(id: "latest", requestID: request.id))
+    }
+
+    func testMessageScrollArbiterConsumesRequestWithMissingTarget() {
+        let request = LaneScrollRequest(targetID: "removed", spaceID: "space-1")
+
+        let resolution = MessageScrollArbiter.resolve(
+            currentSpaceID: "space-1",
+            realRowIDs: ["current"],
+            restoredID: nil,
+            request: request
+        )
+
+        XCTAssertEqual(resolution, .consume(requestID: request.id))
+    }
+
+    func testMessageScrollArbiterConsumesRequestFromPreviousSpace() {
+        let oldRequest = LaneScrollRequest(targetID: "old-message", spaceID: "old-space")
+
+        let resolution = MessageScrollArbiter.resolve(
+            currentSpaceID: "new-space",
+            realRowIDs: ["new-message"],
+            restoredID: nil,
+            request: oldRequest
+        )
+
+        XCTAssertEqual(resolution, .consume(requestID: oldRequest.id))
+    }
+
+    func testMessageScrollArbiterDefersCurrentRequestUntilRealRowsExistThenScrolls() {
+        let request = LaneScrollRequest(targetID: "latest", spaceID: "space-1")
+
+        let deferredResolution = MessageScrollArbiter.resolve(
+            currentSpaceID: "space-1",
+            realRowIDs: [],
+            restoredID: nil,
+            request: request
+        )
+        let readyResolution = MessageScrollArbiter.resolve(
+            currentSpaceID: "space-1",
+            realRowIDs: ["latest"],
+            restoredID: nil,
+            request: request
+        )
+
+        XCTAssertEqual(deferredResolution, .none)
+        XCTAssertEqual(readyResolution, .scroll(id: "latest", requestID: request.id))
+    }
+
     func testSelectingSpaceCreatesOneSharedThreadStream() async {
         let fake = FakeWebexClientProviding()
         let session = AccountSession(clientProvider: fake, diagnostics: DiagnosticsStore())
@@ -575,6 +756,13 @@ private func waitUntil(
         await Task.yield()
     }
     XCTAssertTrue(condition(), file: file, line: line)
+}
+
+@MainActor
+private func yieldMainActor(iterations: Int = 5) async {
+    for _ in 0..<iterations {
+        await Task.yield()
+    }
 }
 
 private actor SuspendedMessagesProvider: WebexClientProviding {
