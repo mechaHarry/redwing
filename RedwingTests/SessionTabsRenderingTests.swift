@@ -18,7 +18,7 @@ final class SessionTabsRenderingTests: XCTestCase {
             id: "message-anchor",
             index: 1
         )
-        await messages.select(spaceID: "selected-space", spaceTitle: "Selected Space")
+        messages.select(spaceID: "selected-space", spaceTitle: "Selected Space")
         let hostingView = NSHostingView(rootView: SessionTabsView(
             spaces: spaces,
             messages: messages,

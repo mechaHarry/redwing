@@ -355,6 +355,23 @@ final class SceneConfigurationTests: XCTestCase {
         XCTAssertFalse(source.contains("value: row"))
     }
 
+    func testMessagesSelectionIsSynchronousInitiationOnly() throws {
+        let source = try String(contentsOf: messagesCoordinatorSourceURL(), encoding: .utf8)
+        let selectSource = try sourceRegion(
+            in: source,
+            startingAt: "func select(spaceID: String, spaceTitle: String? = nil)",
+            endingAt: "    private func installAcquiredStream"
+        )
+
+        XCTAssertTrue(
+            selectSource.contains("func select(spaceID: String, spaceTitle: String? = nil) {")
+        )
+        XCTAssertFalse(selectSource.contains("spaceTitle: String? = nil) async"))
+        XCTAssertTrue(selectSource.contains("streamAcquisitionTask = Task"))
+        XCTAssertFalse(selectSource.contains("await streamAcquisitionTask"))
+        XCTAssertFalse(selectSource.contains("await Task.yield()"))
+    }
+
     private func redwingAppSourceURL() -> URL {
         URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
@@ -381,6 +398,13 @@ final class SceneConfigurationTests: XCTestCase {
             .deletingLastPathComponent()
             .deletingLastPathComponent()
             .appendingPathComponent("Redwing/Messages/MessagesSurfaceView.swift")
+    }
+
+    private func messagesCoordinatorSourceURL() -> URL {
+        URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("Redwing/Messages/MessagesCoordinator.swift")
     }
 
     private func spacesMessagesSurfaceSourceURL() -> URL {

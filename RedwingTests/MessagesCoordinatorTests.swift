@@ -146,7 +146,7 @@ final class MessagesCoordinatorTests: XCTestCase {
         let session = AccountSession(clientProvider: fake, diagnostics: DiagnosticsStore())
         let coordinator = MessagesCoordinator(session: session, diagnostics: DiagnosticsStore())
 
-        await coordinator.select(spaceID: "space-1")
+        coordinator.select(spaceID: "space-1")
         await waitUntil { fake.messagesStreamsBySpaceID["space-1"]?.refreshCount == 1 }
         let stream = try XCTUnwrap(fake.messagesStreamsBySpaceID["space-1"])
         stream.probe.yield(snapshot(ids: ["message-1"]))
@@ -232,9 +232,9 @@ final class MessagesCoordinatorTests: XCTestCase {
         let session = AccountSession(clientProvider: fake, diagnostics: DiagnosticsStore())
         let coordinator = MessagesCoordinator(session: session, diagnostics: DiagnosticsStore())
 
-        await coordinator.select(spaceID: "space-1")
+        coordinator.select(spaceID: "space-1")
         await waitUntil { fake.messagesStreamsBySpaceID["space-1"]?.refreshCount == 1 }
-        await coordinator.select(spaceID: "space-1")
+        coordinator.select(spaceID: "space-1")
 
         XCTAssertNotNil(fake.messagesStreamsBySpaceID["space-1"])
         XCTAssertEqual(fake.messagesStreamsBySpaceID["space-1"]?.refreshCount, 1)
@@ -246,7 +246,7 @@ final class MessagesCoordinatorTests: XCTestCase {
         let session = AccountSession(clientProvider: fake, diagnostics: DiagnosticsStore())
         let coordinator = MessagesCoordinator(session: session, diagnostics: DiagnosticsStore())
 
-        await coordinator.select(spaceID: "space-1")
+        coordinator.select(spaceID: "space-1")
         await waitUntil { fake.messagesStreamsBySpaceID["space-1"]?.refreshCount == 1 }
         let stream = fake.messagesStreamsBySpaceID["space-1"]!
         stream.probe.yield(MessageThreadSnapshotDTO(
@@ -299,7 +299,7 @@ final class MessagesCoordinatorTests: XCTestCase {
         let session = AccountSession(clientProvider: fake, diagnostics: DiagnosticsStore())
         let coordinator = MessagesCoordinator(session: session, diagnostics: DiagnosticsStore())
 
-        await coordinator.select(spaceID: "space-1")
+        coordinator.select(spaceID: "space-1")
         await waitUntil { fake.messagesStreamsBySpaceID["space-1"]?.refreshCount == 1 }
         let stream = fake.messagesStreamsBySpaceID["space-1"]!
         stream.probe.yield(MessageThreadSnapshotDTO(
@@ -339,7 +339,7 @@ final class MessagesCoordinatorTests: XCTestCase {
         let session = AccountSession(clientProvider: fake, diagnostics: DiagnosticsStore())
         let coordinator = MessagesCoordinator(session: session, diagnostics: DiagnosticsStore())
 
-        await coordinator.select(spaceID: "space-1")
+        coordinator.select(spaceID: "space-1")
         await waitUntil { fake.messagesStreamsBySpaceID["space-1"]?.refreshCount == 1 }
         let firstStream = fake.messagesStreamsBySpaceID["space-1"]!
         firstStream.probe.yield(MessageThreadSnapshotDTO(
@@ -356,7 +356,7 @@ final class MessagesCoordinatorTests: XCTestCase {
         await waitUntil { coordinator.messageRows.map(\.id) == ["parent"] }
         coordinator.select(messageID: "parent")
 
-        await coordinator.select(spaceID: "space-2")
+        coordinator.select(spaceID: "space-2")
         await waitUntil { fake.messagesStreamsBySpaceID["space-2"]?.refreshCount == 1 }
         let secondStream = fake.messagesStreamsBySpaceID["space-2"]!
         secondStream.probe.yield(MessageThreadSnapshotDTO(
@@ -370,7 +370,7 @@ final class MessagesCoordinatorTests: XCTestCase {
         await waitUntil { coordinator.messageRows.map(\.id) == ["other"] }
         XCTAssertFalse(coordinator.isThreadLaneVisible)
 
-        await coordinator.select(spaceID: "space-1")
+        coordinator.select(spaceID: "space-1")
         await waitUntil {
             fake.messagesStreamsBySpaceID["space-1"]?.refreshCount == 1
                 && fake.messagesStreamsBySpaceID["space-1"] !== firstStream
@@ -501,7 +501,7 @@ final class MessagesCoordinatorTests: XCTestCase {
             attentionFeed: attentionFeed
         )
 
-        await coordinator.select(spaceID: "space-1", spaceTitle: "General")
+        coordinator.select(spaceID: "space-1", spaceTitle: "General")
         await waitUntil { fake.messagesStreamsBySpaceID["space-1"]?.refreshCount == 1 }
         let stream = try XCTUnwrap(fake.messagesStreamsBySpaceID["space-1"])
         stream.probe.yield(MessageThreadSnapshotDTO(
@@ -534,7 +534,7 @@ final class MessagesCoordinatorTests: XCTestCase {
     func testSameSpaceSelectionIsNoOpAfterUnavailableStream() async {
         let coordinator = MessagesCoordinator(session: nil, diagnostics: DiagnosticsStore())
 
-        await coordinator.select(spaceID: "space-1")
+        coordinator.select(spaceID: "space-1")
         coordinator.apply(snapshot: MessageThreadSnapshotDTO(
             topLevelMessageIDs: ["cached"],
             entriesByID: ["cached": message(id: "cached", body: "Cached")],
@@ -544,7 +544,7 @@ final class MessagesCoordinatorTests: XCTestCase {
             lastErrorDescription: nil
         ))
 
-        await coordinator.select(spaceID: "space-1")
+        coordinator.select(spaceID: "space-1")
 
         XCTAssertEqual(coordinator.messageRows.map(\.id), ["cached"])
         XCTAssertEqual(coordinator.status, .connected)
@@ -582,18 +582,16 @@ final class MessagesCoordinatorTests: XCTestCase {
         let firstStream = FakeMessagesThreadStream()
         let secondStream = FakeMessagesThreadStream()
 
-        let firstSelect = Task { await coordinator.select(spaceID: "old-space") }
+        coordinator.select(spaceID: "old-space")
         await provider.waitForMessageStreamRequestCount(1)
 
-        let secondSelect = Task { await coordinator.select(spaceID: "new-space") }
+        coordinator.select(spaceID: "new-space")
         await provider.waitForMessageStreamRequestCount(2)
 
         await provider.resumeMessageStreamRequest(at: 1, with: secondStream)
-        await secondSelect.value
         await waitUntil { secondStream.refreshCount == 1 }
 
         await provider.resumeMessageStreamRequest(at: 0, with: firstStream)
-        await firstSelect.value
         await waitUntil { firstStream.isCancelled }
 
         XCTAssertTrue(firstStream.isCancelled)
@@ -633,9 +631,7 @@ final class MessagesCoordinatorTests: XCTestCase {
             diagnostics: diagnostics
         )
         weak let weakCoordinator = coordinator
-        let selection = Task { [weak coordinator] in
-            await coordinator?.select(spaceID: "space-to-close")
-        }
+        coordinator?.select(spaceID: "space-to-close")
 
         await provider.waitForMessageStreamRequestCount(1)
         coordinator?.close()
@@ -649,7 +645,6 @@ final class MessagesCoordinatorTests: XCTestCase {
         XCTAssertEqual(cancelledRequestIndices, [0])
         XCTAssertNil(weakCoordinator)
         XCTAssertTrue(diagnostics.entries.isEmpty)
-        selection.cancel()
     }
 
     func testNewSelectionAndCloseCancelSuspendedAcquisitions() async {
@@ -658,14 +653,10 @@ final class MessagesCoordinatorTests: XCTestCase {
         let session = AccountSession(clientProvider: provider, diagnostics: diagnostics)
         let coordinator = MessagesCoordinator(session: session, diagnostics: diagnostics)
 
-        let firstSelection = Task {
-            await coordinator.select(spaceID: "first-space")
-        }
+        coordinator.select(spaceID: "first-space")
         await provider.waitForMessageStreamRequestCount(1)
 
-        let secondSelection = Task {
-            await coordinator.select(spaceID: "second-space")
-        }
+        coordinator.select(spaceID: "second-space")
         await provider.waitForMessageStreamRequestCount(2)
 
         let replacedAcquisitionWasCancelled = await provider.waitForCancellationCount(1)
@@ -682,9 +673,6 @@ final class MessagesCoordinatorTests: XCTestCase {
         XCTAssertNil(coordinator.selectedSpaceID)
         XCTAssertEqual(coordinator.status, .idle)
         XCTAssertTrue(diagnostics.entries.isEmpty)
-
-        firstSelection.cancel()
-        secondSelection.cancel()
     }
 
     func testSnapshotErrorPublishesGenericStatusAndRedactedDiagnosticsDetail() {
@@ -712,7 +700,7 @@ final class MessagesCoordinatorTests: XCTestCase {
         let session = AccountSession(clientProvider: fake, diagnostics: DiagnosticsStore())
         let coordinator = MessagesCoordinator(session: session, diagnostics: DiagnosticsStore())
 
-        await coordinator.select(spaceID: "space-1")
+        coordinator.select(spaceID: "space-1")
         await waitUntil { fake.messagesStreamsBySpaceID["space-1"]?.refreshCount == 1 }
         await coordinator.loadNextPage()
         XCTAssertEqual(fake.messagesStreamsBySpaceID["space-1"]?.loadNextPageCount, 0)
@@ -730,7 +718,7 @@ final class MessagesCoordinatorTests: XCTestCase {
         let session = AccountSession(clientProvider: fake, diagnostics: DiagnosticsStore())
         let coordinator = MessagesCoordinator(session: session, diagnostics: DiagnosticsStore())
 
-        await coordinator.select(spaceID: "space-1", spaceTitle: "General")
+        coordinator.select(spaceID: "space-1", spaceTitle: "General")
         await waitUntil { fake.messagesStreamsBySpaceID["space-1"]?.refreshCount == 1 }
         let stream = try XCTUnwrap(fake.messagesStreamsBySpaceID["space-1"])
         stream.probe.yield(snapshot(ids: ["message-1"], hasMore: true))
@@ -758,8 +746,11 @@ final class MessagesCoordinatorTests: XCTestCase {
         XCTAssertNil(coordinator.footerState)
         XCTAssertEqual(coordinator.status, .idle)
 
-        await coordinator.select(spaceID: "space-1", spaceTitle: "General")
-        await waitUntil { fake.messagesStreamsBySpaceID["space-1"]?.refreshCount == 1 }
+        coordinator.select(spaceID: "space-1", spaceTitle: "General")
+        await waitUntil {
+            fake.messagesStreamsBySpaceID["space-1"]?.refreshCount == 1
+                && fake.messagesStreamsBySpaceID["space-1"] !== stream
+        }
         let replacement = try XCTUnwrap(fake.messagesStreamsBySpaceID["space-1"])
         replacement.probe.yield(snapshot(ids: ["message-1"]))
         await waitUntil { coordinator.messageRows.map(\.id) == ["message-1"] }
@@ -772,7 +763,7 @@ final class MessagesCoordinatorTests: XCTestCase {
         let session = AccountSession(clientProvider: fake, diagnostics: DiagnosticsStore())
         let coordinator = MessagesCoordinator(session: session, diagnostics: DiagnosticsStore())
 
-        await coordinator.select(spaceID: "space-1", spaceTitle: "General")
+        coordinator.select(spaceID: "space-1", spaceTitle: "General")
         await waitUntil { fake.messagesStreamsBySpaceID["space-1"]?.refreshCount == 1 }
         let first = try XCTUnwrap(fake.messagesStreamsBySpaceID["space-1"])
         first.probe.yield(snapshot(ids: ["message-1"]))
@@ -809,7 +800,7 @@ final class MessagesCoordinatorTests: XCTestCase {
         let coordinator = MessagesCoordinator(session: session, diagnostics: DiagnosticsStore())
 
         XCTAssertNil(coordinator.footerState)
-        await coordinator.select(spaceID: "space-1", spaceTitle: "General")
+        coordinator.select(spaceID: "space-1", spaceTitle: "General")
         await waitUntil { fake.messagesStreamsBySpaceID["space-1"]?.refreshCount == 1 }
         XCTAssertEqual(coordinator.selectedSpaceTitle, "General")
         XCTAssertNil(coordinator.footerState)

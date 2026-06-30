@@ -66,7 +66,7 @@ final class MessagesCoordinator: ObservableObject {
         stream?.cancel()
     }
 
-    func select(spaceID: String, spaceTitle: String? = nil) async {
+    func select(spaceID: String, spaceTitle: String? = nil) {
         guard selectedSpaceID != spaceID else {
             selectedSpaceTitle = spaceTitle ?? selectedSpaceTitle
             return
@@ -115,7 +115,6 @@ final class MessagesCoordinator: ObservableObject {
                 self?.failAcquisition(error, generation: generation)
             }
         }
-        await Task.yield()
     }
 
     private func installAcquiredStream(
@@ -217,7 +216,7 @@ final class MessagesCoordinator: ObservableObject {
         let title = selectedSpaceTitle
         rememberSelectedMessageForCurrentSpace()
         selectedSpaceID = nil
-        await select(spaceID: spaceID, spaceTitle: title)
+        select(spaceID: spaceID, spaceTitle: title)
     }
 
     private func apply(snapshot: MessageThreadSnapshotDTO, generation: Int) {
