@@ -3,6 +3,16 @@ import XCTest
 
 @MainActor
 final class SessionNavigationStateTests: XCTestCase {
+    func testMainTabsHaveStableOrderAndPresentation() {
+        XCTAssertEqual(RedwingMainTab.allCases, [.spaces, .teams, .people])
+        XCTAssertEqual(RedwingMainTab.spaces.title, "Spaces")
+        XCTAssertEqual(RedwingMainTab.spaces.systemImage, "bubble.left.and.bubble.right.fill")
+        XCTAssertEqual(RedwingMainTab.teams.title, "Teams")
+        XCTAssertEqual(RedwingMainTab.teams.systemImage, "person.3.fill")
+        XCTAssertEqual(RedwingMainTab.people.title, "People")
+        XCTAssertEqual(RedwingMainTab.people.systemImage, "person.crop.circle.fill")
+    }
+
     func testTabScrollIDsRemainIndependentAcrossSelectedTabChanges() {
         let state = SessionNavigationState()
 
@@ -54,6 +64,30 @@ final class SessionNavigationStateTests: XCTestCase {
         )
     }
 
+    func testRestorationClampsNegativeSavedIndexToFirstRow() {
+        let state = SessionNavigationState()
+        state.rememberMessageAnchor(spaceID: "space-a", id: "removed", index: -4)
+
+        XCTAssertEqual(
+            state.restoredMessageID(spaceID: "space-a", rowIDs: ["message-1", "message-2"]),
+            "message-1"
+        )
+    }
+
+    func testLaterValidMessageAnchorReplacesPriorAnchorForSameSpace() {
+        let state = SessionNavigationState()
+        state.rememberMessageAnchor(spaceID: "space-a", id: "message-1", index: 0)
+        state.rememberMessageAnchor(spaceID: "space-a", id: "message-3", index: 2)
+
+        XCTAssertEqual(
+            state.restoredMessageID(
+                spaceID: "space-a",
+                rowIDs: ["message-1", "message-2", "message-3"]
+            ),
+            "message-3"
+        )
+    }
+
     func testRestorationReturnsNilForEmptyRowsOrMissingAnchor() {
         let state = SessionNavigationState()
         state.rememberMessageAnchor(spaceID: "space-a", id: "message-1", index: 0)
@@ -64,11 +98,14 @@ final class SessionNavigationStateTests: XCTestCase {
 
     func testRememberMessageAnchorIgnoresMissingIDOrIndex() {
         let state = SessionNavigationState()
+        state.rememberMessageAnchor(spaceID: "space-a", id: "message-2", index: 1)
 
         state.rememberMessageAnchor(spaceID: "space-a", id: nil, index: 0)
-        state.rememberMessageAnchor(spaceID: "space-b", id: "message-1", index: nil)
+        state.rememberMessageAnchor(spaceID: "space-a", id: "message-1", index: nil)
 
-        XCTAssertNil(state.restoredMessageID(spaceID: "space-a", rowIDs: ["message-1"]))
-        XCTAssertNil(state.restoredMessageID(spaceID: "space-b", rowIDs: ["message-1"]))
+        XCTAssertEqual(
+            state.restoredMessageID(spaceID: "space-a", rowIDs: ["message-1", "message-2"]),
+            "message-2"
+        )
     }
 }

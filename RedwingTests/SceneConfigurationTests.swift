@@ -41,9 +41,6 @@ final class SceneConfigurationTests: XCTestCase {
 
         XCTAssertTrue(sessionNavigationStateSource.contains("enum RedwingMainTab"))
         XCTAssertTrue(redwingAppSource.contains("SessionSidebarView"))
-        XCTAssertTrue(redwingAppSource.contains("Spaces"))
-        XCTAssertTrue(redwingAppSource.contains("Teams"))
-        XCTAssertTrue(redwingAppSource.contains("People"))
         XCTAssertTrue(redwingAppSource.contains("glassEffect(.regular"))
     }
 
