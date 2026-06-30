@@ -350,14 +350,14 @@ final class SpacesMessagesLayoutTests: XCTestCase {
         let widths = SpacesMessagesLayout.widths(totalWidth: 912, isMessagesOpen: true)
         XCTAssertEqual(widths.spaces, 300, accuracy: 0.001)
         XCTAssertEqual(widths.messages, 600, accuracy: 0.001)
-        XCTAssertEqual(widths.spaces + SpacesMessagesLayout.spacing + widths.messages, 912, accuracy: 0.001)
+        XCTAssertEqual(widths.spaces + widths.effectiveSpacing + widths.messages, 912, accuracy: 0.001)
     }
 
     func testOpenLayoutProtectsMinimumWidths() {
         let widths = SpacesMessagesLayout.widths(totalWidth: 652, isMessagesOpen: true)
         XCTAssertGreaterThanOrEqual(widths.spaces, SpacesMessagesLayout.minimumSpacesWidth)
         XCTAssertGreaterThanOrEqual(widths.messages, SpacesMessagesLayout.minimumMessagesWidth)
-        XCTAssertEqual(widths.spaces + SpacesMessagesLayout.spacing + widths.messages, 652, accuracy: 0.001)
+        XCTAssertEqual(widths.spaces + widths.effectiveSpacing + widths.messages, 652, accuracy: 0.001)
     }
 }
 ```
@@ -381,27 +381,49 @@ Expected: FAIL because `SpacesMessagesLayout` does not exist.
 Create `SpacesMessagesLayout.swift`:
 
 ```swift
-import CoreGraphics
+import Foundation
 
 enum SpacesMessagesLayout {
-    static let spacing: CGFloat = 12
+    static let preferredSpacing: CGFloat = 12
     static let minimumSpacesWidth: CGFloat = 220
     static let minimumMessagesWidth: CGFloat = 420
 
     struct Widths: Equatable {
         let spaces: CGFloat
         let messages: CGFloat
+        let effectiveSpacing: CGFloat
     }
 
     static func widths(totalWidth: CGFloat, isMessagesOpen: Bool) -> Widths {
-        guard isMessagesOpen else {
-            return Widths(spaces: max(totalWidth, 0), messages: 0)
+        guard totalWidth.isFinite else {
+            return Widths(spaces: 0, messages: 0, effectiveSpacing: 0)
         }
 
-        let available = max(totalWidth - spacing, 0)
-        let idealSpaces = available / 3
-        let spaces = max(minimumSpacesWidth, min(idealSpaces, available - minimumMessagesWidth))
-        return Widths(spaces: spaces, messages: max(available - spaces, minimumMessagesWidth))
+        let safeTotalWidth = max(totalWidth, 0)
+        guard isMessagesOpen else {
+            return Widths(spaces: safeTotalWidth, messages: 0, effectiveSpacing: 0)
+        }
+
+        let effectiveSpacing = min(preferredSpacing, safeTotalWidth)
+        let availableWidth = safeTotalWidth - effectiveSpacing
+        let combinedMinimumWidth = minimumSpacesWidth + minimumMessagesWidth
+
+        guard availableWidth >= combinedMinimumWidth else {
+            let scale = availableWidth / combinedMinimumWidth
+            return Widths(
+                spaces: minimumSpacesWidth * scale,
+                messages: minimumMessagesWidth * scale,
+                effectiveSpacing: effectiveSpacing
+            )
+        }
+
+        let requestedSpacesWidth = availableWidth / 3
+        let spacesWidth = max(requestedSpacesWidth, minimumSpacesWidth)
+        return Widths(
+            spaces: spacesWidth,
+            messages: availableWidth - spacesWidth,
+            effectiveSpacing: effectiveSpacing
+        )
     }
 }
 ```
@@ -800,7 +822,7 @@ Add source helpers and tests:
 ```swift
 func testSpacesMessagesSurfaceUsesSharedGlassAndStableIdentities() throws {
     let source = try String(contentsOf: spacesMessagesSurfaceSourceURL(), encoding: .utf8)
-    XCTAssertTrue(source.contains("GlassEffectContainer(spacing: SpacesMessagesLayout.spacing)"))
+    XCTAssertTrue(source.contains("GlassEffectContainer(spacing: SpacesMessagesLayout.preferredSpacing)"))
     XCTAssertTrue(source.contains("glassEffectID(\"spaces-card\""))
     XCTAssertTrue(source.contains("glassEffectID(\"messages-card\""))
     XCTAssertTrue(source.contains("SpacesMessagesLayout.widths"))
@@ -862,8 +884,8 @@ struct SpacesMessagesSurface: View {
                 isMessagesOpen: open
             )
 
-            GlassEffectContainer(spacing: SpacesMessagesLayout.spacing) {
-                HStack(spacing: SpacesMessagesLayout.spacing) {
+            GlassEffectContainer(spacing: SpacesMessagesLayout.preferredSpacing) {
+                HStack(spacing: widths.effectiveSpacing) {
                     LaneSurfaceView(
                         spaces: spaces,
                         scrollAnchorID: $navigation.spacesScrollID,
