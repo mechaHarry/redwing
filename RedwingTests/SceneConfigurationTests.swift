@@ -130,6 +130,43 @@ final class SceneConfigurationTests: XCTestCase {
         XCTAssertTrue(laneSurfaceSource.contains(".id(avatarState)"))
     }
 
+    func testMessagesCardHasNativeGlassHeaderAndReadOnlyTimeline() throws {
+        let source = try String(contentsOf: messagesSurfaceViewSourceURL(), encoding: .utf8)
+
+        XCTAssertTrue(source.contains("struct MessagesSurfaceView"))
+        XCTAssertTrue(source.contains("messages.selectedSpaceTitle ?? \"Messages\""))
+        XCTAssertTrue(source.contains("frame(height: 46)"))
+        XCTAssertTrue(source.contains("Image(systemName: \"xmark\")"))
+        XCTAssertTrue(source.contains(".buttonStyle(.glass)"))
+        XCTAssertTrue(source.contains(".buttonBorderShape(.circle)"))
+        XCTAssertTrue(source.contains(".help(\"Close Messages\")"))
+        XCTAssertTrue(source.contains(".accessibilityLabel(\"Close Messages\")"))
+        XCTAssertTrue(source.contains("Text(row.sender)"))
+        XCTAssertTrue(source.contains("Text(row.body)"))
+        XCTAssertTrue(source.contains("Text(row.detail)"))
+        XCTAssertTrue(source.contains("SkeletonRowView"))
+        XCTAssertFalse(source.localizedCaseInsensitiveContains("composer"))
+        XCTAssertFalse(source.contains("TextEditor"))
+    }
+
+    func testMessagesCardRestoresScrollAndPaginates() throws {
+        let source = try String(contentsOf: messagesSurfaceViewSourceURL(), encoding: .utf8)
+
+        XCTAssertTrue(source.contains("ScrollViewReader"))
+        XCTAssertTrue(source.contains("messageScrollRequest"))
+        XCTAssertTrue(source.contains("rememberMessageAnchor"))
+        XCTAssertTrue(source.contains("LanePaginationFooter"))
+        XCTAssertTrue(source.contains("loadNextPageFromFooterIfNeeded"))
+    }
+
+    func testMessagesRenderUntrustedContentAsTextOnly() throws {
+        let source = try String(contentsOf: messagesSurfaceViewSourceURL(), encoding: .utf8)
+
+        XCTAssertTrue(source.contains("Text(row.body)"))
+        XCTAssertFalse(source.contains("WKWebView"))
+        XCTAssertFalse(source.contains("NSAttributedString.DocumentType.html"))
+    }
+
     private func redwingAppSourceURL() -> URL {
         URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
@@ -149,6 +186,13 @@ final class SceneConfigurationTests: XCTestCase {
             .deletingLastPathComponent()
             .deletingLastPathComponent()
             .appendingPathComponent("Redwing/Lanes/LaneSurfaceView.swift")
+    }
+
+    private func messagesSurfaceViewSourceURL() -> URL {
+        URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("Redwing/Messages/MessagesSurfaceView.swift")
     }
 
     private func skeletonViewsSourceURL() -> URL {

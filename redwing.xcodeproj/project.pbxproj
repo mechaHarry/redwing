@@ -36,6 +36,7 @@
 		D70000000000000000000005 /* MessageRowViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D70000000000000000000006 /* MessageRowViewModel.swift */; };
 		D70000000000000000000007 /* ThreadLanePolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = D70000000000000000000008 /* ThreadLanePolicy.swift */; };
 		D70000000000000000000009 /* MessagesCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7000000000000000000000A /* MessagesCoordinator.swift */; };
+		D71000000000000000000001 /* MessagesSurfaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D71000000000000000000002 /* MessagesSurfaceView.swift */; };
 		E80000000000000000000001 /* AttentionFeedStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80000000000000000000002 /* AttentionFeedStoreTests.swift */; };
 		E80000000000000000000003 /* AttentionItemViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80000000000000000000005 /* AttentionItemViewModel.swift */; };
 		E80000000000000000000004 /* AttentionFeedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E80000000000000000000006 /* AttentionFeedStore.swift */; };
@@ -109,6 +110,7 @@
 		D70000000000000000000006 /* MessageRowViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageRowViewModel.swift; sourceTree = "<group>"; };
 		D70000000000000000000008 /* ThreadLanePolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThreadLanePolicy.swift; sourceTree = "<group>"; };
 		D7000000000000000000000A /* MessagesCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagesCoordinator.swift; sourceTree = "<group>"; };
+		D71000000000000000000002 /* MessagesSurfaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagesSurfaceView.swift; sourceTree = "<group>"; };
 		E80000000000000000000002 /* AttentionFeedStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttentionFeedStoreTests.swift; sourceTree = "<group>"; };
 		E80000000000000000000005 /* AttentionItemViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttentionItemViewModel.swift; sourceTree = "<group>"; };
 		E80000000000000000000006 /* AttentionFeedStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttentionFeedStore.swift; sourceTree = "<group>"; };
@@ -307,6 +309,7 @@
 			children = (
 				D70000000000000000000006 /* MessageRowViewModel.swift */,
 				D7000000000000000000000A /* MessagesCoordinator.swift */,
+				D71000000000000000000002 /* MessagesSurfaceView.swift */,
 				D70000000000000000000008 /* ThreadLanePolicy.swift */,
 			);
 			path = Messages;
@@ -482,6 +485,7 @@
 				A20000000000000000000003 /* MenuBarView.swift in Sources */,
 				D70000000000000000000005 /* MessageRowViewModel.swift in Sources */,
 				D70000000000000000000009 /* MessagesCoordinator.swift in Sources */,
+				D71000000000000000000001 /* MessagesSurfaceView.swift in Sources */,
 				B81000000000000000000007 /* PersonNodeViewModel.swift in Sources */,
 				B81000000000000000000009 /* PeopleCoordinator.swift in Sources */,
 				A10000000000000000000003 /* RedwingEnvironment.swift in Sources */,
