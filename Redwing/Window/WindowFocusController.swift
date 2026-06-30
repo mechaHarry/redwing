@@ -9,12 +9,10 @@ enum WindowFocusController {
     }
 
     static func preferredMainWindowIndex(from candidates: [Candidate]) -> Int? {
-        let available = candidates.enumerated().filter { !$0.element.isMiniaturized }
-        return available.first { $0.element.title == "Redwing" }?.offset
-            ?? available.first { $0.element.isVisible }?.offset
-            ?? available.first?.offset
+        candidates.enumerated().first {
+            $0.element.title == "Redwing" && !$0.element.isMiniaturized
+        }?.offset
             ?? candidates.enumerated().first { $0.element.title == "Redwing" }?.offset
-            ?? candidates.indices.first
     }
 
     static func mainWindow(from windows: [NSWindow]) -> NSWindow? {

@@ -19,6 +19,47 @@ final class WindowFocusControllerTests: XCTestCase {
         XCTAssertEqual(WindowFocusController.preferredMainWindowIndex(from: candidates), 0)
     }
 
+    func testDefaultReopenIsAllowedWhenOnlyVisibleAuxiliaryWindowsExist() {
+        let candidates = [
+            WindowFocusController.Candidate(
+                title: "Item-0",
+                isVisible: true,
+                isMiniaturized: false
+            )
+        ]
+
+        XCTAssertNil(WindowFocusController.preferredMainWindowIndex(from: candidates))
+    }
+
+    func testDefaultReopenIsAllowedWhenOnlyMiniaturizedAuxiliaryWindowsExist() {
+        let candidates = [
+            WindowFocusController.Candidate(
+                title: "Status Item Window",
+                isVisible: false,
+                isMiniaturized: true
+            )
+        ]
+
+        XCTAssertNil(WindowFocusController.preferredMainWindowIndex(from: candidates))
+    }
+
+    func testMainWindowLookupSelectsMiniaturizedRedwingWindowFromMixedCandidates() {
+        let candidates = [
+            WindowFocusController.Candidate(
+                title: "Status Item Window",
+                isVisible: true,
+                isMiniaturized: false
+            ),
+            WindowFocusController.Candidate(
+                title: "Redwing",
+                isVisible: false,
+                isMiniaturized: true
+            )
+        ]
+
+        XCTAssertEqual(WindowFocusController.preferredMainWindowIndex(from: candidates), 1)
+    }
+
     func testCenteredFrameUsesTargetScreenVisibleFrame() {
         let frame = WindowFocusController.centeredFrame(
             windowSize: CGSize(width: 800, height: 500),

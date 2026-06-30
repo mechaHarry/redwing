@@ -65,12 +65,12 @@ struct MainWindowOpeningAction {
 
 final class RedwingAppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows _: Bool) -> Bool {
-        guard !sender.windows.isEmpty else {
+        guard let mainWindow = WindowFocusController.mainWindow(from: sender.windows) else {
             return true
         }
 
         Task { @MainActor in
-            WindowFocusController.moveMainWindowToCurrentDesktop(windows: sender.windows)
+            WindowFocusController.moveToCurrentDesktop(window: mainWindow)
         }
         return false
     }
