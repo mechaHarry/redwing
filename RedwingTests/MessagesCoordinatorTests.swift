@@ -181,30 +181,17 @@ final class MessagesCoordinatorTests: XCTestCase {
         XCTAssertEqual(coordinator.messageScrollTargetID, "newer")
     }
 
-    func testMessagesLaneIssuesNewScrollRequestWhenNewestTargetRepeats() {
+    func testRealtimeSnapshotDoesNotReplaceInitialScrollRequest() {
         let coordinator = MessagesCoordinator(session: nil, diagnostics: DiagnosticsStore())
 
-        coordinator.apply(snapshot: MessageThreadSnapshotDTO(
-            topLevelMessageIDs: ["newest"],
-            entriesByID: ["newest": message(id: "newest", body: "Original")],
-            isRefreshing: false,
-            isLoadingNextPage: false,
-            hasMore: false,
-            lastErrorDescription: nil
-        ))
-        let firstRequest = coordinator.messageScrollRequest
+        coordinator.apply(snapshot: snapshot(ids: ["older", "newest"]))
+        let initialRequest = coordinator.messageScrollRequest
 
-        coordinator.apply(snapshot: MessageThreadSnapshotDTO(
-            topLevelMessageIDs: ["newest"],
-            entriesByID: ["newest": message(id: "newest", body: "Updated")],
-            isRefreshing: false,
-            isLoadingNextPage: false,
-            hasMore: false,
-            lastErrorDescription: nil
-        ))
+        coordinator.apply(snapshot: snapshot(ids: ["older", "newest", "later"]))
 
+        XCTAssertEqual(coordinator.messageRows.map(\.id), ["older", "newest", "later"])
         XCTAssertEqual(coordinator.messageScrollRequest?.targetID, "newest")
-        XCTAssertNotEqual(coordinator.messageScrollRequest?.id, firstRequest?.id)
+        XCTAssertEqual(coordinator.messageScrollRequest?.id, initialRequest?.id)
     }
 
     func testThreadLaneIssuesNewScrollRequestWhenNewestReplyTargetRepeats() {
@@ -411,6 +398,120 @@ final class MessagesCoordinatorTests: XCTestCase {
 
         XCTAssertEqual(fake.messagesStreamsBySpaceID["space-1"]?.loadNextPageCount, 1)
     }
+
+    func testCloseCancelsStreamClearsPresentationAndPreservesRememberedSelection() async throws {
+        let fake = FakeWebexClientProviding()
+        let session = AccountSession(clientProvider: fake, diagnostics: DiagnosticsStore())
+        let coordinator = MessagesCoordinator(session: session, diagnostics: DiagnosticsStore())
+
+        await coordinator.select(spaceID: "space-1", spaceTitle: "General")
+        let stream = try XCTUnwrap(fake.messagesStreamsBySpaceID["space-1"])
+        stream.probe.yield(snapshot(ids: ["message-1"], hasMore: true))
+        await waitUntil { coordinator.messageRows.map(\.id) == ["message-1"] }
+        coordinator.select(messageID: "message-1")
+
+        coordinator.close()
+
+        XCTAssertTrue(stream.isCancelled)
+        XCTAssertNil(coordinator.selectedSpaceID)
+        XCTAssertNil(coordinator.selectedSpaceTitle)
+        XCTAssertNil(coordinator.selectedMessageID)
+        XCTAssertEqual(coordinator.messageRows, [])
+        XCTAssertEqual(coordinator.threadRows, [])
+        XCTAssertFalse(coordinator.isThreadLaneVisible)
+        XCTAssertFalse(coordinator.isShowingSkeletons)
+        XCTAssertFalse(coordinator.hasMore)
+        XCTAssertFalse(coordinator.isLoadingNextPage)
+        XCTAssertNil(coordinator.messageScrollTargetID)
+        XCTAssertNil(coordinator.threadScrollTargetID)
+        XCTAssertNil(coordinator.messageScrollRequest)
+        XCTAssertNil(coordinator.threadScrollRequest)
+        XCTAssertNil(coordinator.footerState)
+        XCTAssertEqual(coordinator.status, .idle)
+
+        await coordinator.select(spaceID: "space-1", spaceTitle: "General")
+        let replacement = try XCTUnwrap(fake.messagesStreamsBySpaceID["space-1"])
+        replacement.probe.yield(snapshot(ids: ["message-1"]))
+        await waitUntil { coordinator.messageRows.map(\.id) == ["message-1"] }
+
+        XCTAssertEqual(coordinator.selectedMessageID, "message-1")
+    }
+
+    func testRetryReplacesFailedStreamAndRetainsCurrentPresentationIdentity() async throws {
+        let fake = FakeWebexClientProviding()
+        let session = AccountSession(clientProvider: fake, diagnostics: DiagnosticsStore())
+        let coordinator = MessagesCoordinator(session: session, diagnostics: DiagnosticsStore())
+
+        await coordinator.select(spaceID: "space-1", spaceTitle: "General")
+        let first = try XCTUnwrap(fake.messagesStreamsBySpaceID["space-1"])
+        first.probe.yield(snapshot(ids: ["message-1"]))
+        await waitUntil { coordinator.messageRows.map(\.id) == ["message-1"] }
+        coordinator.select(messageID: "message-1")
+        first.probe.yield(MessageThreadSnapshotDTO(
+            topLevelMessageIDs: [],
+            entriesByID: [:],
+            isRefreshing: false,
+            isLoadingNextPage: false,
+            hasMore: false,
+            lastErrorDescription: "offline"
+        ))
+        await waitUntil { coordinator.status == .failed("Messages refresh failed") }
+
+        await coordinator.retry()
+        let replacement = try XCTUnwrap(fake.messagesStreamsBySpaceID["space-1"])
+
+        XCTAssertTrue(first.isCancelled)
+        XCTAssertFalse(replacement === first)
+        XCTAssertEqual(replacement.refreshCount, 1)
+        XCTAssertEqual(coordinator.selectedSpaceID, "space-1")
+        XCTAssertEqual(coordinator.selectedSpaceTitle, "General")
+        XCTAssertEqual(coordinator.selectedMessageID, "message-1")
+    }
+
+    func testMessagesFooterAndGuardedPaginationFollowSnapshotState() async throws {
+        let fake = FakeWebexClientProviding()
+        let session = AccountSession(clientProvider: fake, diagnostics: DiagnosticsStore())
+        let coordinator = MessagesCoordinator(session: session, diagnostics: DiagnosticsStore())
+
+        XCTAssertNil(coordinator.footerState)
+        await coordinator.select(spaceID: "space-1", spaceTitle: "General")
+        XCTAssertEqual(coordinator.selectedSpaceTitle, "General")
+        XCTAssertNil(coordinator.footerState)
+
+        coordinator.apply(snapshot: snapshot(ids: ["one"], hasMore: true))
+        XCTAssertEqual(coordinator.footerState, .searching)
+
+        await coordinator.loadNextPageFromFooterIfNeeded()
+        await coordinator.loadNextPageFromFooterIfNeeded()
+
+        XCTAssertTrue(coordinator.isLoadingNextPage)
+        XCTAssertEqual(fake.messagesStreamsBySpaceID["space-1"]?.loadNextPageCount, 1)
+
+        coordinator.apply(snapshot: MessageThreadSnapshotDTO(
+            topLevelMessageIDs: ["one"],
+            entriesByID: ["one": message(id: "one", body: "one")],
+            isRefreshing: false,
+            isLoadingNextPage: false,
+            hasMore: false,
+            lastErrorDescription: nil
+        ))
+
+        XCTAssertFalse(coordinator.isLoadingNextPage)
+        XCTAssertEqual(coordinator.footerState, .allFound)
+    }
+}
+
+private func snapshot(ids: [String], hasMore: Bool = false) -> MessageThreadSnapshotDTO {
+    MessageThreadSnapshotDTO(
+        topLevelMessageIDs: ids,
+        entriesByID: Dictionary(uniqueKeysWithValues: ids.map { id in
+            (id, message(id: id, body: id))
+        }),
+        isRefreshing: false,
+        isLoadingNextPage: false,
+        hasMore: hasMore,
+        lastErrorDescription: nil
+    )
 }
 
 private func message(

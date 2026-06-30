@@ -13,15 +13,25 @@ final class MessagesCoordinator: ObservableObject {
     @Published private(set) var messageRows: [MessageRowViewModel] = (0..<skeletonRowCount).map(MessageRowViewModel.skeleton)
     @Published private(set) var threadRows: [MessageRowViewModel] = []
     @Published private(set) var selectedSpaceID: String?
+    @Published private(set) var selectedSpaceTitle: String?
     @Published private(set) var selectedMessageID: String?
     @Published private(set) var isThreadLaneVisible = false
     @Published private(set) var isShowingSkeletons = true
     @Published private(set) var status: SessionStatus = .idle
     @Published private(set) var hasMore = false
+    @Published private(set) var isLoadingNextPage = false
     @Published private(set) var messageScrollTargetID: String?
     @Published private(set) var threadScrollTargetID: String?
     @Published private(set) var messageScrollRequest: LaneScrollRequest?
     @Published private(set) var threadScrollRequest: LaneScrollRequest?
+
+    var footerState: LanePaginationFooterState? {
+        guard !isShowingSkeletons, selectedSpaceID != nil else {
+            return nil
+        }
+
+        return hasMore || isLoadingNextPage ? .searching : .allFound
+    }
 
     private let session: AccountSession?
     private let diagnostics: DiagnosticsStore
@@ -29,9 +39,9 @@ final class MessagesCoordinator: ObservableObject {
     private var stream: MessagesThreadStreamProviding?
     private var task: Task<Void, Never>?
     private var latestSnapshot: MessageThreadSnapshotDTO?
-    private var selectedSpaceTitle: String?
     private var selectedMessageIDBySpaceID: [String: String] = [:]
     private var generation = 0
+    private var isAwaitingInitialMessageScroll = true
 
     init(
         session: AccountSession?,
@@ -67,6 +77,8 @@ final class MessagesCoordinator: ObservableObject {
         setMessageScrollTarget(nil)
         setThreadScrollTarget(nil)
         hasMore = false
+        isLoadingNextPage = false
+        isAwaitingInitialMessageScroll = true
         status = .refreshing
 
         guard let session else {
@@ -110,11 +122,51 @@ final class MessagesCoordinator: ObservableObject {
         await stream?.loadNextPage()
     }
 
+    func loadNextPageFromFooterIfNeeded() async {
+        guard hasMore,
+              !isLoadingNextPage,
+              let stream else {
+            return
+        }
+
+        isLoadingNextPage = true
+        await stream.loadNextPage()
+    }
+
+    func close() {
+        rememberSelectedMessageForCurrentSpace()
+        _ = replaceStreamState()
+        selectedSpaceID = nil
+        selectedSpaceTitle = nil
+        selectedMessageID = nil
+        latestSnapshot = nil
+        messageRows = []
+        threadRows = []
+        isThreadLaneVisible = false
+        isShowingSkeletons = false
+        hasMore = false
+        isLoadingNextPage = false
+        isAwaitingInitialMessageScroll = false
+        setMessageScrollTarget(nil)
+        setThreadScrollTarget(nil)
+        status = .idle
+    }
+
+    func retry() async {
+        guard let spaceID = selectedSpaceID else { return }
+
+        let title = selectedSpaceTitle
+        rememberSelectedMessageForCurrentSpace()
+        selectedSpaceID = nil
+        await select(spaceID: spaceID, spaceTitle: title)
+    }
+
     private func apply(snapshot: MessageThreadSnapshotDTO, generation: Int) {
         guard isCurrent(generation) else { return }
 
         latestSnapshot = snapshot
         hasMore = snapshot.hasMore
+        isLoadingNextPage = snapshot.isLoadingNextPage
         if let selectedSpaceID {
             attentionFeed?.apply(
                 snapshot: snapshot,
@@ -134,14 +186,19 @@ final class MessagesCoordinator: ObservableObject {
         guard !rows.isEmpty else {
             messageRows = snapshot.isRefreshing ? messageRows : []
             isShowingSkeletons = snapshot.isRefreshing
-            setMessageScrollTarget(nil)
+            if isAwaitingInitialMessageScroll {
+                setMessageScrollTarget(nil)
+            }
             rebuildThreadRows(anchor: .newest)
             return
         }
 
         messageRows = rows
         isShowingSkeletons = false
-        updateMessageScrollTarget(rows: rows, snapshot: snapshot)
+        if isAwaitingInitialMessageScroll {
+            updateMessageScrollTarget(rows: rows, snapshot: snapshot)
+            isAwaitingInitialMessageScroll = false
+        }
         rebuildThreadRows(anchor: .newest)
     }
 
