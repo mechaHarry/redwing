@@ -43,6 +43,7 @@ final class MessagesCoordinator: ObservableObject {
     private let diagnostics: DiagnosticsStore
     private let attentionFeed: AttentionFeedStore?
     private var stream: MessagesThreadStreamProviding?
+    private var streamAcquisitionTask: Task<Void, Never>?
     private var task: Task<Void, Never>?
     private var latestSnapshot: MessageThreadSnapshotDTO?
     private var selectedMessageIDBySpaceID: [String: String] = [:]
@@ -60,6 +61,7 @@ final class MessagesCoordinator: ObservableObject {
     }
 
     deinit {
+        streamAcquisitionTask?.cancel()
         task?.cancel()
         stream?.cancel()
     }
@@ -92,22 +94,65 @@ final class MessagesCoordinator: ObservableObject {
             return
         }
 
-        do {
-            let stream = try await session.makeMessagesThreadStream(spaceID: spaceID)
-            guard isCurrent(generation) else {
-                stream.cancel()
-                return
-            }
+        streamAcquisitionTask = Task { [weak self, session] in
+            do {
+                let stream = try await session.makeMessagesThreadStream(spaceID: spaceID)
+                guard !Task.isCancelled else {
+                    stream.cancel()
+                    return
+                }
+                guard self?.installAcquiredStream(stream, generation: generation) == true else {
+                    stream.cancel()
+                    return
+                }
 
-            self.stream = stream
-            status = .refreshing
-            subscribe(to: stream, generation: generation)
-            await stream.refresh()
-        } catch {
-            guard isCurrent(generation) else { return }
-            status = .failed("Messages unavailable")
-            diagnostics.append(source: .messages, severity: .error, message: "Messages stream failed", detail: String(describing: error))
+                await stream.refresh()
+                self?.completeAcquisition(generation: generation)
+            } catch {
+                guard !Task.isCancelled else {
+                    return
+                }
+                self?.failAcquisition(error, generation: generation)
+            }
         }
+        await Task.yield()
+    }
+
+    private func installAcquiredStream(
+        _ stream: MessagesThreadStreamProviding,
+        generation: Int
+    ) -> Bool {
+        guard isCurrent(generation) else {
+            return false
+        }
+
+        self.stream = stream
+        status = .refreshing
+        subscribe(to: stream, generation: generation)
+        return true
+    }
+
+    private func completeAcquisition(generation: Int) {
+        guard isCurrent(generation) else {
+            return
+        }
+
+        streamAcquisitionTask = nil
+    }
+
+    private func failAcquisition(_ error: Error, generation: Int) {
+        guard isCurrent(generation) else {
+            return
+        }
+
+        streamAcquisitionTask = nil
+        status = .failed("Messages unavailable")
+        diagnostics.append(
+            source: .messages,
+            severity: .error,
+            message: "Messages stream failed",
+            detail: String(describing: error)
+        )
     }
 
     func apply(snapshot: MessageThreadSnapshotDTO) {
@@ -334,6 +379,8 @@ final class MessagesCoordinator: ObservableObject {
 
     private func replaceStreamState() -> Int {
         generation += 1
+        streamAcquisitionTask?.cancel()
+        streamAcquisitionTask = nil
         task?.cancel()
         task = nil
         stream?.cancel()

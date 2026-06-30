@@ -147,6 +147,7 @@ final class MessagesCoordinatorTests: XCTestCase {
         let coordinator = MessagesCoordinator(session: session, diagnostics: DiagnosticsStore())
 
         await coordinator.select(spaceID: "space-1")
+        await waitUntil { fake.messagesStreamsBySpaceID["space-1"]?.refreshCount == 1 }
         let stream = try XCTUnwrap(fake.messagesStreamsBySpaceID["space-1"])
         stream.probe.yield(snapshot(ids: ["message-1"]))
         await waitUntil { coordinator.messageScrollRequest != nil }
@@ -232,6 +233,7 @@ final class MessagesCoordinatorTests: XCTestCase {
         let coordinator = MessagesCoordinator(session: session, diagnostics: DiagnosticsStore())
 
         await coordinator.select(spaceID: "space-1")
+        await waitUntil { fake.messagesStreamsBySpaceID["space-1"]?.refreshCount == 1 }
         await coordinator.select(spaceID: "space-1")
 
         XCTAssertNotNil(fake.messagesStreamsBySpaceID["space-1"])
@@ -245,6 +247,7 @@ final class MessagesCoordinatorTests: XCTestCase {
         let coordinator = MessagesCoordinator(session: session, diagnostics: DiagnosticsStore())
 
         await coordinator.select(spaceID: "space-1")
+        await waitUntil { fake.messagesStreamsBySpaceID["space-1"]?.refreshCount == 1 }
         let stream = fake.messagesStreamsBySpaceID["space-1"]!
         stream.probe.yield(MessageThreadSnapshotDTO(
             topLevelMessageIDs: ["parent"],
@@ -297,6 +300,7 @@ final class MessagesCoordinatorTests: XCTestCase {
         let coordinator = MessagesCoordinator(session: session, diagnostics: DiagnosticsStore())
 
         await coordinator.select(spaceID: "space-1")
+        await waitUntil { fake.messagesStreamsBySpaceID["space-1"]?.refreshCount == 1 }
         let stream = fake.messagesStreamsBySpaceID["space-1"]!
         stream.probe.yield(MessageThreadSnapshotDTO(
             topLevelMessageIDs: ["parent"],
@@ -336,6 +340,7 @@ final class MessagesCoordinatorTests: XCTestCase {
         let coordinator = MessagesCoordinator(session: session, diagnostics: DiagnosticsStore())
 
         await coordinator.select(spaceID: "space-1")
+        await waitUntil { fake.messagesStreamsBySpaceID["space-1"]?.refreshCount == 1 }
         let firstStream = fake.messagesStreamsBySpaceID["space-1"]!
         firstStream.probe.yield(MessageThreadSnapshotDTO(
             topLevelMessageIDs: ["parent"],
@@ -352,6 +357,7 @@ final class MessagesCoordinatorTests: XCTestCase {
         coordinator.select(messageID: "parent")
 
         await coordinator.select(spaceID: "space-2")
+        await waitUntil { fake.messagesStreamsBySpaceID["space-2"]?.refreshCount == 1 }
         let secondStream = fake.messagesStreamsBySpaceID["space-2"]!
         secondStream.probe.yield(MessageThreadSnapshotDTO(
             topLevelMessageIDs: ["other"],
@@ -365,6 +371,10 @@ final class MessagesCoordinatorTests: XCTestCase {
         XCTAssertFalse(coordinator.isThreadLaneVisible)
 
         await coordinator.select(spaceID: "space-1")
+        await waitUntil {
+            fake.messagesStreamsBySpaceID["space-1"]?.refreshCount == 1
+                && fake.messagesStreamsBySpaceID["space-1"] !== firstStream
+        }
         let restoredFirstStream = fake.messagesStreamsBySpaceID["space-1"]!
         XCTAssertFalse(restoredFirstStream.isCancelled)
         restoredFirstStream.probe.yield(MessageThreadSnapshotDTO(
@@ -492,6 +502,7 @@ final class MessagesCoordinatorTests: XCTestCase {
         )
 
         await coordinator.select(spaceID: "space-1", spaceTitle: "General")
+        await waitUntil { fake.messagesStreamsBySpaceID["space-1"]?.refreshCount == 1 }
         let stream = try XCTUnwrap(fake.messagesStreamsBySpaceID["space-1"])
         stream.probe.yield(MessageThreadSnapshotDTO(
             topLevelMessageIDs: ["mention"],
@@ -579,9 +590,11 @@ final class MessagesCoordinatorTests: XCTestCase {
 
         await provider.resumeMessageStreamRequest(at: 1, with: secondStream)
         await secondSelect.value
+        await waitUntil { secondStream.refreshCount == 1 }
 
         await provider.resumeMessageStreamRequest(at: 0, with: firstStream)
         await firstSelect.value
+        await waitUntil { firstStream.isCancelled }
 
         XCTAssertTrue(firstStream.isCancelled)
         XCTAssertFalse(secondStream.isCancelled)
@@ -611,6 +624,69 @@ final class MessagesCoordinatorTests: XCTestCase {
         XCTAssertTrue(coordinator.hasMore)
     }
 
+    func testCloseCancelsSuspendedAcquisitionAndAllowsCoordinatorDeallocation() async {
+        let provider = SuspendedMessagesProvider()
+        let diagnostics = DiagnosticsStore()
+        let session = AccountSession(clientProvider: provider, diagnostics: diagnostics)
+        var coordinator: MessagesCoordinator? = MessagesCoordinator(
+            session: session,
+            diagnostics: diagnostics
+        )
+        weak let weakCoordinator = coordinator
+        let selection = Task { [weak coordinator] in
+            await coordinator?.select(spaceID: "space-to-close")
+        }
+
+        await provider.waitForMessageStreamRequestCount(1)
+        coordinator?.close()
+        coordinator = nil
+
+        let observedCancellation = await provider.waitForCancellationCount(1)
+        let cancelledRequestIndices = await provider.cancelledRequestIndices()
+        await yieldMainActor()
+
+        XCTAssertTrue(observedCancellation)
+        XCTAssertEqual(cancelledRequestIndices, [0])
+        XCTAssertNil(weakCoordinator)
+        XCTAssertTrue(diagnostics.entries.isEmpty)
+        selection.cancel()
+    }
+
+    func testNewSelectionAndCloseCancelSuspendedAcquisitions() async {
+        let provider = SuspendedMessagesProvider()
+        let diagnostics = DiagnosticsStore()
+        let session = AccountSession(clientProvider: provider, diagnostics: diagnostics)
+        let coordinator = MessagesCoordinator(session: session, diagnostics: diagnostics)
+
+        let firstSelection = Task {
+            await coordinator.select(spaceID: "first-space")
+        }
+        await provider.waitForMessageStreamRequestCount(1)
+
+        let secondSelection = Task {
+            await coordinator.select(spaceID: "second-space")
+        }
+        await provider.waitForMessageStreamRequestCount(2)
+
+        let replacedAcquisitionWasCancelled = await provider.waitForCancellationCount(1)
+        let replacedRequestIndices = await provider.cancelledRequestIndices()
+        XCTAssertTrue(replacedAcquisitionWasCancelled)
+        XCTAssertEqual(replacedRequestIndices, [0])
+
+        coordinator.close()
+
+        let closedAcquisitionWasCancelled = await provider.waitForCancellationCount(2)
+        let closedRequestIndices = await provider.cancelledRequestIndices()
+        XCTAssertTrue(closedAcquisitionWasCancelled)
+        XCTAssertEqual(closedRequestIndices, [0, 1])
+        XCTAssertNil(coordinator.selectedSpaceID)
+        XCTAssertEqual(coordinator.status, .idle)
+        XCTAssertTrue(diagnostics.entries.isEmpty)
+
+        firstSelection.cancel()
+        secondSelection.cancel()
+    }
+
     func testSnapshotErrorPublishesGenericStatusAndRedactedDiagnosticsDetail() {
         let diagnostics = DiagnosticsStore()
         let coordinator = MessagesCoordinator(session: nil, diagnostics: diagnostics)
@@ -637,6 +713,7 @@ final class MessagesCoordinatorTests: XCTestCase {
         let coordinator = MessagesCoordinator(session: session, diagnostics: DiagnosticsStore())
 
         await coordinator.select(spaceID: "space-1")
+        await waitUntil { fake.messagesStreamsBySpaceID["space-1"]?.refreshCount == 1 }
         await coordinator.loadNextPage()
         XCTAssertEqual(fake.messagesStreamsBySpaceID["space-1"]?.loadNextPageCount, 0)
 
@@ -654,6 +731,7 @@ final class MessagesCoordinatorTests: XCTestCase {
         let coordinator = MessagesCoordinator(session: session, diagnostics: DiagnosticsStore())
 
         await coordinator.select(spaceID: "space-1", spaceTitle: "General")
+        await waitUntil { fake.messagesStreamsBySpaceID["space-1"]?.refreshCount == 1 }
         let stream = try XCTUnwrap(fake.messagesStreamsBySpaceID["space-1"])
         stream.probe.yield(snapshot(ids: ["message-1"], hasMore: true))
         await waitUntil { coordinator.messageRows.map(\.id) == ["message-1"] }
@@ -681,6 +759,7 @@ final class MessagesCoordinatorTests: XCTestCase {
         XCTAssertEqual(coordinator.status, .idle)
 
         await coordinator.select(spaceID: "space-1", spaceTitle: "General")
+        await waitUntil { fake.messagesStreamsBySpaceID["space-1"]?.refreshCount == 1 }
         let replacement = try XCTUnwrap(fake.messagesStreamsBySpaceID["space-1"])
         replacement.probe.yield(snapshot(ids: ["message-1"]))
         await waitUntil { coordinator.messageRows.map(\.id) == ["message-1"] }
@@ -694,6 +773,7 @@ final class MessagesCoordinatorTests: XCTestCase {
         let coordinator = MessagesCoordinator(session: session, diagnostics: DiagnosticsStore())
 
         await coordinator.select(spaceID: "space-1", spaceTitle: "General")
+        await waitUntil { fake.messagesStreamsBySpaceID["space-1"]?.refreshCount == 1 }
         let first = try XCTUnwrap(fake.messagesStreamsBySpaceID["space-1"])
         first.probe.yield(snapshot(ids: ["message-1"]))
         await waitUntil { coordinator.messageRows.map(\.id) == ["message-1"] }
@@ -709,6 +789,10 @@ final class MessagesCoordinatorTests: XCTestCase {
         await waitUntil { coordinator.status == .failed("Messages refresh failed") }
 
         await coordinator.retry()
+        await waitUntil {
+            fake.messagesStreamsBySpaceID["space-1"]?.refreshCount == 1
+                && fake.messagesStreamsBySpaceID["space-1"] !== first
+        }
         let replacement = try XCTUnwrap(fake.messagesStreamsBySpaceID["space-1"])
 
         XCTAssertTrue(first.isCancelled)
@@ -726,6 +810,7 @@ final class MessagesCoordinatorTests: XCTestCase {
 
         XCTAssertNil(coordinator.footerState)
         await coordinator.select(spaceID: "space-1", spaceTitle: "General")
+        await waitUntil { fake.messagesStreamsBySpaceID["space-1"]?.refreshCount == 1 }
         XCTAssertEqual(coordinator.selectedSpaceTitle, "General")
         XCTAssertNil(coordinator.footerState)
 
@@ -808,7 +893,8 @@ private func yieldMainActor(iterations: Int = 5) async {
 }
 
 private actor SuspendedMessagesProvider: WebexClientProviding {
-    private var messageStreamContinuations: [CheckedContinuation<MessagesThreadStreamProviding, Error>] = []
+    private let cancellationProbe = AcquisitionCancellationProbe()
+    private var messageStreamContinuations: [UnsafeContinuation<MessagesThreadStreamProviding, Error>] = []
 
     func existingAccount() async throws -> WebexAccountSummary? {
         nil
@@ -833,8 +919,13 @@ private actor SuspendedMessagesProvider: WebexClientProviding {
     }
 
     func makeMessagesThreadStream(spaceID: String) async throws -> MessagesThreadStreamProviding {
-        try await withCheckedThrowingContinuation { continuation in
-            messageStreamContinuations.append(continuation)
+        let requestIndex = messageStreamContinuations.count
+        return try await withTaskCancellationHandler {
+            try await withUnsafeThrowingContinuation { continuation in
+                messageStreamContinuations.append(continuation)
+            }
+        } onCancel: {
+            cancellationProbe.record(requestIndex)
         }
     }
 
@@ -852,5 +943,36 @@ private actor SuspendedMessagesProvider: WebexClientProviding {
 
     func resumeMessageStreamRequest(at index: Int, with stream: MessagesThreadStreamProviding) {
         messageStreamContinuations[index].resume(returning: stream)
+    }
+
+    func waitForCancellationCount(_ count: Int) async -> Bool {
+        for _ in 0..<10_000 {
+            if cancellationProbe.indices().count >= count {
+                return true
+            }
+            await Task.yield()
+        }
+        return false
+    }
+
+    func cancelledRequestIndices() -> [Int] {
+        cancellationProbe.indices()
+    }
+}
+
+private final class AcquisitionCancellationProbe: @unchecked Sendable {
+    private let lock = NSLock()
+    private var recordedIndices: [Int] = []
+
+    func record(_ index: Int) {
+        lock.lock()
+        recordedIndices.append(index)
+        lock.unlock()
+    }
+
+    func indices() -> [Int] {
+        lock.lock()
+        defer { lock.unlock() }
+        return recordedIndices
     }
 }

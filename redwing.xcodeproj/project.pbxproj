@@ -66,6 +66,7 @@
 		C24000000000000000000001 /* SpacesMessagesIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C24000000000000000000002 /* SpacesMessagesIntegrationTests.swift */; };
 		C25000000000000000000001 /* SpaceOpeningAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = C25000000000000000000002 /* SpaceOpeningAction.swift */; };
 		C26000000000000000000001 /* SpacesMessagesSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = C26000000000000000000002 /* SpacesMessagesSurface.swift */; };
+		C27000000000000000000001 /* SessionTabsRenderingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C27000000000000000000002 /* SessionTabsRenderingTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -141,6 +142,7 @@
 		C24000000000000000000002 /* SpacesMessagesIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpacesMessagesIntegrationTests.swift; sourceTree = "<group>"; };
 		C25000000000000000000002 /* SpaceOpeningAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpaceOpeningAction.swift; sourceTree = "<group>"; };
 		C26000000000000000000002 /* SpacesMessagesSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpacesMessagesSurface.swift; sourceTree = "<group>"; };
+		C27000000000000000000002 /* SessionTabsRenderingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionTabsRenderingTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -205,6 +207,7 @@
 				AB1300000000000000000002 /* ReleaseScriptTests.swift */,
 				AB1200000000000000000002 /* SceneConfigurationTests.swift */,
 				C22000000000000000000004 /* SessionNavigationStateTests.swift */,
+				C27000000000000000000002 /* SessionTabsRenderingTests.swift */,
 				A1000000000000000000001B /* SetupValidationTests.swift */,
 				A10000000000000000000014 /* SmokeTests.swift */,
 				C60000000000000000000002 /* SpacesCoordinatorTests.swift */,
@@ -528,6 +531,7 @@
 				AB1300000000000000000001 /* ReleaseScriptTests.swift in Sources */,
 				AB1200000000000000000001 /* SceneConfigurationTests.swift in Sources */,
 				C22000000000000000000002 /* SessionNavigationStateTests.swift in Sources */,
+				C27000000000000000000001 /* SessionTabsRenderingTests.swift in Sources */,
 				A10000000000000000000009 /* SetupValidationTests.swift in Sources */,
 				A10000000000000000000004 /* SmokeTests.swift in Sources */,
 				C60000000000000000000001 /* SpacesCoordinatorTests.swift in Sources */,

@@ -130,7 +130,7 @@ private struct RedwingRootView: View {
     }
 }
 
-private struct SessionSidebarView: View {
+struct SessionSidebarView: View {
     @Binding var selection: RedwingMainTab
 
     var body: some View {
@@ -158,6 +158,8 @@ private struct SessionSidebarView: View {
                     }
                     .help(tab.title)
                     .accessibilityLabel(tab.title)
+                    .accessibilityAddTraits(selection == tab ? .isSelected : [])
+                    .keyboardShortcut(KeyEquivalent(tab.keyboardShortcutKey), modifiers: .command)
                 }
 
                 Spacer(minLength: 0)
@@ -168,6 +170,56 @@ private struct SessionSidebarView: View {
         }
         .padding(.leading, 16)
         .padding(.vertical, 20)
+    }
+}
+
+struct SessionTabsView: View {
+    @ObservedObject var spaces: SpacesCoordinator
+    @ObservedObject var messages: MessagesCoordinator
+    @ObservedObject var teams: TeamsCoordinator
+    @ObservedObject var people: PeopleCoordinator
+    @ObservedObject var navigation: SessionNavigationState
+
+    var body: some View {
+        HStack(spacing: 0) {
+            SessionSidebarView(selection: $navigation.selectedTab)
+
+            Group {
+                switch navigation.selectedTab {
+                case .spaces:
+                    SpacesMessagesSurface(
+                        spaces: spaces,
+                        messages: messages,
+                        navigation: navigation
+                    )
+                case .teams:
+                    TeamsLaneSurfaceView(
+                        teams: teams,
+                        scrollAnchorID: $navigation.teamsScrollID
+                    )
+                case .people:
+                    PeopleHierarchyView(
+                        people: people,
+                        scrollAnchorID: $navigation.peopleScrollID
+                    )
+                }
+            }
+            .transition(.opacity.combined(with: .scale(scale: 0.99)))
+            .animation(.easeInOut(duration: 0.2), value: navigation.selectedTab)
+        }
+    }
+}
+
+extension RedwingMainTab {
+    var keyboardShortcutKey: Character {
+        switch self {
+        case .spaces:
+            "1"
+        case .teams:
+            "2"
+        case .people:
+            "3"
+        }
     }
 }
 
@@ -186,32 +238,13 @@ private struct RedwingSessionView: View {
             switch accountSession.phase {
             case .idle, .loading, .ready:
                 VStack(spacing: 0) {
-                    HStack(spacing: 0) {
-                        SessionSidebarView(selection: $navigation.selectedTab)
-
-                        Group {
-                            switch navigation.selectedTab {
-                            case .spaces:
-                                SpacesMessagesSurface(
-                                    spaces: spaces,
-                                    messages: messages,
-                                    navigation: navigation
-                                )
-                            case .teams:
-                                TeamsLaneSurfaceView(
-                                    teams: teams,
-                                    scrollAnchorID: $navigation.teamsScrollID
-                                )
-                            case .people:
-                                PeopleHierarchyView(
-                                    people: people,
-                                    scrollAnchorID: $navigation.peopleScrollID
-                                )
-                            }
-                        }
-                        .transition(.opacity.combined(with: .scale(scale: 0.99)))
-                        .animation(.easeInOut(duration: 0.2), value: navigation.selectedTab)
-                    }
+                    SessionTabsView(
+                        spaces: spaces,
+                        messages: messages,
+                        teams: teams,
+                        people: people,
+                        navigation: navigation
+                    )
 
                     Divider()
 

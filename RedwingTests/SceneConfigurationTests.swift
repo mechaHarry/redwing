@@ -107,12 +107,17 @@ final class SceneConfigurationTests: XCTestCase {
         let rootSource = try sourceRegion(
             in: source,
             startingAt: "private struct RedwingRootView",
-            endingAt: "private struct SessionSidebarView"
+            endingAt: "struct SessionSidebarView"
         )
         let sessionSource = try sourceRegion(
             in: source,
             startingAt: "private struct RedwingSessionView",
             endingAt: "    private func start() async"
+        )
+        let tabsSource = try sourceRegion(
+            in: source,
+            startingAt: "struct SessionTabsView",
+            endingAt: "extension RedwingMainTab"
         )
 
         XCTAssertTrue(rootSource.contains("let messages = rootModel.messagesCoordinator"))
@@ -124,14 +129,15 @@ final class SceneConfigurationTests: XCTestCase {
             )
         )
         XCTAssertTrue(
-            sessionSource.contains("SessionSidebarView(selection: $navigation.selectedTab)")
+            tabsSource.contains("SessionSidebarView(selection: $navigation.selectedTab)")
         )
-        XCTAssertTrue(sessionSource.contains("switch navigation.selectedTab"))
-        XCTAssertTrue(sessionSource.contains("SpacesMessagesSurface("))
+        XCTAssertTrue(tabsSource.contains("switch navigation.selectedTab"))
+        XCTAssertTrue(tabsSource.contains("SpacesMessagesSurface("))
+        XCTAssertTrue(sessionSource.contains("SessionTabsView("))
         XCTAssertTrue(sessionSource.contains("messages: messages"))
         XCTAssertTrue(sessionSource.contains("navigation: navigation"))
         XCTAssertFalse(sessionSource.contains("@State private var selectedTab"))
-        XCTAssertFalse(containsTabDerivedIdentityReset(in: sessionSource))
+        XCTAssertFalse(containsTabDerivedIdentityReset(in: tabsSource))
     }
 
     func testTabDerivedIdentityResetDetectionIsPrecise() {
@@ -208,6 +214,11 @@ final class SceneConfigurationTests: XCTestCase {
 
     func testSessionShellUsesGlassSidebarTabs() throws {
         let redwingAppSource = try String(contentsOf: redwingAppSourceURL(), encoding: .utf8)
+        let sidebarSource = try sourceRegion(
+            in: redwingAppSource,
+            startingAt: "struct SessionSidebarView",
+            endingAt: "struct SessionTabsView"
+        )
         let sessionNavigationStateSource = try String(
             contentsOf: sessionNavigationStateSourceURL(),
             encoding: .utf8
@@ -216,6 +227,16 @@ final class SceneConfigurationTests: XCTestCase {
         XCTAssertTrue(sessionNavigationStateSource.contains("enum RedwingMainTab"))
         XCTAssertTrue(redwingAppSource.contains("SessionSidebarView"))
         XCTAssertTrue(redwingAppSource.contains("glassEffect(.regular"))
+        XCTAssertTrue(
+            sidebarSource.contains(
+                ".accessibilityAddTraits(selection == tab ? .isSelected : [])"
+            )
+        )
+        XCTAssertTrue(
+            sidebarSource.contains(
+                ".keyboardShortcut(KeyEquivalent(tab.keyboardShortcutKey), modifiers: .command)"
+            )
+        )
     }
 
     func testSpaceRowsOwnIndividualGlassSurfaces() throws {
