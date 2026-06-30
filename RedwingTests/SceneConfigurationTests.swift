@@ -34,8 +34,12 @@ final class SceneConfigurationTests: XCTestCase {
 
     func testSessionShellUsesGlassSidebarTabs() throws {
         let redwingAppSource = try String(contentsOf: redwingAppSourceURL(), encoding: .utf8)
+        let sessionNavigationStateSource = try String(
+            contentsOf: sessionNavigationStateSourceURL(),
+            encoding: .utf8
+        )
 
-        XCTAssertTrue(redwingAppSource.contains("enum RedwingMainTab"))
+        XCTAssertTrue(sessionNavigationStateSource.contains("enum RedwingMainTab"))
         XCTAssertTrue(redwingAppSource.contains("SessionSidebarView"))
         XCTAssertTrue(redwingAppSource.contains("Spaces"))
         XCTAssertTrue(redwingAppSource.contains("Teams"))
@@ -100,6 +104,13 @@ final class SceneConfigurationTests: XCTestCase {
             .deletingLastPathComponent()
             .deletingLastPathComponent()
             .appendingPathComponent("Redwing/App/RedwingApp.swift")
+    }
+
+    private func sessionNavigationStateSourceURL() -> URL {
+        URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("Redwing/App/SessionNavigationState.swift")
     }
 
     private func laneSurfaceViewSourceURL() -> URL {
