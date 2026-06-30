@@ -60,6 +60,8 @@
 		B81000000000000000000009 /* PeopleCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8100000000000000000000A /* PeopleCoordinator.swift */; };
 		C22000000000000000000001 /* SessionNavigationState.swift in Sources */ = {isa = PBXBuildFile; fileRef = C22000000000000000000003 /* SessionNavigationState.swift */; };
 		C22000000000000000000002 /* SessionNavigationStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C22000000000000000000004 /* SessionNavigationStateTests.swift */; };
+		C23000000000000000000001 /* SpacesMessagesLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C23000000000000000000003 /* SpacesMessagesLayoutTests.swift */; };
+		C23000000000000000000002 /* SpacesMessagesLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = C23000000000000000000004 /* SpacesMessagesLayout.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -129,6 +131,8 @@
 		B8100000000000000000000A /* PeopleCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeopleCoordinator.swift; sourceTree = "<group>"; };
 		C22000000000000000000003 /* SessionNavigationState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionNavigationState.swift; sourceTree = "<group>"; };
 		C22000000000000000000004 /* SessionNavigationStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionNavigationStateTests.swift; sourceTree = "<group>"; };
+		C23000000000000000000003 /* SpacesMessagesLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpacesMessagesLayoutTests.swift; sourceTree = "<group>"; };
+		C23000000000000000000004 /* SpacesMessagesLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpacesMessagesLayout.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -196,6 +200,7 @@
 				A1000000000000000000001B /* SetupValidationTests.swift */,
 				A10000000000000000000014 /* SmokeTests.swift */,
 				C60000000000000000000002 /* SpacesCoordinatorTests.swift */,
+				C23000000000000000000003 /* SpacesMessagesLayoutTests.swift */,
 				B80000000000000000000002 /* TeamsCoordinatorTests.swift */,
 				B80000000000000000000004 /* PeopleCoordinatorTests.swift */,
 				D70000000000000000000002 /* ThreadLanePolicyTests.swift */,
@@ -319,6 +324,7 @@
 				B81000000000000000000002 /* LanePaginationFooterState.swift */,
 				F90000000000000000000009 /* LaneSurfaceView.swift */,
 				F90000000000000000000006 /* SkeletonViews.swift */,
+				C23000000000000000000004 /* SpacesMessagesLayout.swift */,
 			);
 			path = Lanes;
 			sourceTree = "<group>";
@@ -481,6 +487,7 @@
 				F90000000000000000000004 /* SkeletonViews.swift in Sources */,
 				C60000000000000000000003 /* SpaceRowViewModel.swift in Sources */,
 				C60000000000000000000004 /* SpacesCoordinator.swift in Sources */,
+				C23000000000000000000002 /* SpacesMessagesLayout.swift in Sources */,
 				A20000000000000000000001 /* StatusBarView.swift in Sources */,
 				B81000000000000000000003 /* TeamRowViewModel.swift in Sources */,
 				B81000000000000000000005 /* TeamsCoordinator.swift in Sources */,
@@ -509,6 +516,7 @@
 				A10000000000000000000009 /* SetupValidationTests.swift in Sources */,
 				A10000000000000000000004 /* SmokeTests.swift in Sources */,
 				C60000000000000000000001 /* SpacesCoordinatorTests.swift in Sources */,
+				C23000000000000000000001 /* SpacesMessagesLayoutTests.swift in Sources */,
 				B80000000000000000000001 /* TeamsCoordinatorTests.swift in Sources */,
 				B80000000000000000000003 /* PeopleCoordinatorTests.swift in Sources */,
 				D70000000000000000000001 /* ThreadLanePolicyTests.swift in Sources */,
