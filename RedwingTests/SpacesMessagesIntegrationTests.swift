@@ -3,14 +3,14 @@ import XCTest
 
 @MainActor
 final class SpacesMessagesIntegrationTests: XCTestCase {
-    func testOpeningSpaceSelectsSpaceBeforeMessagesWithRowIdentity() async {
+    func testOpeningSpaceSelectsSpaceBeforeMessagesWithRowIdentity() {
         var calls: [OpeningCall] = []
         let action = SpaceOpeningAction(
             selectSpace: { calls.append(.space(id: $0)) },
             selectMessages: { calls.append(.messages(id: $0, title: $1)) }
         )
 
-        await action(makeRow())
+        action(makeRow())
 
         XCTAssertEqual(
             calls,
@@ -21,25 +21,45 @@ final class SpacesMessagesIntegrationTests: XCTestCase {
         )
     }
 
-    func testOpeningSpaceIntegratesSpacesAndMessagesCoordinators() async {
+    func testRapidSpaceOpeningsFinishEachSequenceBeforeStartingTheNext() {
         let spaces = SpacesCoordinator(session: nil, diagnostics: DiagnosticsStore())
         let messages = MessagesCoordinator(session: nil, diagnostics: DiagnosticsStore())
+        var calls: [OpeningCall] = []
         let action = SpaceOpeningAction(
-            selectSpace: spaces.select(spaceID:),
-            selectMessages: messages.select(spaceID:spaceTitle:)
+            selectSpace: {
+                calls.append(.space(id: $0))
+                spaces.select(spaceID: $0)
+            },
+            selectMessages: {
+                calls.append(.messages(id: $0, title: $1))
+                messages.select(spaceID: $0, spaceTitle: $1)
+            }
         )
 
-        await action(makeRow())
+        action(makeRow(id: "space-a", title: "Space A"))
+        action(makeRow(id: "space-b", title: "Space B"))
 
-        XCTAssertEqual(spaces.selectedSpaceID, "space-1")
-        XCTAssertEqual(messages.selectedSpaceID, "space-1")
-        XCTAssertEqual(messages.selectedSpaceTitle, "General")
+        XCTAssertEqual(
+            calls,
+            [
+                .space(id: "space-a"),
+                .messages(id: "space-a", title: "Space A"),
+                .space(id: "space-b"),
+                .messages(id: "space-b", title: "Space B"),
+            ]
+        )
+        XCTAssertEqual(spaces.selectedSpaceID, "space-b")
+        XCTAssertEqual(messages.selectedSpaceID, "space-b")
+        XCTAssertEqual(messages.selectedSpaceTitle, "Space B")
     }
 
-    private func makeRow() -> SpaceRowViewModel {
+    private func makeRow(
+        id: String = "space-1",
+        title: String = "General"
+    ) -> SpaceRowViewModel {
         SpaceRowViewModel(
-            id: "space-1",
-            title: "General",
+            id: id,
+            title: title,
             teamLabel: nil,
             createdLabel: "",
             lastActivityLabel: "",

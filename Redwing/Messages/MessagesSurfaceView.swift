@@ -31,11 +31,22 @@ struct MessageScrollArbiter {
             return .none
         }
 
-        guard realRowIDs.contains(request.targetID) else {
-            return .consume(requestID: request.id)
-        }
+        let targetID = realRowIDs.contains(request.targetID)
+            ? request.targetID
+            : realRowIDs[realRowIDs.count - 1]
+        return .scroll(id: targetID, requestID: request.id)
+    }
 
-        return .scroll(id: request.targetID, requestID: request.id)
+    static func shouldExecute(
+        requestID: LaneScrollRequest.ID,
+        targetID: String,
+        currentSpaceID: String?,
+        realRowIDs: [String],
+        request: LaneScrollRequest?
+    ) -> Bool {
+        request?.id == requestID
+            && request?.spaceID == currentSpaceID
+            && realRowIDs.contains(targetID)
     }
 }
 
@@ -273,16 +284,15 @@ struct MessagesSurfaceView: View {
     ) {
         scrollExecutor.submit(
             isCurrent: {
-                guard let request = messages.messageScrollRequest else {
-                    return false
-                }
-
-                return request.id == requestID
-                    && request.spaceID == messages.selectedSpaceID
-                    && request.targetID == targetID
-                    && messages.messageRows.contains(where: {
-                        !$0.isSkeleton && $0.id == targetID
-                    })
+                MessageScrollArbiter.shouldExecute(
+                    requestID: requestID,
+                    targetID: targetID,
+                    currentSpaceID: messages.selectedSpaceID,
+                    realRowIDs: messages.messageRows.compactMap {
+                        $0.isSkeleton ? nil : $0.id
+                    },
+                    request: messages.messageScrollRequest
+                )
             },
             action: {
                 withAnimation(.easeInOut(duration: 0.18)) {

@@ -119,11 +119,11 @@ final class SceneConfigurationTests: XCTestCase {
         XCTAssertTrue(source.contains("SpaceOpeningAction("))
         XCTAssertTrue(source.contains("selectSpace: spaces.select(spaceID:)"))
         XCTAssertTrue(source.contains("selectMessages: messages.select(spaceID:spaceTitle:)"))
-        XCTAssertTrue(source.contains("Task { @MainActor in"))
-        XCTAssertTrue(source.contains("await openSpace(row)"))
+        XCTAssertTrue(source.contains("openSpace(row)"))
         XCTAssertTrue(source.contains("onClose: messages.close"))
         XCTAssertFalse(source.contains("spaces.select(spaceID: nil)"))
-        XCTAssertFalse(source.contains("Task.detached"))
+        XCTAssertFalse(source.contains("Task"))
+        XCTAssertFalse(source.contains("await openSpace(row)"))
     }
 
     func testSessionRootInjectsMessagesAndOwnsPersistentNavigation() throws {

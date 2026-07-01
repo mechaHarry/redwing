@@ -26,9 +26,7 @@ struct SpacesMessagesSurface: View {
                         spaces: spaces,
                         scrollAnchorID: $navigation.spacesScrollID
                     ) { row in
-                        Task { @MainActor in
-                            await openSpace(row)
-                        }
+                        openSpace(row)
                     }
                     .frame(width: widths.spaces)
                     .glassEffectID("spaces-card", in: glassNamespace)

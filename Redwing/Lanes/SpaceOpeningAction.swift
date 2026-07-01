@@ -1,10 +1,10 @@
 @MainActor
 struct SpaceOpeningAction {
     let selectSpace: (String) -> Void
-    let selectMessages: (String, String) async -> Void
+    let selectMessages: (String, String) -> Void
 
-    func callAsFunction(_ row: SpaceRowViewModel) async {
+    func callAsFunction(_ row: SpaceRowViewModel) {
         selectSpace(row.id)
-        await selectMessages(row.id, row.title)
+        selectMessages(row.id, row.title)
     }
 }

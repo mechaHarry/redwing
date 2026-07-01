@@ -181,17 +181,26 @@ final class MessagesCoordinatorTests: XCTestCase {
         XCTAssertEqual(resolution, .scroll(id: "latest", requestID: request.id))
     }
 
-    func testMessageScrollArbiterConsumesRequestWithMissingTarget() {
+    func testMessageScrollArbiterFallsBackToLastRealRowForCurrentSpaceMissingTarget() {
         let request = LaneScrollRequest(targetID: "removed", spaceID: "space-1")
 
         let resolution = MessageScrollArbiter.resolve(
             currentSpaceID: "space-1",
-            realRowIDs: ["current"],
+            realRowIDs: ["older", "current"],
             restoredID: nil,
             request: request
         )
 
-        XCTAssertEqual(resolution, .consume(requestID: request.id))
+        XCTAssertEqual(resolution, .scroll(id: "current", requestID: request.id))
+        XCTAssertTrue(
+            MessageScrollArbiter.shouldExecute(
+                requestID: request.id,
+                targetID: "current",
+                currentSpaceID: "space-1",
+                realRowIDs: ["older", "current"],
+                request: request
+            )
+        )
     }
 
     func testMessageScrollArbiterConsumesRequestFromPreviousSpace() {
