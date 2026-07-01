@@ -2,49 +2,63 @@ import SwiftUI
 
 struct LaneSurfaceView: View {
     @ObservedObject var spaces: SpacesCoordinator
+    @Binding var scrollAnchorID: String?
+    let onSelectSpace: (SpaceRowViewModel) -> Void
+
+    init(
+        spaces: SpacesCoordinator,
+        scrollAnchorID: Binding<String?>,
+        onSelectSpace: @escaping (SpaceRowViewModel) -> Void
+    ) {
+        self.spaces = spaces
+        _scrollAnchorID = scrollAnchorID
+        self.onSelectSpace = onSelectSpace
+    }
 
     var body: some View {
         let paneShape = RoundedRectangle(cornerRadius: 28, style: .continuous)
 
-        GlassEffectContainer {
-            ScrollView(.vertical) {
-                LazyVStack(spacing: 12) {
-                    ForEach(spaces.rows) { row in
-                        SpaceGlassRow(row: row) {
-                            spaces.select(spaceID: row.id)
-                        }
-                        .transition(.opacity.combined(with: .scale(scale: 0.98)))
-                        .onAppear {
-                            Task {
-                                await spaces.loadNextPageIfNeeded(visibleRowID: row.id)
-                            }
-                        }
+        ScrollView(.vertical) {
+            LazyVStack(spacing: 12) {
+                ForEach(spaces.rows) { row in
+                    SpaceGlassRow(
+                        row: row,
+                        isSelected: spaces.selectedSpaceID == row.id
+                    ) {
+                        onSelectSpace(row)
                     }
-
-                    if let footerState = spaces.footerState {
-                        LanePaginationFooter(state: footerState)
-                            .onAppear {
-                                Task {
-                                    await spaces.loadNextPageFromFooterIfNeeded()
-                                }
-                            }
+                    .transition(.opacity.combined(with: .scale(scale: 0.98)))
+                    .onAppear {
+                        Task {
+                            await spaces.loadNextPageIfNeeded(visibleRowID: row.id)
+                        }
                     }
                 }
-                .padding(18)
+
+                if let footerState = spaces.footerState {
+                    LanePaginationFooter(state: footerState)
+                        .onAppear {
+                            Task {
+                                await spaces.loadNextPageFromFooterIfNeeded()
+                            }
+                        }
+                }
             }
-            .animation(.easeInOut(duration: 0.24), value: spaces.rows)
-            .animation(.easeInOut(duration: 0.2), value: spaces.footerState)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .clipShape(paneShape)
-            .glassEffect(.regular, in: paneShape)
-            .padding(20)
+            .scrollTargetLayout()
+            .padding(18)
         }
+        .scrollPosition(id: $scrollAnchorID, anchor: .top)
+        .animation(.easeInOut(duration: 0.24), value: spaces.rows)
+        .animation(.easeInOut(duration: 0.2), value: spaces.footerState)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .clipShape(paneShape)
+        .glassEffect(.regular, in: paneShape)
     }
 }
 
 struct TeamsLaneSurfaceView: View {
     @ObservedObject var teams: TeamsCoordinator
+    @Binding var scrollAnchorID: String?
 
     var body: some View {
         let paneShape = RoundedRectangle(cornerRadius: 28, style: .continuous)
@@ -73,8 +87,10 @@ struct TeamsLaneSurfaceView: View {
                             }
                     }
                 }
+                .scrollTargetLayout()
                 .padding(18)
             }
+            .scrollPosition(id: $scrollAnchorID, anchor: .top)
             .animation(.easeInOut(duration: 0.24), value: teams.rows)
             .animation(.easeInOut(duration: 0.2), value: teams.footerState)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -88,6 +104,7 @@ struct TeamsLaneSurfaceView: View {
 
 struct PeopleHierarchyView: View {
     @ObservedObject var people: PeopleCoordinator
+    @Binding var scrollAnchorID: String?
 
     var body: some View {
         let paneShape = RoundedRectangle(cornerRadius: 28, style: .continuous)
@@ -108,9 +125,11 @@ struct PeopleHierarchyView: View {
                         }
                     }
                 }
+                .scrollTargetLayout()
                 .frame(maxWidth: .infinity)
                 .padding(24)
             }
+            .scrollPosition(id: $scrollAnchorID, anchor: .top)
             .animation(.easeInOut(duration: 0.24), value: people.nodes)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .clipShape(paneShape)
@@ -123,6 +142,7 @@ struct PeopleHierarchyView: View {
 
 private struct SpaceGlassRow: View {
     let row: SpaceRowViewModel
+    let isSelected: Bool
     let action: () -> Void
 
     var body: some View {
@@ -170,16 +190,25 @@ private struct SpaceGlassRow: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .buttonStyle(.plain)
+                .accessibilityAddTraits(isSelected ? .isSelected : [])
             }
         }
         .frame(maxWidth: .infinity, minHeight: 84, alignment: .leading)
         .contentShape(rowShape)
         .glassEffect(.regular.interactive(), in: rowShape)
         .overlay {
-            rowShape
-                .strokeBorder(Color.primary.opacity(0.18), lineWidth: 1)
+            rowShape.strokeBorder(
+                isSelected ? Color.accentColor.opacity(0.70) : Color.primary.opacity(0.18),
+                lineWidth: isSelected ? 1.5 : 1
+            )
+        }
+        .background {
+            if isSelected {
+                rowShape.fill(Color.accentColor.opacity(0.10))
+            }
         }
         .animation(.easeInOut(duration: 0.2), value: row)
+        .animation(.easeInOut(duration: 0.2), value: isSelected)
     }
 }
 

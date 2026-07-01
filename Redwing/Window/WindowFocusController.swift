@@ -3,30 +3,56 @@ import SwiftUI
 
 enum WindowFocusController {
     struct Candidate: Equatable {
+        let identifier: String?
         let title: String
         let isVisible: Bool
         let isMiniaturized: Bool
     }
 
     static func preferredMainWindowIndex(from candidates: [Candidate]) -> Int? {
-        let available = candidates.enumerated().filter { !$0.element.isMiniaturized }
-        return available.first { $0.element.title == "Redwing" }?.offset
-            ?? available.first { $0.element.isVisible }?.offset
-            ?? available.first?.offset
-            ?? candidates.enumerated().first { $0.element.title == "Redwing" }?.offset
-            ?? candidates.indices.first
+        candidates.enumerated().first {
+            $0.element.identifier == RedwingWindowID.main && !$0.element.isMiniaturized
+        }?.offset
+            ?? candidates.enumerated().first {
+                $0.element.identifier == RedwingWindowID.main
+            }?.offset
     }
 
-    static func mainWindow(from windows: [NSWindow]) -> NSWindow? {
-        let candidates = windows.map {
-            Candidate(title: $0.title, isVisible: $0.isVisible, isMiniaturized: $0.isMiniaturized)
+    static func handleReopen(
+        from candidates: [Candidate],
+        openMainWindow: () -> Void,
+        focusMainWindowAtIndex: (Int) -> Void
+    ) -> Bool {
+        if let index = preferredMainWindowIndex(from: candidates) {
+            focusMainWindowAtIndex(index)
+        } else {
+            openMainWindow()
         }
+
+        return false
+    }
+
+    @MainActor
+    static func mainWindow(from windows: [NSWindow]) -> NSWindow? {
+        let candidates = candidates(from: windows)
 
         guard let index = preferredMainWindowIndex(from: candidates) else {
             return nil
         }
 
         return windows[index]
+    }
+
+    @MainActor
+    static func handleReopen(
+        windows: [NSWindow],
+        openMainWindow: () -> Void
+    ) -> Bool {
+        handleReopen(
+            from: candidates(from: windows),
+            openMainWindow: openMainWindow,
+            focusMainWindowAtIndex: { moveToCurrentDesktop(window: windows[$0]) }
+        )
     }
 
     static func centeredFrame(windowSize: CGSize, visibleFrame: CGRect) -> CGRect {
@@ -84,6 +110,18 @@ enum WindowFocusController {
         var updated = behavior
         updated.insert(.moveToActiveSpace)
         return updated
+    }
+
+    @MainActor
+    private static func candidates(from windows: [NSWindow]) -> [Candidate] {
+        windows.map {
+            Candidate(
+                identifier: $0.identifier?.rawValue,
+                title: $0.title,
+                isVisible: $0.isVisible,
+                isMiniaturized: $0.isMiniaturized
+            )
+        }
     }
 
     @MainActor
@@ -146,6 +184,9 @@ struct WindowFocusAttachment: NSViewRepresentable {
 
         override func viewDidMoveToWindow() {
             super.viewDidMoveToWindow()
+            if let window {
+                window.identifier = NSUserInterfaceItemIdentifier(RedwingWindowID.main)
+            }
             onWindowAvailable?(window)
         }
     }

@@ -20,17 +20,19 @@ final class SmokeTests: XCTestCase {
         XCTAssertEqual(model.phase, .setupRequired)
     }
 
-    func testConfigureCreatesSessionCoordinatorsAndAttentionFeed() {
+    func testConfigureCreatesSessionCoordinatorsAndAttentionFeed() throws {
         let diagnostics = DiagnosticsStore()
         let model = AppRootModel(diagnostics: diagnostics)
         let clientProvider = FakeWebexClientProviding()
 
         model.configure(clientProvider: clientProvider, currentUserID: "person-123")
 
-        XCTAssertNotNil(model.accountSession)
-        XCTAssertNotNil(model.spacesCoordinator)
-        XCTAssertNotNil(model.messagesCoordinator)
-        XCTAssertNotNil(model.attentionFeed)
+        _ = try XCTUnwrap(model.accountSession)
+        _ = try XCTUnwrap(model.spacesCoordinator)
+        _ = try XCTUnwrap(model.messagesCoordinator)
+        _ = try XCTUnwrap(model.teamsCoordinator)
+        _ = try XCTUnwrap(model.peopleCoordinator)
+        _ = try XCTUnwrap(model.attentionFeed)
     }
 
     func testConfiguredAttentionFeedUsesSuppliedCurrentUserID() throws {

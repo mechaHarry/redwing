@@ -4,6 +4,12 @@ import Foundation
 struct LaneScrollRequest: Equatable, Identifiable {
     let id = UUID()
     let targetID: String
+    let spaceID: String?
+
+    init(targetID: String, spaceID: String? = nil) {
+        self.targetID = targetID
+        self.spaceID = spaceID
+    }
 }
 
 @MainActor
@@ -13,25 +19,36 @@ final class MessagesCoordinator: ObservableObject {
     @Published private(set) var messageRows: [MessageRowViewModel] = (0..<skeletonRowCount).map(MessageRowViewModel.skeleton)
     @Published private(set) var threadRows: [MessageRowViewModel] = []
     @Published private(set) var selectedSpaceID: String?
+    @Published private(set) var selectedSpaceTitle: String?
     @Published private(set) var selectedMessageID: String?
     @Published private(set) var isThreadLaneVisible = false
     @Published private(set) var isShowingSkeletons = true
     @Published private(set) var status: SessionStatus = .idle
     @Published private(set) var hasMore = false
+    @Published private(set) var isLoadingNextPage = false
     @Published private(set) var messageScrollTargetID: String?
     @Published private(set) var threadScrollTargetID: String?
     @Published private(set) var messageScrollRequest: LaneScrollRequest?
     @Published private(set) var threadScrollRequest: LaneScrollRequest?
 
+    var footerState: LanePaginationFooterState? {
+        guard !isShowingSkeletons, selectedSpaceID != nil else {
+            return nil
+        }
+
+        return hasMore || isLoadingNextPage ? .searching : .allFound
+    }
+
     private let session: AccountSession?
     private let diagnostics: DiagnosticsStore
     private let attentionFeed: AttentionFeedStore?
     private var stream: MessagesThreadStreamProviding?
+    private var streamAcquisitionTask: Task<Void, Never>?
     private var task: Task<Void, Never>?
     private var latestSnapshot: MessageThreadSnapshotDTO?
-    private var selectedSpaceTitle: String?
     private var selectedMessageIDBySpaceID: [String: String] = [:]
     private var generation = 0
+    private var isAwaitingInitialMessageScroll = true
 
     init(
         session: AccountSession?,
@@ -44,11 +61,12 @@ final class MessagesCoordinator: ObservableObject {
     }
 
     deinit {
+        streamAcquisitionTask?.cancel()
         task?.cancel()
         stream?.cancel()
     }
 
-    func select(spaceID: String, spaceTitle: String? = nil) async {
+    func select(spaceID: String, spaceTitle: String? = nil) {
         guard selectedSpaceID != spaceID else {
             selectedSpaceTitle = spaceTitle ?? selectedSpaceTitle
             return
@@ -67,6 +85,8 @@ final class MessagesCoordinator: ObservableObject {
         setMessageScrollTarget(nil)
         setThreadScrollTarget(nil)
         hasMore = false
+        isLoadingNextPage = false
+        isAwaitingInitialMessageScroll = true
         status = .refreshing
 
         guard let session else {
@@ -74,22 +94,64 @@ final class MessagesCoordinator: ObservableObject {
             return
         }
 
-        do {
-            let stream = try await session.makeMessagesThreadStream(spaceID: spaceID)
-            guard isCurrent(generation) else {
-                stream.cancel()
-                return
-            }
+        streamAcquisitionTask = Task { [weak self, session] in
+            do {
+                let stream = try await session.makeMessagesThreadStream(spaceID: spaceID)
+                guard !Task.isCancelled else {
+                    stream.cancel()
+                    return
+                }
+                guard self?.installAcquiredStream(stream, generation: generation) == true else {
+                    stream.cancel()
+                    return
+                }
 
-            self.stream = stream
-            status = .refreshing
-            subscribe(to: stream, generation: generation)
-            await stream.refresh()
-        } catch {
-            guard isCurrent(generation) else { return }
-            status = .failed("Messages unavailable")
-            diagnostics.append(source: .messages, severity: .error, message: "Messages stream failed", detail: String(describing: error))
+                await stream.refresh()
+                self?.completeAcquisition(generation: generation)
+            } catch {
+                guard !Task.isCancelled else {
+                    return
+                }
+                self?.failAcquisition(error, generation: generation)
+            }
         }
+    }
+
+    private func installAcquiredStream(
+        _ stream: MessagesThreadStreamProviding,
+        generation: Int
+    ) -> Bool {
+        guard isCurrent(generation) else {
+            return false
+        }
+
+        self.stream = stream
+        status = .refreshing
+        subscribe(to: stream, generation: generation)
+        return true
+    }
+
+    private func completeAcquisition(generation: Int) {
+        guard isCurrent(generation) else {
+            return
+        }
+
+        streamAcquisitionTask = nil
+    }
+
+    private func failAcquisition(_ error: Error, generation: Int) {
+        guard isCurrent(generation) else {
+            return
+        }
+
+        streamAcquisitionTask = nil
+        status = .failed("Messages unavailable")
+        diagnostics.append(
+            source: .messages,
+            severity: .error,
+            message: "Messages stream failed",
+            detail: String(describing: error)
+        )
     }
 
     func apply(snapshot: MessageThreadSnapshotDTO) {
@@ -107,7 +169,54 @@ final class MessagesCoordinator: ObservableObject {
     }
 
     func loadNextPage() async {
-        await stream?.loadNextPage()
+        await loadNextPageFromFooterIfNeeded()
+    }
+
+    func acknowledgeMessageScrollRequest(id: LaneScrollRequest.ID) {
+        guard messageScrollRequest?.id == id else {
+            return
+        }
+
+        messageScrollRequest = nil
+    }
+
+    func loadNextPageFromFooterIfNeeded() async {
+        guard hasMore,
+              !isLoadingNextPage,
+              let stream else {
+            return
+        }
+
+        isLoadingNextPage = true
+        await stream.loadNextPage()
+    }
+
+    func close() {
+        rememberSelectedMessageForCurrentSpace()
+        _ = replaceStreamState()
+        selectedSpaceID = nil
+        selectedSpaceTitle = nil
+        selectedMessageID = nil
+        latestSnapshot = nil
+        messageRows = []
+        threadRows = []
+        isThreadLaneVisible = false
+        isShowingSkeletons = false
+        hasMore = false
+        isLoadingNextPage = false
+        isAwaitingInitialMessageScroll = false
+        setMessageScrollTarget(nil)
+        setThreadScrollTarget(nil)
+        status = .idle
+    }
+
+    func retry() async {
+        guard let spaceID = selectedSpaceID else { return }
+
+        let title = selectedSpaceTitle
+        rememberSelectedMessageForCurrentSpace()
+        selectedSpaceID = nil
+        select(spaceID: spaceID, spaceTitle: title)
     }
 
     private func apply(snapshot: MessageThreadSnapshotDTO, generation: Int) {
@@ -115,6 +224,7 @@ final class MessagesCoordinator: ObservableObject {
 
         latestSnapshot = snapshot
         hasMore = snapshot.hasMore
+        isLoadingNextPage = snapshot.isLoadingNextPage
         if let selectedSpaceID {
             attentionFeed?.apply(
                 snapshot: snapshot,
@@ -141,7 +251,10 @@ final class MessagesCoordinator: ObservableObject {
 
         messageRows = rows
         isShowingSkeletons = false
-        updateMessageScrollTarget(rows: rows, snapshot: snapshot)
+        if isAwaitingInitialMessageScroll {
+            updateMessageScrollTarget(rows: rows, snapshot: snapshot)
+            isAwaitingInitialMessageScroll = false
+        }
         rebuildThreadRows(anchor: .newest)
     }
 
@@ -193,12 +306,16 @@ final class MessagesCoordinator: ObservableObject {
 
     private func setMessageScrollTarget(_ targetID: String?) {
         messageScrollTargetID = targetID
-        messageScrollRequest = targetID.map { LaneScrollRequest(targetID: $0) }
+        messageScrollRequest = targetID.map {
+            LaneScrollRequest(targetID: $0, spaceID: selectedSpaceID)
+        }
     }
 
     private func setThreadScrollTarget(_ targetID: String?) {
         threadScrollTargetID = targetID
-        threadScrollRequest = targetID.map { LaneScrollRequest(targetID: $0) }
+        threadScrollRequest = targetID.map {
+            LaneScrollRequest(targetID: $0, spaceID: selectedSpaceID)
+        }
     }
 
     private func messageLaneTargetID(for entry: MessageThreadEntryDTO, in snapshot: MessageThreadSnapshotDTO) -> String {
@@ -261,6 +378,8 @@ final class MessagesCoordinator: ObservableObject {
 
     private func replaceStreamState() -> Int {
         generation += 1
+        streamAcquisitionTask?.cancel()
+        streamAcquisitionTask = nil
         task?.cancel()
         task = nil
         stream?.cancel()

@@ -14,6 +14,8 @@ struct RedwingApp: App {
     @Environment(\.openWindow) private var openWindow
 
     var body: some Scene {
+        let openMainWindow = configureOpenMainWindow()
+
         Window("Redwing", id: RedwingWindowID.main) {
             RedwingRootView(
                 rootModel: rootModel,
@@ -39,11 +41,20 @@ struct RedwingApp: App {
     }
 
     private var openMainWindow: MainWindowOpeningAction {
-        MainWindowOpeningAction(
+        let openWindow = openWindow
+        let focusRequestID = $mainWindowFocusRequestID
+
+        return MainWindowOpeningAction(
             openWindow: { openWindow(id: $0) },
-            requestFocus: { mainWindowFocusRequestID += 1 },
+            requestFocus: { focusRequestID.wrappedValue += 1 },
             activate: { NSApp.activate(ignoringOtherApps: true) }
         )
+    }
+
+    private func configureOpenMainWindow() -> MainWindowOpeningAction {
+        let action = openMainWindow
+        appDelegate.openMainWindow = action.callAsFunction
+        return action
     }
 }
 
@@ -63,16 +74,16 @@ struct MainWindowOpeningAction {
     }
 }
 
+@MainActor
 final class RedwingAppDelegate: NSObject, NSApplicationDelegate {
-    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows _: Bool) -> Bool {
-        guard !sender.windows.isEmpty else {
-            return true
-        }
+    var openMainWindow: (() -> Void)?
 
-        Task { @MainActor in
-            WindowFocusController.moveMainWindowToCurrentDesktop(windows: sender.windows)
-        }
-        return false
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows _: Bool) -> Bool {
+        let openMainWindow = openMainWindow
+        return WindowFocusController.handleReopen(
+            windows: sender.windows,
+            openMainWindow: { openMainWindow?() }
+        )
     }
 }
 
@@ -85,12 +96,14 @@ private struct RedwingRootView: View {
         Group {
             if let accountSession = rootModel.accountSession,
                let spaces = rootModel.spacesCoordinator,
+               let messages = rootModel.messagesCoordinator,
                let teams = rootModel.teamsCoordinator,
                let people = rootModel.peopleCoordinator,
                let attentionFeed = rootModel.attentionFeed {
                 RedwingSessionView(
                     accountSession: accountSession,
                     spaces: spaces,
+                    messages: messages,
                     teams: teams,
                     people: people,
                     attentionFeed: attentionFeed,
@@ -128,37 +141,7 @@ private struct RedwingRootView: View {
     }
 }
 
-enum RedwingMainTab: String, CaseIterable, Identifiable {
-    case spaces
-    case teams
-    case people
-
-    var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .spaces:
-            "Spaces"
-        case .teams:
-            "Teams"
-        case .people:
-            "People"
-        }
-    }
-
-    var systemImage: String {
-        switch self {
-        case .spaces:
-            "bubble.left.and.bubble.right.fill"
-        case .teams:
-            "person.3.fill"
-        case .people:
-            "person.crop.circle.fill"
-        }
-    }
-}
-
-private struct SessionSidebarView: View {
+struct SessionSidebarView: View {
     @Binding var selection: RedwingMainTab
 
     var body: some View {
@@ -186,6 +169,8 @@ private struct SessionSidebarView: View {
                     }
                     .help(tab.title)
                     .accessibilityLabel(tab.title)
+                    .accessibilityAddTraits(selection == tab ? .isSelected : [])
+                    .keyboardShortcut(KeyEquivalent(tab.keyboardShortcutKey), modifiers: .command)
                 }
 
                 Spacer(minLength: 0)
@@ -199,37 +184,78 @@ private struct SessionSidebarView: View {
     }
 }
 
+struct SessionTabsView: View {
+    @ObservedObject var spaces: SpacesCoordinator
+    @ObservedObject var messages: MessagesCoordinator
+    @ObservedObject var teams: TeamsCoordinator
+    @ObservedObject var people: PeopleCoordinator
+    @ObservedObject var navigation: SessionNavigationState
+
+    var body: some View {
+        HStack(spacing: 0) {
+            SessionSidebarView(selection: $navigation.selectedTab)
+
+            Group {
+                switch navigation.selectedTab {
+                case .spaces:
+                    SpacesMessagesSurface(
+                        spaces: spaces,
+                        messages: messages,
+                        navigation: navigation
+                    )
+                case .teams:
+                    TeamsLaneSurfaceView(
+                        teams: teams,
+                        scrollAnchorID: $navigation.teamsScrollID
+                    )
+                case .people:
+                    PeopleHierarchyView(
+                        people: people,
+                        scrollAnchorID: $navigation.peopleScrollID
+                    )
+                }
+            }
+            .transition(.opacity.combined(with: .scale(scale: 0.99)))
+            .animation(.easeInOut(duration: 0.2), value: navigation.selectedTab)
+        }
+    }
+}
+
+extension RedwingMainTab {
+    var keyboardShortcutKey: Character {
+        switch self {
+        case .spaces:
+            "1"
+        case .teams:
+            "2"
+        case .people:
+            "3"
+        }
+    }
+}
+
 private struct RedwingSessionView: View {
     @ObservedObject var accountSession: AccountSession
     @ObservedObject var spaces: SpacesCoordinator
+    @ObservedObject var messages: MessagesCoordinator
     @ObservedObject var teams: TeamsCoordinator
     @ObservedObject var people: PeopleCoordinator
     @ObservedObject var attentionFeed: AttentionFeedStore
     @Binding var isShowingDiagnostics: Bool
-    @State private var selectedTab: RedwingMainTab = .spaces
+    @StateObject private var navigation = SessionNavigationState()
 
     var body: some View {
         Group {
             switch accountSession.phase {
             case .idle, .loading, .ready:
                 VStack(spacing: 0) {
-                    HStack(spacing: 0) {
-                        SessionSidebarView(selection: $selectedTab)
-
-                        Group {
-                            switch selectedTab {
-                            case .spaces:
-                                LaneSurfaceView(spaces: spaces)
-                            case .teams:
-                                TeamsLaneSurfaceView(teams: teams)
-                            case .people:
-                                PeopleHierarchyView(people: people)
-                            }
-                        }
-                        .id(selectedTab)
-                        .transition(.opacity.combined(with: .scale(scale: 0.99)))
-                        .animation(.easeInOut(duration: 0.2), value: selectedTab)
-                    }
+                    SessionTabsView(
+                        spaces: spaces,
+                        messages: messages,
+                        teams: teams,
+                        people: people,
+                        navigation: navigation
+                    )
 
                     Divider()
 
