@@ -24,7 +24,7 @@ The SDK package is pinned to a released tag from:
 https://github.com/mechaHarry/webex-swift-sdk.git
 ```
 
-The current pinned SDK version is `2.6.1`.
+The current pinned SDK version is `2.7.1`.
 
 ## Versioning
 
@@ -94,9 +94,9 @@ On first launch, Redwing shows Webex setup. Enter:
 - Redirect URI, defaulting to `http://127.0.0.1:8282/oauth/callback`
 - Scopes including `spark:all spark:kms`
 
-After authorization, the app loads Spaces into a single glass pane. Message and
-thread lane code remains archived in the source tree while the client surface is
-reset around Spaces.
+After authorization, the app loads Spaces into a single glass pane. Selecting a
+space animates the pane into a one-third/two-thirds Spaces and read-only Messages
+split. Thread rendering remains deferred.
 
 ## Notes
 
